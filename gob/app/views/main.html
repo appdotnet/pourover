@@ -1,0 +1,99 @@
+<div class="navbar navbar-static-top" ng-show='authenticated'>
+  <div class="navbar-inner">
+    <a class="brand" href="/" >PourOver</a>
+    <ul class="nav pull-right" ng-show="authenticated">
+      <li>
+        <a href='http://app.net/{{current_user.username}}' target='_blank'>
+          <span>logged in as @</span><span ng-bind="current_user.username"></span>
+        </a>
+      </li>
+      <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Actions <b class="caret"></b></a>
+        <ul class="dropdown-menu">
+          <li><a href='#/logout' ng-click='logout()'>Logout</a></li>
+          <li ng-show='feed.feed_id'><a ng-click='deleteFeed()'>Delete Feed</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</div>
+<div class="hero-unit" ng-show="!authenticated">
+  <h1>PourOver <small>from App.net</small></h1>
+  <p>PourOver is an easy to use RSS/Atom to App.net syndicator.</p>
+  <p>You can create an account or sign in by clicking the Authorize with App.net button.</p>
+  <a href='https://account.app.net/oauth/authenticate?client_id=6kmFxf2JrEqmFRQ4WncLfN8WWx7FnUS8&response_type=token&scope=write_post' class='adn-button' data-type='authorize' data-width="145" data-height="22" data-client-id='6kmFxf2JrEqmFRQ4WncLfN8WWx7FnUS8' data-response-type='token' data-scope='write_post' >Authorize with App.net</a>
+<script>(function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='//d2zh9g63fcvyrq.cloudfront.net/adn.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'adn-button-js'));</script>
+</div>
+<div class='authenticated-app' ng-show="authenticated">
+    <div class='row'>
+        <div class='span4'>
+            <h3>Feed Configuration</h3>
+            <form class="form-vertical">
+              <input type="hidden" id="feed_id" ng-model='feed.feed_id'>
+              <div class="control-group">
+                  <label class="control-label" for="inputEmail">Feed URL</label>
+                  <div class="controls">
+                    <input type="text" id="inputEmail" placeholder="https://example.com/rss" ng-model='feed.feed_url' ng-show='!feed.feed_id'>
+                    <p ng-show='feed.feed_id'>
+                      <a ng-href='feed.feed_url' ng-bind='feed.feed_url' class='ellipses'></a>
+                    </p>
+                  </div>
+              </div>
+            </form>
+            <form class='form-inline'>
+              <div class="control-group schedule">
+                <div>
+                  <label>Schedule</label><br>
+                  <span>At most post <span>
+                  <input type='number' value='1' ng-min='1' ng-max='5' name='max_items_per_period' ng-model='feed.max_stories_per_period' ng-bind='feed.max_stories_per_period' class='input-super-mini'>
+                  <span ng-bind="feed.max_stories_per_period == 1 && 'item' || 'items'"></span><span> every</span>
+                  <select class='input-small' ng-model='feed.schedule_period' name='schedule_period' ng-options="c.value as c.label for c in schedule_periods"></select>
+                </div>
+              </div>
+              <p><small>If the feed uses <a href='https://code.google.com/p/pubsubhubbub/' target='_blank'>PuSH</a> syndication is realtime.</small></p>
+              <div class="control-group">
+                <div class="controls">
+                  <button type="submit" class="btn btn-primary" ng-click='createOrUpdateFeed()' ng-bind="feed.feed_id && 'Update Feed' || 'Save Feed'"></button>
+                </div>
+              </div>
+            </form>
+        </div>
+        <div class='span8' ng-show='posts'>
+            <h3>Feed Preview</h3>
+            <div class="media" ng-repeat="post in posts">
+              <span class="pull-left">
+                <img class="media-object " ng-src='{{ current_user.avatar_image.url }}' width='50px' height='50px'>
+              </span>
+              <div class="media-body">
+                <b class="media-heading"><span ng-bind="current_user.username"></span></b>
+                <p ng-bind-html-unsafe='post'></p>
+              </div>
+            </div>
+        </div>
+        <div class='span8' ng-hide='posts'>
+          <h3>Feed Preview</h3>
+          <p>Add a feed url to see an approximation of what the App.net posts would look like.</p>
+        </div>
+    </div>
+    <div class='row' ng-show='authenticated'>
+      <hr>
+      <div class='span6'>
+        <h4>Future Entries</h4>
+        <div ng-show='unpublished_entries'>
+          <div ng-repeat='entry in unpublished_entries' ng-include="'views/entry.html'"></div>
+        </div>
+        <div ng-show='!unpublished_entries || unpublished_entries == []'>
+          <p>There are no unpublished entries at this time.</p>
+        </div>
+      </div>
+      <div class='span6'>
+        <h4>Past Entries</h4>
+        <div ng-show='published_entries'>
+          <div ng-repeat='entry in published_entries' ng-include="'views/entry.html'"></div>
+        </div>
+        <div ng-show='!published_entries || published_entries == []'>
+          <p>There are no past entries at this time.</p>
+        </div>
+      </div>
+    </div>
+</div>

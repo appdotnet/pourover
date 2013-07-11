@@ -1,0 +1,12 @@
+<div class='well clearfix'>
+    <div class='clearfix'>
+        <div class='pull-left'>
+            Status: <span ng-bind="entryStatus(entry)" ng-class="{'text-alert-success': entry.published}"></span>
+        </div>
+        <div class='pull-right'>
+            <a ng-click='publishEntry(entry)' class='btn btn-mini' ng-bind="!entry.published && 'Publish Now' || 'Republish Now'"></a>
+        </div>
+    </div>
+    <p><small ng-bind='entry.title'></small></p>
+    <p ng-show='entry.published'><small>Published: </small><small ng-bind='entry.published_at && entry.published_at || "N/A"'></small></p>
+</div>

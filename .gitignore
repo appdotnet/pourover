@@ -43,3 +43,4 @@ gob/.sass-cache
 gob/.tmp
 gob/node_modules
 *.DS_Store*
+buster/application/secret_keys.py
