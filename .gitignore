@@ -33,3 +33,13 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+venv
+*.pyc
+buster/static
+gob/dist
+gob/build
+gob/.sass-cache
+gob/.tmp
+gob/node_modules
+*.DS_Store*
