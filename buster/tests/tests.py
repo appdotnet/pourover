@@ -9,13 +9,29 @@ from datetime import timedelta
 from google.appengine.ext import testbed
 from google.appengine.api import memcache
 
+import feedparser
+
+RSS_MOCKS = {}
+true_parse = feedparser.parse
+
+
+def fake_parse(url, *args, **kwargs):
+    content = RSS_MOCKS.get(url, url)
+    parsed_feed = true_parse(content, *args, **kwargs)
+    if content != url:
+        parsed_feed.status = 200
+        parsed_feed.etag = ''
+
+    return parsed_feed
+
+feedparser.parse = fake_parse
 
 sys.path.insert(1, os.path.join(os.path.abspath('./buster/'), 'lib'))
 sys.path.insert(1, os.path.join(os.path.abspath('./buster')))
 from agar.test import MockUrlfetchTest
 # from rss_to_adn import Feed
 from application import app
-from application.models import Entry, User, Feed
+from application.models import Entry, User, Feed, OVERFLOW_REASON
 
 XML_TEMPLATE = """
 <?xml version='1.0' encoding='utf-8'?>
@@ -65,6 +81,9 @@ class BusterTestCase(MockUrlfetchTest):
             hub = '<link rel="hub" href="http://pubsubhubbub.appspot.com"/>'
         return XML_TEMPLATE % (hub, title, description, guid, link)
 
+    def set_rss_response(self, url, content='', status_code=200):
+        RSS_MOCKS[url] = content
+
     def buildMockUserResponse(self, username='voidfiles', id=3):
         return {
             'data': {
@@ -106,7 +125,7 @@ class BusterTestCase(MockUrlfetchTest):
         json_resp = json.loads(resp.data)
         assert len(json_resp['data']) == 0
 
-        self.set_response("http://example.com/rss", content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
+        self.set_rss_response("http://example.com/rss", content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
         test_feed_url = 'http://example.com/rss'
         resp = self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
@@ -137,7 +156,7 @@ class BusterTestCase(MockUrlfetchTest):
         json_resp = json.loads(resp.data)
         assert len(json_resp['data']) == 1
 
-        self.set_response("http://example.com/rss", content=self.buildRSS('test', 'test', 'test_2', 'test_2'), status_code=200)
+        self.set_rss_response("http://example.com/rss", content=self.buildRSS('test', 'test', 'test_2', 'test_2'), status_code=200)
         resp = self.app.post('/api/feeds/%s/update' % feed_id, headers=self.authHeaders())
         assert 2 == Entry.query().count()
 
@@ -145,13 +164,13 @@ class BusterTestCase(MockUrlfetchTest):
         self.setMockUser()
         self.set_response("https://alpha-api.app.net/stream/0/posts", content='', status_code=200, method="POST")
         test_feed_url = 'http://example.com/rss'
-        self.set_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
         resp = self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
         ), headers=self.authHeaders())
 
         test_feed_url = 'http://example.com/rss2'
-        self.set_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
 
         resp = self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
@@ -160,7 +179,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert 2 == Entry.query().count()
 
         test_feed_url = 'http://example.com/rss2'
-        self.set_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_2', 'test_2'), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_2', 'test_2'), status_code=200)
 
         resp = self.app.get('/api/feeds/all/update/2', data=dict(
             feed_url=test_feed_url,
@@ -179,7 +198,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.set_response("https://alpha-api.app.net/stream/0/posts", content='', status_code=200, method="POST")
         self.set_response('http://pubsubhubbub.appspot.com', content='', status_code=200, method="POST")
         test_feed_url = 'http://example.com/rss'
-        self.set_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1', use_hub=True), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1', use_hub=True), status_code=200)
         resp = self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
@@ -198,12 +217,12 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert resp.data == 'testing'
 
-        self.set_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_2', 'test_2', use_hub=True), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_2', 'test_2', use_hub=True), status_code=200)
         resp = self.app.post('/api/feeds/%s/subscribe' % (feed.key.id(), ))
 
         assert 2 == Entry.query().count()
 
-        assert 1 == Entry.query(Entry.published == True).count()
+        assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
         resp = self.app.post('/api/feeds/%s/subscribe' % (feed.key.id(), ))
 
@@ -212,7 +231,7 @@ class BusterTestCase(MockUrlfetchTest):
     def testSchedule(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
-        self.set_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
         resp = self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
@@ -220,36 +239,40 @@ class BusterTestCase(MockUrlfetchTest):
             schedule_period=5,
         ), headers=self.authHeaders())
 
-        assert 0 == Entry.query(Entry.published == True).count()
+        assert 0 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
         self.set_response("https://alpha-api.app.net/stream/0/posts", content='', status_code=200, method="POST")
 
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_2', 'test_2'), status_code=200)
         resp = self.app.get('/api/feeds/all/update/1')
 
-        assert 1 == Entry.query(Entry.published == True).count()
+        assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
-        self.set_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_2', 'test_2'), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_3', 'test_3'), status_code=200)
         resp = self.app.get('/api/feeds/all/update/1', data=dict(
             feed_url=test_feed_url,
         ))
 
         # Should have been rate limited
-        assert 1 == Entry.query(Entry.published == True).count()
+        assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
         # Set the entry back in time
-        first_entry = Entry.query().get()
+        first_entry = Entry.query(Entry.published == True, Entry.overflow == False).get()
         first_entry.published_at = first_entry.published_at - timedelta(minutes=10)
         first_entry.put()
 
-        self.set_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_2', 'test_2'), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_4', 'test_4'), status_code=200)
         resp = self.app.get('/api/feeds/all/update/1', data=dict(
             feed_url=test_feed_url,
         ))
 
+        # Should not have been rate limited
+        assert 2 == Entry.query(Entry.published == True, Entry.overflow == False).count()
+
     def testMulitpleSchedule(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
-        self.set_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
         resp = self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
@@ -257,30 +280,34 @@ class BusterTestCase(MockUrlfetchTest):
             schedule_period=5,
         ), headers=self.authHeaders())
 
-        assert 0 == Entry.query(Entry.published == True).count()
+        assert 1 == Entry.query(Entry.published == True, Entry.overflow == True).count()
 
         self.set_response("https://alpha-api.app.net/stream/0/posts", content='', status_code=200, method="POST")
 
         resp = self.app.get('/api/feeds/all/update/1')
-        self.set_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_2', 'test_2'), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_2', 'test_2'), status_code=200)
         resp = self.app.get('/api/feeds/all/update/1')
 
         # Should not have been rate limited
-        assert 2 == Entry.query(Entry.published == True).count()
+        assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
-        self.set_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_3', 'test_3'), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_3', 'test_3'), status_code=200)
         resp = self.app.get('/api/feeds/all/update/1')
+        # Should not have been rate limited
+        assert 2 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_4', 'test_4'), status_code=200)
+        resp = self.app.get('/api/feeds/all/update/1')
         # Should have been rate limited
-        assert 2 == Entry.query(Entry.published == True).count()
+        assert 2 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
-        # Set the entry back in time
-        first_entry = Entry.query().get()
-        first_entry.published_at = first_entry.published_at - timedelta(minutes=10)
-        first_entry.put()
-
-        resp = self.app.get('/api/feeds/all/update/1')
-        assert 3 == Entry.query(Entry.published == True).count()
+        # We should have burned off the latest entry
+        burned_entries = Entry.query(Entry.published == True, Entry.overflow == True).fetch(2)
+        assert 2 == len(burned_entries)
+        # So, the first entry was burned because it was already in the feed
+        assert burned_entries[0].overflow_reason == OVERFLOW_REASON.BACKLOG
+        # The second entry was burned because it was overflowing the queue
+        assert burned_entries[1].overflow_reason == OVERFLOW_REASON.FEED_OVERFLOW
 
 if __name__ == '__main__':
     unittest.main()

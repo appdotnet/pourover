@@ -126,6 +126,10 @@ def build_html_from_post(post):
     return '<span>%s</span>' % (''.join(html_pieces), )
 
 
+def fetch_feed_url(feed_url, etag=None):
+    return feedparser.parse(feed_url, agent='PourOver/1.0 +https://pour-over.appspot.com/', etag=etag)
+
+
 class User(ndb.Model):
     access_token = ndb.StringProperty()
 
@@ -213,8 +217,7 @@ class Entry(ndb.Model):
 
     @classmethod
     def entry_preview_for_feed(cls, feed_url, include_summary):
-        resp = urlfetch.fetch(feed_url)
-        parsed_feed = feedparser.parse(resp.content)
+        parsed_feed = fetch_feed_url(feed_url)
         feed_items = []
         for item in parsed_feed.entries:
             entry = cls(guid=item.guid, title=item.title, summary=item.get('summary', ''), link=item.link)
@@ -268,11 +271,14 @@ class Entry(ndb.Model):
 
     @classmethod
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
-        result = urlfetch.fetch(feed.feed_url)
-        if result.status_code != 200:
-            raise Exception('Could not fetch feed')
+        parsed_feed = fetch_feed_url(feed.feed_url, feed.etag)
+        if parsed_feed.status not in (200, 304):
+            raise Exception('Could not fetch feed:%s status_code:%s' % (feed.feed_url, parsed_feed.status))
 
-        parsed_feed = feedparser.parse(result.content)
+        if feed.etag != parsed_feed.etag:
+            feed.etag = parsed_feed.etag
+            feed.put()
+
         for item in parsed_feed.entries:
             entry = cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason)
 
@@ -340,6 +346,7 @@ class Feed(ndb.Model):
     extra_info = ndb.JsonProperty()
     schedule_period = ndb.IntegerProperty(default=PERIOD_SCHEDULE.MINUTE_5)
     max_stories_per_period = ndb.IntegerProperty(default=1)
+    etag = ndb.StringProperty()
 
     @classmethod
     def for_user(cls, user):
