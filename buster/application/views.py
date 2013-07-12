@@ -12,16 +12,12 @@ import json
 import logging
 import datetime
 
-from google.appengine.api import users
-from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
-
-from flask import request, render_template, flash, url_for, redirect, g, Response
+from flask import request, render_template, g, Response
 
 from flask_cache import Cache
 
 from application import app
-from decorators import login_required, admin_required
-from models import Entry, Feed, User, UPDATE_INTERVAL, OVERFLOW_REASON
+from models import Entry, Feed, User, UPDATE_INTERVAL
 from forms import FeedCreate
 
 logger = logging.getLogger(__name__)
@@ -51,9 +47,9 @@ def jsonify_error(message='There was an error', code=404):
     return resp
 
 
-@app.route('/', endpoint='home')
-def home():
-    return redirect(url_for('feeds'))
+@app.route('/', endpoint='index')
+def index():
+    return render_template('index.html')
 
 
 @app.route('/api/feeds', methods=['GET'])
@@ -73,7 +69,7 @@ def feed_create():
     exsisting_feeds = Feed.for_user_id_and_feed(user_id=g.user.id, feed_url=form.data['feed_url'])
     try:
         feed = exsisting_feeds.iter().next()
-    except StopIteration, e:
+    except StopIteration:
         feed = Feed.create_feed_from_form(g.user.id, form)
 
     return jsonify(status='ok', data=feed.to_json())
@@ -126,6 +122,8 @@ def feed_change(feed_id):
 
     form.populate_obj(feed)
     feed.put()
+
+    feed_data = feed.to_json()
     entries = [entry.to_dict(include=['title', 'link', 'published', 'published_at']) for entry in Entry.latest_for_feed(feed).fetch(10)]
     feed_data['entries'] = entries
 
@@ -183,9 +181,7 @@ def published_entries_for_feed(feed_id):
 @app.route('/api/feeds/<int:feed_id>/subscribe', methods=['GET'])
 def feed_subscribe(feed_id):
     mode = request.args['hub.mode']
-    topic = request.args['hub.topic']
     challenge = request.args['hub.challenge']
-    lease_seconds = request.args.get('hub.lease_seconds')
     verify_token = request.args.get('hub.verify_token', '')
 
     if mode == 'subscribe':
