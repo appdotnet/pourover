@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "pourover-gob",
   "version": "0.0.0",
   "dependencies": {},
   "devDependencies": {
@@ -25,7 +25,9 @@
     "matchdep": "~0.1.1",
     "grunt-google-cdn": "~0.1.1",
     "grunt-ngmin": "~0.0.2",
-    "grunt-connect-proxy": "~0.1.5"
+    "grunt-connect-proxy": "~0.1.5",
+    "grunt-angular-templates": "~0.3.10",
+    "bower": "~0.10.0"
   },
   "engines": {
     "node": ">=0.8.0"

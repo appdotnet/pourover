@@ -160,6 +160,17 @@ module.exports = function (grunt) {
         }
       }
     },
+    ngtemplates: {
+      dist: {
+        options: {
+          base: '.tmp',
+          concat: 'dist/scripts/scripts.js',
+          module: 'frontendApp',
+        },
+        src: '.tmp/views/*.html',
+        dest: '.tmp/scripts/templates.js'
+      }
+    },
     useminPrepare: {
       html: '<%= yeoman.app %>/index.html',
       options: {
@@ -206,12 +217,20 @@ module.exports = function (grunt) {
           removeEmptyAttributes: true,
           removeOptionalTags: true*/
         },
-        files: [{
-          expand: true,
-          cwd: '<%= yeoman.app %>',
-          src: ['*.html', 'views/*.html'],
-          dest: '<%= yeoman.dist %>'
-        }]
+        files: [
+          {
+            expand: true,
+            cwd: '<%= yeoman.app %>',
+            src: 'views/*.html',
+            dest: '.tmp'
+          },
+          {
+            expand: true,
+            cwd: '<%= yeoman.app %>',
+            src: '*.html',
+            dest: '<%= yeoman.dist %>/templates'
+          }
+        ]
       }
     },
     cdnify: {
@@ -293,12 +312,12 @@ module.exports = function (grunt) {
   grunt.registerTask('build', [
     'clean:dist',
     'jshint',
-    'test',
     'coffee',
     'compass:dist',
     'useminPrepare',
     'imagemin',
     'htmlmin',
+    'ngtemplates:dist',
     'concat',
     'cssmin',
     'copy',
