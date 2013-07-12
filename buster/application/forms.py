@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 def boolean_filter(value):
-    logger.info('Boolean filter: %s', value)
     return value is True or value == 'true'
 
 
