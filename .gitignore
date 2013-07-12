@@ -44,3 +44,4 @@ gob/.tmp
 gob/node_modules
 *.DS_Store*
 buster/application/secret_keys.py
+buster/application/templates/

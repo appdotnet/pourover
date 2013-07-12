@@ -11,6 +11,7 @@ MEMCACHE_USER_KEY = 'user:%s'
 
 logger = logging.getLogger(__name__)
 
+
 def hash_for_token(access_token):
     return MEMCACHE_USER_KEY % (access_token, ), hashlib.sha224(access_token).hexdigest()
 

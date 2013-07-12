@@ -51,6 +51,8 @@ def jsonify_error(message='There was an error', code=404):
 def index():
     return render_template('index.html')
 
+index.login_required = False
+
 
 @app.route('/api/feeds', methods=['GET'])
 def feeds():
@@ -277,3 +279,5 @@ def warmup():
 
     """
     return ''
+
+warmup.login_required = False

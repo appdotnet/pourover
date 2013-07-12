@@ -9,3 +9,5 @@ def gae_mini_profiler_should_profile_production():
     # from google.appengine.api import users
     # return users.is_current_user_admin()
     return False
+
+remoteapi_CUSTOM_ENVIRONMENT_AUTHENTICATION = ('HTTP_X_APPENGINE_INBOUND_APPID', ['pour-over'])

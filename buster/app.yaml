@@ -1,4 +1,4 @@
-application: pour-over
+application: adn-pourover
 version: 1
 runtime: python27
 api_version: 1
@@ -34,9 +34,9 @@ handlers:
   upload: static/robots.txt
   secure: always
 
-- url: /(.+\.(css|png|html|js))
+- url: /(.*\.(css|png|html|js))
   static_files: static/\1
-  upload: static/(.+\.(css|png|html|js))
+  upload: static/(.*\.(css|png|html|js))
   secure: always
 
 - url: .*
