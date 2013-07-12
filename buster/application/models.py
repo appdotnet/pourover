@@ -366,17 +366,19 @@ class Feed(ndb.Model):
         # Sync pull down the latest feeds
         parsed_feed = Entry.update_for_feed(feed)
 
-        hub_url = None
         for link in parsed_feed.feed.links:
             if link['rel'] == 'hub':
                 hub_url = link['href']
                 feed.hub = hub_url
+
                 if hub_url.startswith('https://'):
                     feed.hub_secret = uuid.uuid4().hex
                 else:
                     feed.hub_secret = None
+
                 feed.verify_token = uuid.uuid4().hex
                 feed.put()
+
                 subscribe_data = {
                     "hub.callback": url_for('feed_subscribe', feed_key=feed.key.urlsafe(), _external=True),
                     "hub.mode": 'subscribe',
