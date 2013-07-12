@@ -273,18 +273,25 @@ class Entry(ndb.Model):
     @classmethod
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
         parsed_feed = fetch_feed_url(feed.feed_url, feed.etag)
-        if parsed_feed.status not in (200, 304):
-            raise Exception('Could not fetch feed:%s status_code:%s' % (feed.feed_url, parsed_feed.status))
+        status = getattr(parsed_feed, 'status', None)
+        if status and status not in (200, 300, 301, 302, 304, 307):
+            raise Exception('Could not fetch feed:%s status_code:%s' % (feed.feed_url, status))
+
+        # logger.info('Parsed feed has not status href:%s status:%s', parsed_feed.href, status)
 
         # There should be no data in here anyway
         if parsed_feed.status == 304:
             return parsed_feed
 
-        if feed.etag != parsed_feed.etag:
-            feed.etag = parsed_feed.etag
+        # Update feed location
+        if parsed_feed.status == 301:
+            feed.feed_url = parsed_feed.href
             feed.put()
 
-
+        etag = getattr(parsed_feed, 'etag', None)
+        if etag and feed.etag != etag:
+            feed.etag = etag
+            feed.put()
 
         for item in parsed_feed.entries:
             entry = cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason)
