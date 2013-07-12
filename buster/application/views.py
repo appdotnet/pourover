@@ -17,7 +17,7 @@ from flask import request, render_template, g, Response
 from flask_cache import Cache
 
 from application import app
-from models import Entry, Feed, User, UPDATE_INTERVAL
+from models import Entry, Feed, UPDATE_INTERVAL
 from forms import FeedCreate
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ index.login_required = False
 @app.route('/api/feeds', methods=['GET'])
 def feeds():
     """List all examples"""
-    users_feeds = [feed.to_json() for feed in Feed.for_user_id(user_id=g.user.id)]
+    users_feeds = [feed.to_json() for feed in Feed.for_user(g.user)]
     return jsonify(status='ok', data=users_feeds)
 
 
@@ -68,11 +68,11 @@ def feed_create():
     if not form.validate():
         return jsonify(status='error', message='The passed arguments failed validation')
 
-    exsisting_feeds = Feed.for_user_id_and_feed(user_id=g.user.id, feed_url=form.data['feed_url'])
+    exsisting_feeds = Feed.for_user_and_url(user=g.user, feed_url=form.data['feed_url'])
     try:
         feed = exsisting_feeds.iter().next()
     except StopIteration:
-        feed = Feed.create_feed_from_form(g.user.id, form)
+        feed = Feed.create_feed_from_form(g.user, form)
 
     return jsonify(status='ok', data=feed.to_json())
 
@@ -97,7 +97,7 @@ def feed(feed_id):
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
-    if feed.adn_user_id != g.user.id:
+    if feed.parent_key() != g.user.key:
         return jsonify_error(message="Not Authorized")
 
     feed_data = feed.to_json()
@@ -119,7 +119,7 @@ def feed_change(feed_id):
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
-    if feed.adn_user_id != g.user.id:
+    if feed.parent_key() != g.user.key:
         return jsonify_error(message="Not Authorized")
 
     form.populate_obj(feed)
@@ -139,7 +139,7 @@ def delete_feed(feed_id):
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
-    if feed.adn_user_id != g.user.id:
+    if feed.parent_key() != g.user.key:
         return jsonify_error(message="Not Authorized")
 
     Entry.delete_for_feed(feed)
@@ -154,7 +154,7 @@ def unpublished_entries_for_feed(feed_id):
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
-    if feed.adn_user_id != g.user.id:
+    if feed.parent_key() != g.user.key:
         return jsonify_error(message="Not Authorized")
 
     feed_data = feed.to_json()
@@ -170,7 +170,7 @@ def published_entries_for_feed(feed_id):
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
-    if feed.adn_user_id != g.user.id:
+    if feed.parent_key() != g.user.key:
         return jsonify_error(message="Not Authorized")
 
     feed_data = feed.to_json()
@@ -224,7 +224,7 @@ def feed_update(feed_id):
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
-    if feed.adn_user_id != int(g.user.id):
+    if feed.parent_key() != g.user.key:
         return jsonify_error(message="Not Authorized")
 
     Entry.update_for_feed(feed, publish=True)
@@ -247,12 +247,10 @@ def feed_entry_publish(feed_id, entry_id):
     if not entry:
         return jsonify_error(message="Can't find that entry")
 
-    if feed.adn_user_id != int(g.user.id):
+    if feed.parent_key() != g.user.key:
         return jsonify_error(message="Not Authorized")
 
-    user = User.for_adn_user_id(feed.adn_user_id)
-
-    Entry.publish_entry(entry, feed, user)
+    entry.publish_entry()
     entry.overflow = False
     entry.put()
 

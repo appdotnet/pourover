@@ -3,7 +3,7 @@ import json
 import logging
 
 from google.appengine.api import urlfetch, memcache
-from flask import g, request, abort
+from flask import g, request, abort, current_app
 
 from .models import User
 
@@ -49,9 +49,9 @@ class ADNTokenAuthMiddleware(object):
             'Authorization': 'Bearer %s' % auth_token,
         }
 
-        resp = urlfetch.fetch(url='https://alpha-api.app.net/stream/0/users/me', method='GET', headers=headers)
+        resp = urlfetch.fetch(url='https://alpha-api.app.net/stream/0/token', method='GET', headers=headers)
         if resp.status_code == 200:
-            memcache.set(memcache_key, resp.content, 60 * 60)  # Expire in 1 hour
+            memcache.set(memcache_key, resp.content, 5 * 60)  # Expire in 5 min
             return resp.content
 
         return None
@@ -60,24 +60,27 @@ class ADNTokenAuthMiddleware(object):
         '''Try and setup user for this request'''
 
         authorization_header = request.headers.get('Authorization')
-        user = None
+        adn_user = None
         if authorization_header:
             method, access_token = authorization_header.split(' ', 1)
             if access_token:
                 memcache_key, token_hash = hash_for_token(access_token)
                 user_data = memcache.get(memcache_key) or self.fetch_user_data(access_token, memcache_key)
                 if user_data:
-                    user_data = json.loads(user_data)
-                    user = EasyDict(user_data.get('data'))
+                    token = json.loads(user_data).get('data', {})
+                    if token and token['app']['client_id'] == current_app.config['CLIENT_ID']:
+                        adn_user = EasyDict(token['user'])
 
         view_func = self.app.view_functions.get(request.endpoint)
         login_required = getattr(view_func, 'login_required', None)
         login_required = login_required is None or login_required is True
-        if login_required and user is None:
+        if login_required and adn_user is None:
             abort(401)
 
-        if user:
-            User.get_or_create(user, access_token)
-            user.id = int(user.id)
+        if adn_user:
+            user = User.get_or_insert(User.key_from_adn_user(adn_user), access_token=access_token)
+            if user.access_token != access_token:
+                user.access_token = access_token
+                user.put()
 
-        g.user = user
+            g.user = user

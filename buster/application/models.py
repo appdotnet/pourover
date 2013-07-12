@@ -6,7 +6,6 @@ App Engine datastore models
 """
 import logging
 import uuid
-import re
 from datetime import datetime, timedelta
 
 from google.appengine.ext import ndb
@@ -128,25 +127,11 @@ def build_html_from_post(post):
 
 
 class User(ndb.Model):
-    adn_user_id = ndb.IntegerProperty()
     access_token = ndb.StringProperty()
 
     @classmethod
-    def get_or_create(cls, remote_user, access_token):
-        user = cls.query(cls.adn_user_id == int(remote_user.id)).get()
-        if not user:
-            user = cls(adn_user_id=int(remote_user.id), access_token=access_token)
-            user.put()
-
-        if user.access_token != access_token:
-            user.access_token = access_token
-            user.put()
-
-        return user
-
-    @classmethod
-    def for_adn_user_id(cls, adn_user_id):
-        return cls.query(cls.adn_user_id == int(adn_user_id)).get()
+    def key_from_adn_user(cls, adn_user):
+        return 'adn_user_id=%d' % int(adn_user.id)
 
 
 class Entry(ndb.Model):
@@ -170,16 +155,16 @@ class Entry(ndb.Model):
 
         if self.overflow:
             data['overflow_reason'] = OVERFLOW_REASON.for_display(self.overflow_reason)
+
         data['id'] = self.key.id()
 
         return data
 
-    @classmethod
-    def format_for_adn(cls, entry, include_summary):
-        post_text = entry.title
+    def format_for_adn(self, include_summary):
+        post_text = self.title
         links = []
         if include_summary:
-            summary_text = strip_html_tags(entry.summary)
+            summary_text = strip_html_tags(self.summary)
             summary_text = ellipse_text(summary_text, 140)
 
         else:
@@ -192,7 +177,7 @@ class Entry(ndb.Model):
 
         post_text = ellipse_text(post_text, MAX_CHARS)
         # logger.info(u'Text Len: %s text: %s entry_title:%s entry_title_len:%s', len(post_text), post_text, entry.title, len(entry.title))
-        links.insert(0, (entry.link, entry.title))
+        links.insert(0, (self.link, self.title))
         link_entities = []
         index = 0
         for href, link_text in links:
@@ -213,7 +198,7 @@ class Entry(ndb.Model):
                 {
                     "type": "net.app.core.crosspost",
                     "value": {
-                        "canonical_url": entry.link
+                        "canonical_url": self.link
                     }
                 }
             ]
@@ -233,7 +218,7 @@ class Entry(ndb.Model):
         feed_items = []
         for item in parsed_feed.entries:
             entry = cls(guid=item.guid, title=item.title, summary=item.get('summary', ''), link=item.link)
-            feed_items.append(cls.format_for_adn(entry, include_summary=include_summary))
+            feed_items.append(entry.format_for_adn(include_summary=include_summary))
 
         html = [build_html_from_post(x) for x in feed_items]
 
@@ -252,9 +237,10 @@ class Entry(ndb.Model):
 
         return entry
 
-    @classmethod
-    def publish_entry(cls, entry, feed, user):
-        post = cls.format_for_adn(entry, feed.include_summary)
+    def publish_entry(self):
+        feed = self.parent()
+        user = feed.parent()
+        post = self.format_for_adn(feed.include_summary)
         logger.info('Post: %s', post)
         resp = urlfetch.fetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), method='POST', headers={
             'Authorization': 'Bearer %s' % (user.access_token, ),
@@ -264,11 +250,9 @@ class Entry(ndb.Model):
         if resp.status_code != 200:
             raise Exception(resp.content)
 
-        entry.published = True
-        entry.published_at = datetime.now()
-        entry.put()
-
-        return entry
+        self.published = True
+        self.published_at = datetime.now()
+        self.put()
 
     @classmethod
     def drain_queue(cls, feed):
@@ -305,11 +289,10 @@ class Entry(ndb.Model):
                 if skip_queue:
                     max_stories_to_publish = max_stories_to_publish or 1
 
-                user = User.for_adn_user_id(feed.adn_user_id)
                 latest_entries = cls.latest_unpublished(feed).fetch(max_stories_to_publish)
 
                 for entry in latest_entries:
-                    cls.publish_entry(entry, feed, user)
+                    entry.publish_entry()
             else:
                 cls.drain_queue(feed)
 
@@ -321,8 +304,8 @@ class Entry(ndb.Model):
         cursor = None
         while more:
             entries, cursor, more = cls.latest_for_feed(feed).fetch_page(25, start_cursor=cursor)
-            entryies_keys = [x.key for x in entries]
-            ndb.delete_multi(entryies_keys)
+            entries_keys = [x.key for x in entries]
+            ndb.delete_multi(entries_keys)
 
     @classmethod
     def latest_for_feed(cls, feed):
@@ -345,7 +328,6 @@ class Entry(ndb.Model):
 
 class Feed(ndb.Model):
     """Keep track of users"""
-    adn_user_id = ndb.IntegerProperty()
     feed_url = ndb.StringProperty()
     hub = ndb.StringProperty()
     subscribed_at_hub = ndb.BooleanProperty(default=False)
@@ -360,12 +342,12 @@ class Feed(ndb.Model):
     max_stories_per_period = ndb.IntegerProperty(default=1)
 
     @classmethod
-    def for_user_id(cls, user_id):
-        return cls.query(cls.adn_user_id == int(user_id))
+    def for_user(cls, user):
+        return cls.query(ancestor=user.key)
 
     @classmethod
-    def for_user_id_and_feed(cls, user_id, feed_url):
-        return cls.query(cls.adn_user_id == int(user_id), cls.feed_url == feed_url)
+    def for_user_and_url(cls, user, feed_url):
+        return cls.query(cls.feed_url == feed_url, ancestor=user.key)
 
     @classmethod
     def for_interval(cls, interval_id):
@@ -396,17 +378,16 @@ class Feed(ndb.Model):
         return feed
 
     @classmethod
-    def create_feed_from_form(cls, user_id, form):
-        feed = cls(adn_user_id=user_id)
+    def create_feed_from_form(cls, user, form):
+        feed = cls(parent=user)
         form.populate_obj(feed)
         feed.put()
         Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
-        feed_data = feed.to_json()
         return cls.process_new_feed(feed)
 
     @classmethod
-    def create_feed(cls, user_id, feed_url, include_summary, schedule_period=PERIOD_SCHEDULE.MINUTE_5, max_stories_per_period=1):
-        feed = cls(feed_url=feed_url, adn_user_id=int(user_id), include_summary=include_summary)
+    def create_feed(cls, user, feed_url, include_summary, schedule_period=PERIOD_SCHEDULE.MINUTE_5, max_stories_per_period=1):
+        feed = cls(parent=user, feed_url=feed_url, include_summary=include_summary)
         feed.put()
         return cls.process_new_feed(feed)
 
@@ -418,4 +399,3 @@ class Feed(ndb.Model):
             'schedule_period': self.schedule_period,
             'max_stories_per_period': self.max_stories_per_period,
         }
-
