@@ -54,6 +54,12 @@ def index():
 index.login_required = False
 
 
+@app.route('/api/me', methods=['GET'])
+def me(s):
+    """return current user"""
+    return jsonify(status='ok', data=g.adn_user)
+
+
 @app.route('/api/feeds', methods=['GET'])
 def feeds():
     """List all examples"""

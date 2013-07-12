@@ -83,4 +83,5 @@ class ADNTokenAuthMiddleware(object):
                 user.access_token = access_token
                 user.put()
 
+            g.adn_user = adn_user
             g.user = user
