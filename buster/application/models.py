@@ -347,6 +347,7 @@ class Feed(ndb.Model):
     schedule_period = ndb.IntegerProperty(default=PERIOD_SCHEDULE.MINUTE_5)
     max_stories_per_period = ndb.IntegerProperty(default=1)
     etag = ndb.StringProperty()
+    hub_secret = ndb.StringProperty()
 
     @classmethod
     def for_user(cls, user):
@@ -370,23 +371,31 @@ class Feed(ndb.Model):
             if link['rel'] == 'hub':
                 hub_url = link['href']
                 feed.hub = hub_url
+                if hub_url.startswith('https://'):
+                    feed.hub_secret = uuid.uuid4().hex
+                else:
+                    feed.hub_secret = None
                 feed.verify_token = uuid.uuid4().hex
                 feed.put()
-                subscibe_data = {
-                    "hub.callback": url_for('feed_subscribe', feed_id=feed.key.id(), _external=True),
+                subscribe_data = {
+                    "hub.callback": url_for('feed_subscribe', feed_key=feed.key.urlsafe(), _external=True),
                     "hub.mode": 'subscribe',
                     "hub.topic": feed.feed_url,
                     'hub.verify_token': feed.verify_token,
                 }
-                logger.info('Hub: %s Subscribe Data: %s', hub_url, subscibe_data)
-                form_data = urllib.urlencode(subscibe_data)
+
+                if feed.hub_secret:
+                    subscribe_data['hub.secret'] = feed.hub_secret
+
+                logger.info('Hub: %s Subscribe Data: %s', hub_url, subscribe_data)
+                form_data = urllib.urlencode(subscribe_data)
                 urlfetch.fetch(hub_url, method='POST', payload=form_data)
 
         return feed
 
     @classmethod
     def create_feed_from_form(cls, user, form):
-        feed = cls(parent=user)
+        feed = cls(parent=user.key)
         form.populate_obj(feed)
         feed.put()
         Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
@@ -394,7 +403,7 @@ class Feed(ndb.Model):
 
     @classmethod
     def create_feed(cls, user, feed_url, include_summary, schedule_period=PERIOD_SCHEDULE.MINUTE_5, max_stories_per_period=1):
-        feed = cls(parent=user, feed_url=feed_url, include_summary=include_summary)
+        feed = cls(parent=user.key, feed_url=feed_url, include_summary=include_summary)
         feed.put()
         return cls.process_new_feed(feed)
 
