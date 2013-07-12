@@ -13,6 +13,8 @@ import logging
 import datetime
 import hmac
 
+from google.appengine.ext import ndb
+
 from flask import request, render_template, g, Response
 
 from flask_cache import Cache
@@ -199,7 +201,7 @@ def feed_subscribe(feed_key):
     verify_token = request.args.get('hub.verify_token', '')
 
     if mode == 'subscribe':
-        feed = feed_key.get()
+        feed = ndb.Key(urlsafe=feed_key).get()
         if verify_token != feed.verify_token:
             return "Failed Verification", 400
 
@@ -218,7 +220,7 @@ feed_subscribe.login_required = False
 
 @app.route('/api/feeds/<feed_key>/subscribe', methods=['POST'])
 def feed_push_update(feed_key):
-    feed = feed_key.get()
+    feed = ndb.Key(urlsafe=feed_key).get()
     if not feed:
         return "No feed", 404
 
