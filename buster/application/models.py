@@ -127,6 +127,7 @@ def build_html_from_post(post):
 
 
 def fetch_feed_url(feed_url, etag=None):
+    logger.info('Fetching feed feed_url:%s etag:%s', feed_url, etag)
     return feedparser.parse(feed_url, agent='PourOver/1.0 +https://pour-over.appspot.com/', etag=etag)
 
 
@@ -279,6 +280,10 @@ class Entry(ndb.Model):
             feed.etag = parsed_feed.etag
             feed.put()
 
+        # There should be no data in here anyway
+        if parsed_feed.status == 304:
+            return parsed_feed
+
         for item in parsed_feed.entries:
             entry = cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason)
 
@@ -362,10 +367,11 @@ class Feed(ndb.Model):
         return cls.query(cls.update_interval == interval_id)
 
     @classmethod
-    def process_new_feed(cls, feed):
+    def process_new_feed(cls, feed, overflow, overflow_reason):
         # Sync pull down the latest feeds
-        parsed_feed = Entry.update_for_feed(feed)
 
+        parsed_feed = Entry.update_for_feed(feed, overflow=overflow, overflow_reason=overflow_reason)
+        hub_url = None
         for link in parsed_feed.feed.links:
             if link['rel'] == 'hub':
                 hub_url = link['href']
@@ -400,8 +406,7 @@ class Feed(ndb.Model):
         feed = cls(parent=user.key)
         form.populate_obj(feed)
         feed.put()
-        Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
-        return cls.process_new_feed(feed)
+        return cls.process_new_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
 
     @classmethod
     def create_feed(cls, user, feed_url, include_summary, schedule_period=PERIOD_SCHEDULE.MINUTE_5, max_stories_per_period=1):
