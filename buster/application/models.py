@@ -242,8 +242,8 @@ class Entry(ndb.Model):
         return entry
 
     def publish_entry(self):
-        feed = self.parent()
-        user = feed.parent()
+        feed = self.key.parent().get()
+        user = feed.key.parent().get()
         post = self.format_for_adn(feed.include_summary)
         logger.info('Post: %s', post)
         resp = urlfetch.fetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), method='POST', headers={
