@@ -53,7 +53,7 @@
               <p><small>If the feed uses <a href='https://code.google.com/p/pubsubhubbub/' target='_blank'>PuSH</a> syndication is realtime.</small></p>
               <div class="control-group">
                 <div class="controls">
-                  <button type="submit" class="btn btn-primary" ng-click='createOrUpdateFeed()' ng-bind="feed.feed_id && 'Update Feed' || 'Save Feed'"></button>
+                  <button type="submit" class="btn btn-primary ladda-button" data-save-btn data-style="slide-left" ng-click='createOrUpdateFeed()'><span class='ladda-label' ng-bind="feed.feed_id && 'Update Feed' || 'Save Feed'"></span></button>
                 </div>
               </div>
             </form>

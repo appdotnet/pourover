@@ -62,6 +62,8 @@ angular.module('frontendApp')
     client = authedAjax($scope.local.accessToken);
   }
 
+  // If the user was just returned from the oauth flow refresh the page with
+  // out the access_token
   if (window.location.hash) {
     window.history.replaceState({}, window.title, '/');
     window.location = window.location;
@@ -139,7 +141,9 @@ angular.module('frontendApp')
     refreshEntries();
   });
 
+  var updateLoader = Ladda.create(jQuery('[data-save-btn]').get(0));
   $scope.createOrUpdateFeed = function () {
+    updateLoader.start();
     var url = 'feeds';
     if ($scope.feed.feed_id)  {
       url = 'feeds/' + $scope.feed.feed_id;
@@ -149,9 +153,15 @@ angular.module('frontendApp')
       data: $scope.feed,
       method: 'POST',
     }, client, window.location + 'api/').done(function (resp) {
-      $scope.$apply(function (scope) {
-        scope.feed.feed_id = resp.data.feed_id;
-      });
+      if (resp.data && resp.data.feed_id) {
+        $scope.$apply(function (scope) {
+          scope.feed.feed_id = resp.data.feed_id;
+        });
+      } else {
+        window.alert('There was an error saving that feed.');
+      }
+    }).always(function () {
+      updateLoader.stop();
     });
 
     return false;
@@ -182,7 +192,7 @@ angular.module('frontendApp')
     var status = 'Published';
 
     if (!entry.published) {
-      status = 'unpublished';
+      status = 'Unpublished';
     }
 
     if (entry.overflow_reason) {
