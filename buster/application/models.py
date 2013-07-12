@@ -276,13 +276,15 @@ class Entry(ndb.Model):
         if parsed_feed.status not in (200, 304):
             raise Exception('Could not fetch feed:%s status_code:%s' % (feed.feed_url, parsed_feed.status))
 
+        # There should be no data in here anyway
+        if parsed_feed.status == 304:
+            return parsed_feed
+
         if feed.etag != parsed_feed.etag:
             feed.etag = parsed_feed.etag
             feed.put()
 
-        # There should be no data in here anyway
-        if parsed_feed.status == 304:
-            return parsed_feed
+
 
         for item in parsed_feed.entries:
             entry = cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason)
