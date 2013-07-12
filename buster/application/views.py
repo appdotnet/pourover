@@ -199,7 +199,7 @@ def feed_subscribe(feed_key):
     verify_token = request.args.get('hub.verify_token', '')
 
     if mode == 'subscribe':
-        feed = Feed.get(feed_key)
+        feed = feed_key.get()
         if verify_token != feed.verify_token:
             return "Failed Verification", 400
 
@@ -218,7 +218,7 @@ feed_subscribe.login_required = False
 
 @app.route('/api/feeds/<feed_key>/subscribe', methods=['POST'])
 def feed_push_update(feed_key):
-    feed = Feed.get(feed_key)
+    feed = feed_key.get()
     if not feed:
         return "No feed", 404
 
