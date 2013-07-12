@@ -1,1 +1,1 @@
-./runtests.py ./venv/gae ./buster/tests/
+./runtests.py  $GAE_PATH ./buster/tests/
