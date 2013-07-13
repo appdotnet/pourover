@@ -20,8 +20,8 @@ def valid_feed(form, field):
         logger.info('Failed good status %s', getattr(parsed_feed, 'status', None))
         raise ValidationError(message='Failed to fetch feed')
 
-    if not parsed_feed.get('href'):
-        logger.info('Failed to find a feed href')
+    if not parsed_feed.feed.get('title'):
+        logger.info('Failed to find a feed title')
         raise ValidationError(message='Invalid RSS feed')
 
 
