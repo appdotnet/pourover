@@ -18,6 +18,7 @@ import json
 
 from bs4 import BeautifulSoup
 from flask import url_for
+from .utils import append_query_string
 
 logger = logging.getLogger(__name__)
 
@@ -182,8 +183,11 @@ class Entry(ndb.Model):
             post_text = u'%s\n%s' % (post_text, summary_text)
 
         post_text = ellipse_text(post_text, MAX_CHARS)
+
+        link = append_query_string(self.link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
+
         # logger.info(u'Text Len: %s text: %s entry_title:%s entry_title_len:%s', len(post_text), post_text, entry.title, len(entry.title))
-        links.insert(0, (self.link, self.title))
+        links.insert(0, (link, self.title))
         link_entities = []
         index = 0
         for href, link_text in links:
@@ -204,7 +208,7 @@ class Entry(ndb.Model):
                 {
                     "type": "net.app.core.crosspost",
                     "value": {
-                        "canonical_url": self.link
+                        "canonical_url": link
                     }
                 }
             ]
