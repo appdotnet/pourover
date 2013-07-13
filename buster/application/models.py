@@ -471,7 +471,7 @@ class Feed(ndb.Model):
         return {
             'feed_url': self.feed_url,
             'feed_id': self.key.id(),
-            'include_summary': self.include_summary,
+            # 'include_summary': self.include_summary,
             'schedule_period': self.schedule_period,
             'max_stories_per_period': self.max_stories_per_period,
         }
