@@ -151,6 +151,8 @@ def register_logger(recipients, logger=None):
     """
     if not logger:
         logger = logging.getLogger()
+        logger.setLevel(logging.WARNING)
+
     handler = EmailLoggingHandler(recipients)
     logger.addHandler(handler)
     return handler
