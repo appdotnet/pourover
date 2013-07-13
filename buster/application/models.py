@@ -77,6 +77,7 @@ OVERFLOW_REASON = DjangoEnum(
 )
 
 MAX_CHARS = 256
+VALID_STATUS = (200, 300, 301, 302, 304, 307)
 
 
 def strip_html_tags(html):
@@ -274,7 +275,7 @@ class Entry(ndb.Model):
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
         parsed_feed = fetch_feed_url(feed.feed_url, feed.etag)
         status = getattr(parsed_feed, 'status', None)
-        if status and status not in (200, 300, 301, 302, 304, 307):
+        if status and status not in VALID_STATUS:
             raise Exception('Could not fetch feed:%s status_code:%s' % (feed.feed_url, status))
 
         # logger.info('Parsed feed has not status href:%s status:%s', parsed_feed.href, status)
