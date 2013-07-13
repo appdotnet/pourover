@@ -32,10 +32,9 @@ import hashlib
 import logging
 import os
 
-from google.appengine.api import memcache, xmpp
+from google.appengine.api import memcache
 from google.appengine.api import mail
 
-import simplejson
 
 LOG_FORMAT = '%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s] %(message)s'
 
@@ -44,6 +43,7 @@ MAX_SIGNATURE_LENGTH = 256
 debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 app_id = os.environ.get('APPLICATION_ID')
 app_ver = os.environ.get('CURRENT_VERSION_ID')
+
 
 class EmailLoggingHandler(logging.Handler):
     """A handler that sends log messages out over XMPP.

@@ -77,6 +77,9 @@ def feed_create():
     if not form.validate():
         return jsonify(status='error', message='The passed arguments failed validation')
 
+    if Feed.for_user(user=g.user).count():
+        return jsonify(status='error', message='This user has already created a feed')
+
     exsisting_feeds = Feed.for_user_and_url(user=g.user, feed_url=form.data['feed_url'])
     try:
         feed = exsisting_feeds.iter().next()
