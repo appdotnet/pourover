@@ -32,6 +32,7 @@ from agar.test import MockUrlfetchTest
 # from rss_to_adn import Feed
 from application import app
 from application.models import Entry, User, Feed, OVERFLOW_REASON
+from application import settings
 
 XML_TEMPLATE = """
 <?xml version='1.0' encoding='utf-8'?>
@@ -87,8 +88,13 @@ class BusterTestCase(MockUrlfetchTest):
     def buildMockUserResponse(self, username='voidfiles', id=3):
         return {
             'data': {
-                'id': unicode(id),
-                'username': username
+                'user': {
+                    'id': unicode(id),
+                    'username': username
+                },
+                'app': {
+                    'client_id': settings.CLIENT_ID
+                }
             }
         }
 
@@ -100,7 +106,7 @@ class BusterTestCase(MockUrlfetchTest):
     def setMockUser(self,):
         user_data = self.buildMockUserResponse()
         memcache.set('user:%s' % FAKE_ACCESS_TOKEN, json.dumps(user_data), 60 * 60)
-        user = User(adn_user_id=int(user_data['data']['id']), access_token=FAKE_ACCESS_TOKEN)
+        user = User(access_token=FAKE_ACCESS_TOKEN)
         user.put()
 
     def testAuth(self):
@@ -108,7 +114,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert resp.status_code == 401
         mock_user_response = json.dumps(self.buildMockUserResponse())
 
-        self.set_response("https://alpha-api.app.net/stream/0/users/me", content=mock_user_response, status_code=200)
+        self.set_response("https://alpha-api.app.net/stream/0/token", content=mock_user_response, status_code=200)
         resp = self.app.get('/api/feeds', headers=self.authHeaders())
 
         assert resp.status_code == 200

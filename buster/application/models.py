@@ -241,6 +241,12 @@ class Entry(ndb.Model):
             published = True
         if not entry:
             title = item.title[0:499]
+            guid = item.get('guid')
+
+            if not guid:
+                logger.warn("Item found without guid skipping entry: %s", item)
+                return None
+
             entry = cls(parent=feed.key, guid=item.guid, title=title, summary=item.get('summary', ''), link=item.link,
                         published=published, overflow=overflow, overflow_reason=overflow_reason)
             entry.put()
@@ -258,6 +264,7 @@ class Entry(ndb.Model):
         })
 
         if resp.status_code != 200:
+            logger.warn("Couldn't post entry. Error: %s Post:%s", resp.content, post)
             raise Exception(resp.content)
 
         self.published = True
@@ -283,7 +290,8 @@ class Entry(ndb.Model):
         if status and status not in VALID_STATUS:
             raise Exception('Could not fetch feed:%s status_code:%s' % (feed.feed_url, status))
 
-        # logger.info('Parsed feed has not status href:%s status:%s', parsed_feed.href, status)
+        if not status:
+            logger.info('Parsed feed has no status href:%s status:%s feed:%s', parsed_feed.href, status, parsed_feed)
 
         # There should be no data in here anyway
         if parsed_feed.status == 304:
