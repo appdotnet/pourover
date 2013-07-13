@@ -84,7 +84,7 @@ def feed_create():
     try:
         feed = exsisting_feeds.iter().next()
     except StopIteration:
-        feed = Feed.create_feed_from_form(g.user, form)
+        feed = Feed.create_feed_from_form(g.user.key, form)
 
     return jsonify(status='ok', data=feed.to_json())
 

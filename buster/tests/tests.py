@@ -90,10 +90,10 @@ class BusterTestCase(MockUrlfetchTest):
             'data': {
                 'user': {
                     'id': unicode(id),
-                    'username': username
+                    'username': username,
                 },
                 'app': {
-                    'client_id': settings.CLIENT_ID
+                    'client_id': settings.CLIENT_ID,
                 }
             }
         }
