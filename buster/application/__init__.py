@@ -35,8 +35,8 @@ ADNTokenAuthMiddleware(app)
 # Werkzeug Debugger (only enabled when DEBUG=True)
 if app.debug:
     app = DebuggedApplication(app, evalex=True)
+else:
+    import logging
+    import email_logger
 
-import logging
-import email_logger
-
-email_logger.register_logger('alex@app.net')
+    email_logger.register_logger('alex@app.net')

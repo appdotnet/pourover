@@ -226,12 +226,49 @@ class Entry(ndb.Model):
         parsed_feed = fetch_feed_url(feed_url)
         feed_items = []
         for item in parsed_feed.entries:
-            entry = cls(guid=item.guid, title=item.title, summary=item.get('summary', ''), link=item.link)
-            feed_items.append(entry.format_for_adn(include_summary=include_summary))
+            entry = cls.prepare_entry_from_item(item)
+            if entry:
+                feed_items.append(entry.format_for_adn(include_summary=include_summary))
 
         html = [build_html_from_post(x) for x in feed_items]
 
         return html
+
+    @classmethod
+    def prepare_entry_from_item(cls, item, overflow=False, overflow_reason=None, published=False, feed=None):
+        title_detail = item.get('title_detail')
+        title = item.get('title', 'No Title')
+
+        # If the title is HTML then we need to decode it to some kind of usable text
+        # Definitely need to decode any entities
+        if title_detail:
+            if title_detail['type'] == u'text/html':
+                title = BeautifulSoup(title).text
+
+        # We can only store a title up to 500 chars
+        title = item.title[0:499]
+        guid = item.get('guid')
+        link = item.get('link')
+        if len(link) > 500:
+            logger.warn('Found a link > 500 chars link: %s item: %s', link, item)
+            return None
+
+        if not guid:
+            logger.warn("Item found without guid skipping item: %s", item)
+            return None
+
+        if not link:
+            logger.warn("Item found without link skipping item: %s", item)
+            return None
+
+        kwargs = dict(guid=guid, title=title, summary=item.get('summary', ''), link=link,
+                      published=published, overflow=overflow, overflow_reason=overflow_reason)
+        if feed:
+            kwargs['parent'] = feed.key
+
+        entry = cls(**kwargs)
+
+        return entry
 
     @classmethod
     def create_from_feed_and_item(cls, feed, item, overflow=False, overflow_reason=None):
@@ -240,30 +277,9 @@ class Entry(ndb.Model):
         if overflow:
             published = True
         if not entry:
-            title_detail = item.get('title_detail')
-            title = item.get('title', 'No Title')
-
-            # If the title is HTML then we need to decode it to some kind of usable text
-            # Definitely need to decode any entities
-            if title_detail:
-                if title_detail['type'] == u'text/html':
-                    title = BeautifulSoup(title).text
-
-            # We can only store a title up to 500 chars
-            title = item.title[0:499]
-            guid = item.get('guid')
-            link = item.get('link')
-            if not guid:
-                logger.warn("Item found without guid skipping entry: %s", item)
-                return None
-
-            if not link:
-                logger.warn("Item found without link skipping entry: %s", item)
-                return None
-
-            entry = cls(parent=feed.key, guid=guid, title=title, summary=item.get('summary', ''), link=link,
-                        published=published, overflow=overflow, overflow_reason=overflow_reason)
-            entry.put()
+            entry = cls.prepare_entry_from_item(item, overflow, overflow_reason, published, feed=feed)
+            if entry:
+                entry.put()
 
         return entry
 
