@@ -240,7 +240,8 @@ class Entry(ndb.Model):
         if overflow:
             published = True
         if not entry:
-            entry = cls(parent=feed.key, guid=item.guid, title=item.title, summary=item.get('summary', ''), link=item.link,
+            title = item.title[0:499]
+            entry = cls(parent=feed.key, guid=item.guid, title=title, summary=item.get('summary', ''), link=item.link,
                         published=published, overflow=overflow, overflow_reason=overflow_reason)
             entry.put()
 
