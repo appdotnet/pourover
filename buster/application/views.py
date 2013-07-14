@@ -259,7 +259,7 @@ def update_all_feeds(interval_id):
         try:
             Entry.update_for_feed(feed, publish=True)
         except Exception, e:
-            logger.warn('Failed to update feed:%s exception:%s', feed.feed_url, e)
+            logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
 
     return jsonify(status='ok')
 
