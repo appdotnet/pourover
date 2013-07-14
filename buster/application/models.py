@@ -246,7 +246,7 @@ class Entry(ndb.Model):
                 title = BeautifulSoup(title).text
 
         # We can only store a title up to 500 chars
-        title = item.title[0:499]
+        title = title[0:499]
         guid = item.get('guid')
         link = item.get('link')
         if len(link) > 500:
