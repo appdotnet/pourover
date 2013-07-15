@@ -35,7 +35,7 @@
                   <div class="controls">
                     <input type="text" id="inputEmail" placeholder="https://example.com/rss" ng-model='feed.feed_url' ng-show='!feed.feed_id'>
                     <p ng-show='feed.feed_id'>
-                      <a ng-href='feed.feed_url' ng-bind='feed.feed_url' class='ellipses'></a>
+                      <a ng-href='{{feed.feed_url}}' ng-bind='feed.feed_url' class='ellipses'></a>
                     </p>
                   </div>
               </div>

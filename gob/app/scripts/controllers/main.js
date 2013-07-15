@@ -74,8 +74,13 @@ angular.module('frontendApp')
   }
 
   $scope.$watch('feed', function () {
+    var preview_url = 'feed/preview';
+    if($scope.feed.feed_id) {
+      preview_url = 'feeds/' + $scope.feed.feed_id + '/preview';
+    }
+
     apiRequest({
-      url:'feed/preview',
+      url: preview_url,
       data: $scope.feed,
     }, client, window.location + 'api/').done(function (resp) {
       $scope.$apply(function (scope) {

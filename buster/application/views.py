@@ -177,6 +177,18 @@ def published_entries_for_feed(feed_id):
     return jsonify(status='ok', data=feed_data)
 
 
+@app.route('/api/feeds/<int:feed_id>/preview', methods=['GET'])
+def save_feed_preview(feed_id):
+    """preview a saved feed"""
+    feed = Feed.get_by_id(feed_id, parent=g.user.key)
+    if not feed:
+        return jsonify_error(message="Can't find that feed")
+
+    preview_entries = Entry.entry_preview(Entry.latest_published(feed).fetch(3))
+
+    return jsonify(status='ok', data=preview_entries)
+
+
 @app.route('/api/feeds/<int:feed_id>/entries/<int:entry_id>/publish', methods=['POST'])
 def feed_entry_publish(feed_id, entry_id):
     """Get a feed"""

@@ -171,7 +171,7 @@ class Entry(ndb.Model):
 
         return data
 
-    def format_for_adn(self, include_summary):
+    def format_for_adn(self, include_summary=False):
         post_text = self.title
         links = []
         if include_summary:
@@ -226,17 +226,19 @@ class Entry(ndb.Model):
         return post
 
     @classmethod
+    def entry_preview(cls, entries):
+        return [build_html_from_post(entry.format_for_adn()) for entry in entries]
+
+    @classmethod
     def entry_preview_for_feed(cls, feed_url, include_summary):
         parsed_feed = fetch_feed_url(feed_url)
-        feed_items = []
+        entries = []
         for item in parsed_feed.entries:
             entry = cls.prepare_entry_from_item(item)
             if entry:
-                feed_items.append(entry.format_for_adn(include_summary=include_summary))
+                entries.append(entry)
 
-        html = [build_html_from_post(x) for x in feed_items]
-
-        return html
+        return cls.entry_preview(entries)
 
     @classmethod
     def prepare_entry_from_item(cls, item, overflow=False, overflow_reason=None, published=False, feed=None):

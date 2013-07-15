@@ -34,6 +34,10 @@ module.exports = function (grunt) {
         files: ['<%= yeoman.app %>/styles/{,*/}*.{scss,sass}'],
         tasks: ['compass']
       },
+      templates: {
+        files: ['<%= yeoman.app %>/views/**.html'],
+        tasks: ['ngtemplates']
+      },
       livereload: {
         files: [
           '<%= yeoman.app %>/{,*/}*.html',
