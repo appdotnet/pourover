@@ -37,3 +37,6 @@ CACHE_TYPE = 'gaememcached'
 # update this with your own App.net client ID
 # make sure this matches what's in gob/app/views/main.html
 CLIENT_ID = '6kmFxf2JrEqmFRQ4WncLfN8WWx7FnUS8'
+
+# Make sure you update this with your email address
+ADMIN_EMAIL = 'alex@app.net'

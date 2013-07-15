@@ -35,7 +35,6 @@ import os
 from google.appengine.api import memcache
 from google.appengine.api import mail
 
-
 LOG_FORMAT = '%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s] %(message)s'
 
 MAX_SIGNATURE_LENGTH = 256

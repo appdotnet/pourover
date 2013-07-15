@@ -39,4 +39,4 @@ else:
     import logging
     import email_logger
 
-    email_logger.register_logger('alex@app.net')
+    email_logger.register_logger(app.config['ADMIN_EMAIL'])
