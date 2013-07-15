@@ -133,6 +133,10 @@ def fetch_feed_url(feed_url, etag=None):
     return feedparser.parse(feed_url, agent='PourOver/1.0 +https://pour-over.appspot.com/', etag=etag)
 
 
+def guid_for_item(item):
+    return item.get('guid', item.get('link'))
+
+
 class User(ndb.Model):
     access_token = ndb.StringProperty()
 
@@ -247,7 +251,7 @@ class Entry(ndb.Model):
 
         # We can only store a title up to 500 chars
         title = title[0:499]
-        guid = item.get('guid', item.get('link'))
+        guid = guid_for_item(item)
         if len(guid) > 500:
             logger.warn('Found a guid > 500 chars link: %s item: %s', guid, item)
             return None
@@ -276,7 +280,7 @@ class Entry(ndb.Model):
 
     @classmethod
     def create_from_feed_and_item(cls, feed, item, overflow=False, overflow_reason=None):
-        entry = cls.query(cls.guid == item.guid, ancestor=feed.key).get()
+        entry = cls.query(cls.guid == guid_for_item(item), ancestor=feed.key).get()
         published = False
         if overflow:
             published = True
