@@ -247,7 +247,11 @@ class Entry(ndb.Model):
 
         # We can only store a title up to 500 chars
         title = title[0:499]
-        guid = item.get('guid')
+        guid = item.get('guid', item.get('link'))
+        if len(guid) > 500:
+            logger.warn('Found a guid > 500 chars link: %s item: %s', guid, item)
+            return None
+
         link = item.get('link')
         if len(link) > 500:
             logger.warn('Found a link > 500 chars link: %s item: %s', link, item)
