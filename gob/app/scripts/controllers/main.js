@@ -27,7 +27,7 @@ angular.module('frontendApp')
 .controller('MainCtrl', ['$scope', function ($scope) {
   // Developers should change this client_id to their own app.
   $scope.client_id = '6kmFxf2JrEqmFRQ4WncLfN8WWx7FnUS8';
-  $scope.redirect_uri = window.location;
+  $scope.redirect_uri = '' + window.location;
 
   $scope.schedule_periods = [
     {label: '1 mins', value: 1},
