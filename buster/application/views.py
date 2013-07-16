@@ -11,6 +11,7 @@ import hmac
 from google.appengine.ext import ndb
 
 from flask import request, render_template, g, Response
+from google.appengine.api import urlfetch
 
 from flask_cache import Cache
 
