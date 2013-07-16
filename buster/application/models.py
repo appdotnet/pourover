@@ -182,6 +182,62 @@ def guid_for_item(item):
     return item.get('guid', item.get('link'))
 
 
+def parse_style_tag(text):
+    if not text:
+        return text
+    text = text.strip()
+    attrs = text.split(';')
+    attrs = filter(None, map(lambda x: x.strip(), attrs))
+    attrs = map(lambda x: x.split(':'), attrs)
+    # logger.info('attrs: %s', attrs)
+    return {x[0].strip(): x[1].strip() for x in attrs}
+
+
+def find_thumbnail(item):
+    min_d = 200
+    max_d = 1000
+    media_thumbnails = item.get('media_thumbnail') or []
+    for thumb in media_thumbnails:
+        w = int(thumb.get('width'))
+        h = int(thumb.get('height'))
+        if all([w, h, w >= min_d, w <= max_d, h >= min_d, w <= max_d]):
+            return {
+                'thumbnail_image_url': thumb['url'],
+                'thumbnail_image_width': int(thumb['width']),
+                'thumbnail_image_height': int(thumb['height'])
+            }
+
+    soup = BeautifulSoup(item.get('summary', ''))
+    for image in soup.findAll('img'):
+        w = image.get('width');
+        h = image.get('height');
+        if not (w and h):
+            style = parse_style_tag(image.get('style'))
+            if style:
+                w = style.get('width', w)
+                h = style.get('height', h)
+
+        if not(w and h):
+            continue
+
+        w, h = map(lambda x: x.replace('px', ''), (w, h))
+
+        try:
+            w = int(w)
+            h = int(h)
+        except:
+            continue
+
+        if all([w, h, w >= min_d, w <= max_d, h >= min_d, w <= max_d]):
+            return {
+                'thumbnail_image_url': image['src'],
+                'thumbnail_image_width': w,
+                'thumbnail_image_height': h,
+            }
+
+    return None
+
+
 class User(ndb.Model):
     access_token = ndb.StringProperty()
 
@@ -203,6 +259,14 @@ class Entry(ndb.Model):
     status = ndb.IntegerProperty(default=ENTRY_STATE.ACTIVE)
     extra_info = ndb.JsonProperty()
 
+    image_url = ndb.StringProperty()
+    image_width = ndb.IntegerProperty()
+    image_height = ndb.IntegerProperty()
+
+    thumbnail_image_url = ndb.StringProperty()
+    thumbnail_image_width = ndb.IntegerProperty()
+    thumbnail_image_height = ndb.IntegerProperty()
+
     def to_json(self, include=None):
         include = include or []
         data = {}
@@ -216,7 +280,7 @@ class Entry(ndb.Model):
 
         return data
 
-    def format_for_adn(self, include_summary=False):
+    def format_for_adn(self, include_summary=False, include_thumb=False):
         post_text = self.title
         links = []
         if include_summary:
@@ -267,7 +331,23 @@ class Entry(ndb.Model):
             post['entities'] = {
                 'links': link_entities,
             }
-
+        # logger.info('Info %s, %s', include_thumb, self.thumbnail_image_url)
+        if include_thumb and self.thumbnail_image_url:
+            post['annotations'].append({
+                "type": "net.app.core.oembed",
+                "value": {
+                    "version": "1.0",
+                    "type": "photo",
+                    "title": self.title,
+                    "width": self.thumbnail_image_width,
+                    "height": self.thumbnail_image_height,
+                    "url": self.thumbnail_image_url,
+                    "thumbnail_width": self.thumbnail_image_width,
+                    "thumbnail_height": self.thumbnail_image_height,
+                    "thumbnail_url": self.thumbnail_image_url,
+                    "embeddable_url": self.link,
+                }
+            })
         return post
 
     @classmethod
@@ -321,6 +401,13 @@ class Entry(ndb.Model):
         if feed:
             kwargs['parent'] = feed.key
 
+        try:
+            thumbnail = find_thumbnail(item)
+            if thumbnail:
+                kwargs.update(thumbnail)
+        except Exception, e:
+            logger.info("Exception while trying to find thumbnail %s", e)
+
         entry = cls(**kwargs)
 
         return entry
@@ -341,7 +428,8 @@ class Entry(ndb.Model):
     def publish_entry(self):
         feed = self.key.parent().get()
         user = feed.key.parent().get()
-        post = self.format_for_adn(feed.include_summary)
+        # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
+        post = self.format_for_adn(feed.include_summary, feed.include_thumb)
         logger.info('Post: %s', post)
         resp = urlfetch.fetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), method='POST', headers={
             'Authorization': 'Bearer %s' % (user.access_token, ),
@@ -446,6 +534,7 @@ class Feed(ndb.Model):
     verify_token = ndb.StringProperty()
     status = ndb.IntegerProperty(default=FEED_STATE.ACTIVE)
     include_summary = ndb.BooleanProperty(default=False)
+    include_thumb = ndb.BooleanProperty(default=False)
     template = ndb.TextProperty(default='')
     added = ndb.DateTimeProperty(auto_now_add=True)
     update_interval = ndb.IntegerProperty(default=UPDATE_INTERVAL.MINUTE_5)

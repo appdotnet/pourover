@@ -268,6 +268,9 @@ def update_all_feeds(interval_id):
         try:
             Entry.update_for_feed(feed, publish=True)
             success += 1
+        except urlfetch.DownloadError:
+            errors += 1
+            logger.info('Failed to download feed: %s', feed)
         except Exception, e:
             errors += 1
             logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
