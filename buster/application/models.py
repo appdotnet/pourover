@@ -147,7 +147,7 @@ def fetch_feed_url(feed_url, etag=None, update_url=False):
     resp = urlfetch.fetch(**kwargs)
 
     if resp.status_code not in VALID_STATUS:
-        raise Exception('Could not fetch feed. feed_url:%s status_code:%s final_url:%s' % (feed_url, resp.status_code, resp.final_url))
+        raise FetchException('Could not fetch feed. feed_url:%s status_code:%s final_url:%s' % (feed_url, resp.status_code, resp.final_url))
 
     # Feed hasn't been updated so there isn't a feed
     if resp.status_code == 304:

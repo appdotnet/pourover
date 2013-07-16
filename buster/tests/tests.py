@@ -95,7 +95,7 @@ class BusterTestCase(MockUrlfetchTest):
         return XML_TEMPLATE % (hub, title, description, guid, link)
 
     def set_rss_response(self, url, content='', status_code=200):
-        self.set_response(url, content=content, status_code=200)
+        self.set_response(url, content=content, status_code=status_code)
 
     def buildMockUserResponse(self, username='voidfiles', id=3):
         return {
@@ -346,6 +346,14 @@ class BusterTestCase(MockUrlfetchTest):
 
         feed = Feed.query().get()
         assert feed.feed_url == 'http://techcrunch.com/feed/'
+
+    def testFeedPreview(self):
+        self.set_rss_response('http://techcrunch.com/feed/', content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
+        resp = self.app.get('/api/feed/preview?feed_url=http://techcrunch.com/feed/', headers=self.authHeaders())
+        assert 1 == len(json.loads(resp.data)['data'])
+        self.set_rss_response('http://techcrunch.com/feed/2', content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=500)
+        resp = self.app.get('/api/feed/preview?feed_url=http://techcrunch.com/feed/2', headers=self.authHeaders())
+        assert 0 == len(json.loads(resp.data)['data'])
 
 if __name__ == '__main__':
     unittest.main()
