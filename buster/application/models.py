@@ -145,6 +145,10 @@ def fetch_feed_url(feed_url, etag=None, update_url=False):
     if resp.status_code not in VALID_STATUS:
         raise Exception('Could not fetch feed. feed_url:%s status_code:%s final_url:%s' % (feed_url, resp.status_code, resp.final_url))
 
+    # Feed hasn't been updated so there isn't a feed
+    if resp.status_code == 304:
+        return None, resp
+
     feed = feedparser.parse(resp.content)
     if feed.bozo == 1 and len(feed.entries) == 0:
         content_type = resp.headers.get('Content-Type')
