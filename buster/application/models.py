@@ -129,7 +129,7 @@ def build_html_from_post(post):
 
 
 def fetch_feed_url(feed_url, etag=None, update_url=False):
-    logger.info('Fetching feed feed_url:%s etag:%s', feed_url, etag)
+    # logger.info('Fetching feed feed_url:%s etag:%s', feed_url, etag)
     kwargs = {
         'url': feed_url,
         'headers': {
@@ -367,7 +367,6 @@ class Entry(ndb.Model):
     @classmethod
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
         parsed_feed, resp = fetch_feed_url(feed.feed_url, feed.etag)
-        logger.info('Yo dawg I got some feeds here')
         # There should be no data in here anyway
         if resp.status_code == 304:
             return parsed_feed

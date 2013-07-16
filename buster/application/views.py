@@ -262,11 +262,15 @@ def update_all_feeds(interval_id):
         return jsonify_error(message='Not a cron call')
 
     feeds = Feed.for_interval(interval_id)
+    errors = 0
     for feed in feeds:
         try:
             Entry.update_for_feed(feed, publish=True)
         except Exception, e:
+            errors += 1
             logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
+
+    logger.info('Updated Feeds interval_id:%s total:%s errors: %s', interval_id, len(feeds), errors)
 
     return jsonify(status='ok')
 
