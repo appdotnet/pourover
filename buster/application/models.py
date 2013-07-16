@@ -146,7 +146,7 @@ def fetch_feed_url(feed_url, etag=None, update_url=False):
         raise Exception('Could not fetch feed. feed_url:%s status_code:%s final_url:%s' % (feed_url, resp.status_code, resp.final_url))
 
     feed = feedparser.parse(resp.content)
-    if feed.bozo == 1:
+    if feed.bozo == 1 and not len(feed.entries) > 0:
         content_type = resp.headers.get('Content-Type')
         logger.info('Feed failed bozo detection feed_url:%s content_type:%s', feed_url, content_type)
         if content_type and content_type.startswith('text/html'):
