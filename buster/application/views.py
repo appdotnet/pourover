@@ -271,6 +271,9 @@ def update_all_feeds(interval_id):
         except urlfetch.DownloadError:
             errors += 1
             logger.info('Failed to download feed: %s', feed)
+        except urlfetch.DeadlineExceededError:
+            errors += 1
+            logger.info('Feed took too long: %s', feed)
         except Exception, e:
             errors += 1
             logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
