@@ -16,7 +16,7 @@ from google.appengine.api import urlfetch
 from flask_cache import Cache
 
 from application import app
-from models import Entry, Feed, UPDATE_INTERVAL
+from models import Entry, Feed, UPDATE_INTERVAL, FetchException
 from forms import FeedCreate
 
 logger = logging.getLogger(__name__)
@@ -275,6 +275,9 @@ def update_all_feeds(interval_id):
         except urlfetch.DeadlineExceededError:
             errors += 1
             logger.info('Feed took too long: %s', feed)
+        except FetchException, e:
+            errors += 1
+            logger.info('Returned a bad response code: %s', e)
         except Exception, e:
             errors += 1
             logger.exception('Failed to update feed:%s' % (feed.feed_url, ))

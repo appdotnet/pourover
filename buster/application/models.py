@@ -81,6 +81,10 @@ MAX_CHARS = 256
 VALID_STATUS = (200, 300, 301, 302, 304, 307)
 
 
+class FetchException(Exception):
+    pass
+
+
 def strip_html_tags(html):
     if html is None:
         return None
