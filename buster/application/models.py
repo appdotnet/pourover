@@ -128,9 +128,50 @@ def build_html_from_post(post):
     return '<span>%s</span>' % (''.join(html_pieces), )
 
 
-def fetch_feed_url(feed_url, etag=None):
+def fetch_feed_url(feed_url, etag=None, update_url=False):
     logger.info('Fetching feed feed_url:%s etag:%s', feed_url, etag)
-    return feedparser.parse(feed_url, agent='PourOver/1.0 +https://pour-over.appspot.com/', etag=etag)
+    kwargs = {
+        'url': feed_url,
+        'headers': {
+            'User-Agent': 'PourOver/1.0 +https://adn-pourover.appspot.com/'
+        }
+    }
+
+    if etag:
+        kwargs['headers']['If-None-Match'] = etag
+
+    resp = urlfetch.fetch(**kwargs)
+
+    if resp.status_code not in VALID_STATUS:
+        raise Exception('Could not fetch feed. feed_url:%s status_code:%s final_url:%s' % (feed_url, resp.status_code, resp.final_url))
+
+    feed = feedparser.parse(resp.content)
+    if feed.bozo == 1:
+        content_type = resp.headers.get('Content-Type')
+        logger.info('Feed failed bozo detection feed_url:%s content_type:%s', feed_url, content_type)
+        if content_type and content_type.startswith('text/html'):
+            # If we have this lets try and find a feed
+            logger.info('Feed might be a web page trying to find feed_url:%s', feed_url)
+            soup = BeautifulSoup(resp.content)
+            # The thinking here is that the main RSS feed will be shorter in length then any others
+            links = [x.get('href') for x in soup.findAll('link', type='application/rss+xml')]
+            links += [x.get('href') for x in soup.findAll('link', type='application/atom+xml')]
+            shortest_link = None
+            for link in links:
+                if shortest_link is None:
+                    shortest_link = link
+                elif len(link) < len(shortest_link):
+                    shortest_link = link
+
+            if shortest_link:
+                return fetch_feed_url(shortest_link, update_url=shortest_link)
+
+    if resp.status_code == 301 and feed_url != resp.final_url:
+        update_url = resp.final_url
+
+    feed.update_url = update_url
+
+    return feed, resp
 
 
 def guid_for_item(item):
@@ -231,7 +272,7 @@ class Entry(ndb.Model):
 
     @classmethod
     def entry_preview_for_feed(cls, feed_url, include_summary):
-        parsed_feed = fetch_feed_url(feed_url)
+        parsed_feed, resp = fetch_feed_url(feed_url)
         entries = []
         for item in parsed_feed.entries:
             entry = cls.prepare_entry_from_item(item)
@@ -325,24 +366,18 @@ class Entry(ndb.Model):
 
     @classmethod
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
-        parsed_feed = fetch_feed_url(feed.feed_url, feed.etag)
-        status = getattr(parsed_feed, 'status', None)
-        if status and status not in VALID_STATUS:
-            raise Exception('Could not fetch feed:%s status_code:%s' % (feed.feed_url, status))
-
-        if not status:
-            logger.info('Parsed feed has no status href:%s status:%s feed:%s', parsed_feed.href, status, parsed_feed)
-
+        parsed_feed, resp = fetch_feed_url(feed.feed_url, feed.etag)
+        logger.info('Yo dawg I got some feeds here')
         # There should be no data in here anyway
-        if parsed_feed.status == 304:
+        if resp.status_code == 304:
             return parsed_feed
 
         # Update feed location
-        if parsed_feed.status == 301:
-            feed.feed_url = parsed_feed.href
+        if parsed_feed.update_url:
+            feed.feed_url = parsed_feed.update_url
             feed.put()
 
-        etag = getattr(parsed_feed, 'etag', None)
+        etag = resp.headers.get('ETag')
         if etag and feed.etag != etag:
             feed.etag = etag
             feed.put()

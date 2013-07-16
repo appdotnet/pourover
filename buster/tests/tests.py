@@ -60,6 +60,18 @@ XML_TEMPLATE = """
 </rss>
 """
 
+HTML_PAGE_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+        <link rel="alternate" type="application/rss+xml" title="TechCrunch &raquo; Feed" href="http://techcrunch.com/feed/" />
+        <link rel="alternate" type="application/rss+xml" title="TechCrunch &raquo; Comments Feed" href="http://techcrunch.com/comments/feed/" />
+</head>
+<body>
+</body>
+</html>
+"""
+
 FAKE_ACCESS_TOKEN = 'theres_always_posts_in_the_banana_stand'
 
 
@@ -83,7 +95,7 @@ class BusterTestCase(MockUrlfetchTest):
         return XML_TEMPLATE % (hub, title, description, guid, link)
 
     def set_rss_response(self, url, content='', status_code=200):
-        RSS_MOCKS[url] = content
+        self.set_response(url, content=content, status_code=200)
 
     def buildMockUserResponse(self, username='voidfiles', id=3):
         return {
@@ -319,6 +331,21 @@ class BusterTestCase(MockUrlfetchTest):
         assert burned_entries[0].overflow_reason == OVERFLOW_REASON.BACKLOG
         # The second entry was burned because it was overflowing the queue
         assert burned_entries[1].overflow_reason == OVERFLOW_REASON.FEED_OVERFLOW
+
+    def testRssFeedDetection(self):
+        self.set_rss_response('http://techcrunch.com/feed/', content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
+        self.set_response('http://techcrunch.com', content=HTML_PAGE_TEMPLATE, status_code=200, headers={'Content-Type': 'text/html'})
+        resp = self.app.get('/api/feed/preview?feed_url=http://techcrunch.com', headers=self.authHeaders())
+        assert 1 == len(json.loads(resp.data)['data'])
+
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url='http://techcrunch.com',
+            max_stories_per_period=1,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+        assert feed.feed_url == 'http://techcrunch.com/feed/'
 
 if __name__ == '__main__':
     unittest.main()

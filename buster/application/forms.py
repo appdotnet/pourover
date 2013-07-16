@@ -15,9 +15,10 @@ def boolean_filter(value):
 
 
 def valid_feed(form, field):
-    parsed_feed = fetch_feed_url(field.data)
-    if getattr(parsed_feed, 'status', None) not in VALID_STATUS:
-        logger.info('Failed good status %s', getattr(parsed_feed, 'status', None))
+    try:
+        parsed_feed, resp = fetch_feed_url(field.data)
+    except Exception, e:
+        logger.exception('failed validation')
         raise ValidationError(message='Failed to fetch feed')
 
     if not parsed_feed.feed.get('title'):
