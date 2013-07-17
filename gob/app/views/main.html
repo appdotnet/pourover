@@ -33,7 +33,12 @@
               <div class="control-group">
                   <label class="control-label" for="inputEmail">Feed URL</label>
                   <div class="controls">
-                    <input type="text" id="inputEmail" placeholder="https://example.com/rss" ng-model='feed.feed_url' ng-show='!feed.feed_id'>
+                    <div class=''>
+                      <input type="text" id="inputEmail" placeholder="https://example.com/rss" ng-model='feed.feed_url' ng-show='!feed.feed_id'>
+                      <span class='loading-icon' style='display: none;'>
+                        <i class="icon-refresh icon-spin"></i>
+                      <span>
+                    </div>
                     <p ng-show='feed.feed_id'>
                       <a ng-href='{{feed.feed_url}}' ng-bind='feed.feed_url' class='ellipses'></a>
                     </p>
@@ -72,7 +77,8 @@
         </div>
         <div class='span8' ng-hide='posts'>
           <h3>Feed Preview</h3>
-          <p>Add a feed url to see an approximation of what the App.net posts would look like.</p>
+          <p ng-hide='feed_error && feed.feed_url'>Add a feed url to see an approximation of what the App.net posts would look like.</p>
+          <p ng-show='feed_error && feed.feed_url' class='alert error' ng-bind='feed_error'></p>
         </div>
     </div>
     <div class='row' ng-show='authenticated'>

@@ -94,18 +94,30 @@ def feed_preview():
         return jsonify(status='error', message='You must pass a feed url')
 
     exsisting_feeds = []
-
+    error = None
     try:
         exsisting_feeds = Entry.entry_preview_for_feed(feed_url=feed_url, include_summary=include_summary)
     except urlfetch.DownloadError:
+        error = 'Failed to fetch that URL.'
         logger.info('Feed Preview: Failed to download feed: %s', feed_url)
     except urlfetch.DeadlineExceededError:
+        error = 'URL took to long to fetch.'
         logger.info('Feed Preview: Feed took too long: %s', feed_url)
+    except urlfetch.InvalidURLError:
+        error = 'The URL for this feeds seems to be invalid.'
     except FetchException, e:
+        error = 'URL took to long to fetch.'
         logger.info('Feed Preview: Returned a bad response code: %s', e)
     except Exception, e:
+        error = 'Something went wrong while fetching your URL.'
         logger.exception('Feed Preview: Failed to update feed:%s' % (feed_url, ))
         raise
+
+    if not exsisting_feeds and not error:
+        error = 'The feed doesn\'t have any entries'
+
+    if error:
+        return jsonify(status='error', message=error)
 
     return jsonify(status='ok', data=exsisting_feeds[0:3])
 

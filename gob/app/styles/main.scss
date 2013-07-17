@@ -92,5 +92,13 @@
 }
 .ta-right {text-align: right;}
 
+
+.loading-icon {
+    padding: 5px;
+    display: inline-block;
+    top: -3px;
+    position: relative;
+}
+
 // Utility classes
 @import "compass_twitter_bootstrap/utilities"; // Has to be last to override when necessary

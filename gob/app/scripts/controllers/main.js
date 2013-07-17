@@ -75,22 +75,33 @@ angular.module('frontendApp')
   if (!client) {
     return;
   }
-
-  $scope.$watch('feed', function () {
+  $scope.feed_error = undefined;
+  $scope.$watch('feed', _.debounce(function () {
     var preview_url = 'feed/preview';
     if($scope.feed.feed_id) {
       preview_url = 'feeds/' + $scope.feed.feed_id + '/preview';
     }
 
+    if (!$scope.feed.feed_url) {
+      return false;
+    }
+    jQuery('.loading-icon').show();
     apiRequest({
       url: preview_url,
       data: $scope.feed,
     }, client, window.location + 'api/').done(function (resp) {
       $scope.$apply(function (scope) {
-        scope.posts = resp.data;
+        if (resp.status == 'ok') {
+          scope.posts = resp.data;
+          scope.feed_error = undefined;
+        } else {
+          scope.posts = undefined;
+          scope.feed_error = resp.message;
+        }
+        jQuery('.loading-icon').hide();
       });
     });
-  }, true);
+  }, 300), true);
 
   apiRequest({
     url: 'feeds',
