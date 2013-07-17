@@ -1,0 +1,1616 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>Daring Fireball</title>
+<subtitle>Mac and web curmudgeonry/nerdery. By John Gruber.</subtitle>
+<link rel="alternate" type="text/html" href="http://daringfireball.net/" />
+<link rel="self" type="application/atom+xml" href="http://daringfireball.net/index.xml" />
+<id>http://daringfireball.net/feeds/combo</id>
+
+<updated>2013-07-17T19:56:44Z</updated><rights>Copyright Â© 2013, John Gruber</rights><entry>
+    <title>PourOver for App.net</title>
+    <link rel="alternate" type="text/html" href="http://blog.app.net/2013/07/15/pourover-for-app-net-is-now-available/" />
+    <link rel="shorturl" href="http://df4.us/lkh" />
+    <id>tag:daringfireball.net,2013:/linked//6.27953</id>
+    <published>2013-07-17T19:21:11Z</published>
+    <updated>2013-07-17T19:56:44Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>New from App.net: a super-simple service for publishing an RSS feed. If you&#8217;re using App.net, you can now <a href="https://alpha.app.net/daringfireball">use it to follow Daring Fireball</a>.</p>
+
+<p>(Unlike the <a href="https://twitter.com/daringfireball">@daringfireball Twitter feed</a>, the App.net one points at the link destination, not the entry on Daring Fireball. That&#8217;s the downside of using an automated service like PourOver. I&#8217;m not sure there are enough people using App.net to make it worth my while to work around this.)</p>
+
+<div>
+<a  title="Permanent link to â€˜PourOver for App.netâ€™"  href="http://daringfireball.net/linked/2013/07/17/pourover">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Appleâ€™s Answer on Upgrade Pricing</title>
+    <link rel="alternate" type="text/html" href="http://david-smith.org/blog/2013/07/16/apples-answer-on-upgrade-pricing/" />
+    <link rel="shorturl" href="http://df4.us/lkg" />
+    <id>tag:daringfireball.net,2013:/linked//6.27952</id>
+    <published>2013-07-17T18:36:58Z</published>
+    <updated>2013-07-17T18:37:00Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>David Smith:</p>
+
+<blockquote>
+  <p>Logic Pro X is a Major (with a capital M) update to their
+professional audio editing suite. It appears to represent a
+significant investment in both time and resources. So how is it
+being sold, especially to people who already paid $200 for the
+previous version (Logic Pro 9)? It is a separate app download with
+a full cost purchase. No upgrades, no introductory pricing, just
+straight forward sale.</p>
+
+<p>Iâ€™d say that this is the best indication of Appleâ€™s intentions and
+expectations for the App Stores going forward.</p>
+</blockquote>
+
+<div>
+<a  title="Permanent link to â€˜Apple&#8217;s Answer on Upgrade Pricingâ€™"  href="http://daringfireball.net/linked/2013/07/17/smith-upgrade-pricing">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Jim Dalrymple Reviews Logic Pro X</title>
+    <link rel="alternate" type="text/html" href="http://www.loopinsight.com/2013/07/16/review-logic-pro-x/" />
+    <link rel="shorturl" href="http://df4.us/lkf" />
+    <id>tag:daringfireball.net,2013:/linked//6.27951</id>
+    <published>2013-07-16T16:58:22Z</published>
+    <updated>2013-07-16T16:58:24Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Jim Dalrymple:</p>
+
+<blockquote>
+  <p>First of all, I should address the fears of many users. Rumors
+have circulated for a long time that Logic Pro was going to be
+discontinued or that it was going to be reincarnated as some sort
+of â€œGarageBand Pro.â€ Clearly, it hasnâ€™t been discontinued, and I
+can tell you from my own experience, this is far from a GarageBand
+knockoff. This is the same professional digital audio workstation
+software that weâ€™ve used for years, only better.</p>
+
+<p>Logic Pro X still has all of the same professional-level features
+as its predecessor, but also adds some new high-end abilities. In
+addition, Apple has made the software more approachable to new
+users with features like Smart Controls (weâ€™ll talk about this
+later), without taking away any ability for pros to dig down into
+the plug-ins, preferences or controls.</p>
+</blockquote>
+
+<div>
+<a  title="Permanent link to â€˜Jim Dalrymple Reviews Logic Pro Xâ€™"  href="http://daringfireball.net/linked/2013/07/16/dalrymple-logic-pro">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Apple Releases Logic Pro X</title>
+    <link rel="alternate" type="text/html" href="http://www.apple.com/logic-pro/" />
+    <link rel="shorturl" href="http://df4.us/lke" />
+    <id>tag:daringfireball.net,2013:/linked//6.27950</id>
+    <published>2013-07-16T16:57:13Z</published>
+    <updated>2013-07-16T17:00:00Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Looks like an extensive update. $199.</p>
+
+<p>Interesting that while Apple&#8217;s consumer-focused iOS has turned its back on skeuomorphism, its last pro tool has upped the ante on mimicking real-world audio hardware buttons and dials.</p>
+
+<div>
+<a  title="Permanent link to â€˜Apple Releases Logic Pro Xâ€™"  href="http://daringfireball.net/linked/2013/07/16/logic-pro-x">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Jack Handey</title>
+    <link rel="alternate" type="text/html" href="http://www.nytimes.com/2013/07/21/magazine/jack-handey-is-the-envy-of-every-comedy-writer-in-america.html" />
+    <link rel="shorturl" href="http://df4.us/lkd" />
+    <id>tag:daringfireball.net,2013:/linked//6.27949</id>
+    <published>2013-07-15T22:49:19Z</published>
+    <updated>2013-07-15T22:49:21Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Dan Kois profiles Jack Handey for the NYT:</p>
+
+<blockquote>
+  <p>â€œDeep Thoughtsâ€ wound up being the perfect distillation of
+Handeyâ€™s comedic temperament. He was no longer constrained by the
+format of the sketch &#8212; he was free to create koans, tiny polished
+gems of comedy. Like: â€œIf a kid asks where rain comes from, I
+think a cute thing to tell him is â€˜God is crying.â€™ And if he asks
+why God is crying, another cute thing to tell him is â€˜Probably
+because of something you did.â€™â€</p>
+</blockquote>
+
+<p>Handey&#8217;s new novel, <em><a href="http://www.amazon.com/gp/product/1455522384/ref=as_li_ss_tl?ie=UTF8&amp;camp=1789&amp;creative=390957&amp;creativeASIN=1455522384&amp;linkCode=as2&amp;tag=daringfirebal-20">The Stench of Honolulu</a></em>, comes out tomorrow.</p>
+
+<div>
+<a  title="Permanent link to â€˜Jack Handeyâ€™"  href="http://daringfireball.net/linked/2013/07/15/jack-handey">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Jessica Lessin: â€˜Apple Pitches Ad-Skipping for New TV Serviceâ€™</title>
+    <link rel="alternate" type="text/html" href="http://jessicalessin.com/2013/07/15/exclusive-apple-pitches-ad-skipping-for-new-tv-service/" />
+    <link rel="shorturl" href="http://df4.us/lkc" />
+    <id>tag:daringfireball.net,2013:/linked//6.27948</id>
+    <published>2013-07-15T22:32:23Z</published>
+    <updated>2013-07-15T22:32:25Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Former WSJ reporter Jessica Lessin, now writing for her own website:</p>
+
+<blockquote>
+  <p>In recent discussions, Apple told media executives it wants to
+offer a â€œpremiumâ€ version of the service that would allow users to
+skip ads and would compensate television networks for the lost
+revenue, according to people briefed on the conversations. [â€¦]</p>
+
+<p>It is a risky idea. Ad-skipping would disrupt the entrenched
+system of television ratings &#8212; the basis for buying TV ads. In
+fact, television broadcasters sued Dish Network when it introduced
+similar technology last year.</p>
+</blockquote>
+
+<div>
+<a  title="Permanent link to â€˜Jessica Lessin: &#8216;Apple Pitches Ad-Skipping for New TV Service&#8217;â€™"  href="http://daringfireball.net/linked/2013/07/15/lessin">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Jesus Diaz, One Year Ago: â€˜Microsoft Surface Just Made the MacBook Air and the iPad Look Obsoleteâ€™</title>
+    <link rel="alternate" type="text/html" href="http://gizmodo.com/5919521/microsoft-surface-just-made-the-macbook-air-and-the-ipad-obsolete" />
+    <link rel="shorturl" href="http://df4.us/lkb" />
+    <id>tag:daringfireball.net,2013:/linked//6.27947</id>
+    <published>2013-07-15T21:54:02Z</published>
+    <updated>2013-07-15T21:54:03Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Jesus Diaz, last June:</p>
+
+<blockquote>
+  <p>After yesterday&#8217;s Surface event &#8212; assuming they don&#8217;t fumble the
+execution &#8212; Gates&#8217; children may have found the weapon to stop the
+heirs of Jobs and turn the tide.</p>
+</blockquote>
+
+<p>Bloomberg, <a href="http://www.bloomberg.com/news/2013-07-15/microsoft-cuts-surface-tablet-prices-amid-weak-demand.html">yesterday</a>:</p>
+
+<blockquote>
+  <p>Microsoft Corp. is cutting the price of its Surface RT tablet by
+as much as 30 percent as the device struggles to lure customers
+amid competition from machines such as Apple Inc.â€™s iPad.</p>
+</blockquote>
+
+<div>
+<a  title="Permanent link to â€˜Jesus Diaz, One Year Ago: &#8216;Microsoft Surface Just Made the MacBook Air and the iPad Look Obsolete&#8217;â€™"  href="http://daringfireball.net/linked/2013/07/15/diaz-claim-chowder">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>When to Start Work on iOS 7-Ready App Updates: A Month Ago</title>
+    <link rel="alternate" type="text/html" href="http://tapadoo.com/2013/ios7-move-now-or-be-an-insta-delete/" />
+    <link rel="shorturl" href="http://df4.us/lk9" />
+    <id>tag:daringfireball.net,2013:/linked//6.27945</id>
+    <published>2013-07-15T21:12:38Z</published>
+    <updated>2013-07-15T21:12:39Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Dermot Daly, on clients who thought letterboxed apps would be OK on the iPhone 5:</p>
+
+<blockquote>
+  <p>I predict the iOS 7 effect will be worse. Within a week of running
+full time, those apps which havenâ€™t been modernised to look like
+an iOS 7 app will look very old. They too will become
+insta-deletes.</p>
+
+<p>If you have an app in the store, Weâ€™d highly recommend looking at
+modernising them pretty quick.</p>
+</blockquote>
+
+<div>
+<a  title="Permanent link to â€˜When to Start Work on iOS 7-Ready App Updates: A Month Agoâ€™"  href="http://daringfireball.net/linked/2013/07/15/ios-7-instadelete">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Tim Stevens Out at Engadget, Marc Perton to Take Over</title>
+    <link rel="alternate" type="text/html" href="http://techcrunch.com/2013/07/15/tim-stevens-out-at-engadget-marc-perton-to-take-over-temporarily/" />
+    <link rel="shorturl" href="http://df4.us/lk8" />
+    <id>tag:daringfireball.net,2013:/linked//6.27944</id>
+    <published>2013-07-15T20:41:13Z</published>
+    <updated>2013-07-15T20:41:15Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>AOL seems like a swell place to work.</p>
+
+<div>
+<a  title="Permanent link to â€˜Tim Stevens Out at Engadget, Marc Perton to Take Overâ€™"  href="http://daringfireball.net/linked/2013/07/15/stevens-engadget">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Whoâ€™s the Bigger Fool: the Fool, or the Fool Who Follows Him?</title>
+    <link rel="alternate" type="text/html" href="http://mikecanex.wordpress.com/2013/07/10/more-proof-the-big-six-of-publishing-are-run-by-morons/" />
+    <link rel="shorturl" href="http://df4.us/lk7" />
+    <id>tag:daringfireball.net,2013:/linked//6.27943</id>
+    <published>2013-07-15T20:33:21Z</published>
+    <updated>2013-07-15T21:36:56Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Mike Cane argues that the evidence in the DOJ/Apple e-book case shows that the big six publishers are stupid:</p>
+
+<blockquote>
+  <p>The math pros of the Big Six crunched the numbers and revealed
+this agreement would cost all of them money. Yet they still went
+ahead with it! If that isnâ€™t being a <em>moron</em>, I donâ€™t know what
+the hell is!</p>
+</blockquote>
+
+<p>Maybe they are stupid. But on the issue of pricing and near-future profits, I don&#8217;t think so. With the wholesale/retail model that was in place, pre-iBooks, they were making more money per book from Amazon, and selling more books at the $9.99 retail price. With the switch to the agency model, retail prices went up, so of course unit sales went down. And, the publishers made less money per book.</p>
+
+<p>But long-term, the publishers were concerned about what would happen if Amazon continued to dominate the e-book market with retail prices at $9.99. Eventually, Amazon might have forced the publishers to lower their wholesale prices dramatically. The big six publishers were willing to sacrifice a slice of their revenue now (17 percent, by their own calculations) in order to regain long-term control over the retail pricing of e-books. You can disagree with that, but it&#8217;s not moronic.</p>
+
+<div>
+<a  title="Permanent link to â€˜Who&#8217;s the Bigger Fool: the Fool, or the Fool Who Follows Him?â€™"  href="http://daringfireball.net/linked/2013/07/15/ebook-fools">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Vesper 1.002</title>
+    <link rel="alternate" type="text/html" href="http://vesperapp.co/blog/vesper-1-002/" />
+    <link rel="shorturl" href="http://df4.us/lk6" />
+    <id>tag:daringfireball.net,2013:/linked//6.27942</id>
+    <published>2013-07-15T19:34:15Z</published>
+    <updated>2013-07-15T19:34:17Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Short and sweet: bug fixes and workarounds for users running Vesper on iOS 7 betas.</p>
+
+<div>
+<a  title="Permanent link to â€˜Vesper 1.002â€™"  href="http://daringfireball.net/linked/2013/07/15/vesper-1-002">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+
+<link rel="alternate" type="text/html" href="http://manything.com/" />
+<link rel="shorturl" href="http://df4.us/lka" />
+<id>tag:daringfireball.net,2013:/feeds/sponsors//11.27946</id>
+<author>
+    <name>Daring Fireball Department of Commerce</name>
+</author>
+   
+<published>2013-07-15T17:21:21-04:00</published>
+<updated>2013-07-15T17:21:22-04:00</updated>
+   
+<content type="html" xml:base="http://daringfireball.net/feeds/sponsors/" xml:lang="en"><![CDATA[
+<p>Manything &#8212; the clever video streaming app that monitors anything, wherever you are.</p>
+
+]]></content>
+<title>[Sponsor] Manything</title></entry><entry>
+    <title>â€˜Eddy Cue Is Going to Jailâ€™</title>
+    <link rel="alternate" type="text/html" href="http://www.muleradio.net/thetalkshow/48/" />
+    <link rel="shorturl" href="http://df4.us/lk5" />
+    <id>tag:daringfireball.net,2013:/linked//6.27941</id>
+    <published>2013-07-14T23:42:47Z</published>
+    <updated>2013-07-14T23:42:48Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>If you like podcasts, I&#8217;ve got something just for you: a brand-new episode of The Talk Show, on which I&#8217;m joined by special guest star John Moltz. Topics include Appleâ€™s e-book price-fixing trial, mom-n-pop porno shops, and being a nervous flyer.</p>
+
+<p>Brought to you by two great sponsors:</p>
+
+<ul>
+<li><p><a href="http://www.domesticbeast.com/?utm_source=mule&amp;utm_medium=podcast&amp;utm_campaign=tts">Domestic Beast</a>: Just because you own a dog doesnâ€™t mean your home should look like a doghouse.</p></li>
+<li><p><a href="http://tablo.io/thetalkshow">Tablo</a>: Create beautiful e-books in the cloud and publish to Amazon and Apple with a single click.</p></li>
+</ul>
+
+<div>
+<a  title="Permanent link to â€˜&#8216;Eddy Cue Is Going to Jail&#8217;â€™"  href="http://daringfireball.net/linked/2013/07/14/the-talk-show-048">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Seeing Apple in Microsoftâ€™s Reorganization</title>
+    <link rel="alternate" type="text/html" href="http://tech.fortune.cnn.com/2013/07/12/in-microsofts-reorganization-a-lot-of-apple/" />
+    <link rel="shorturl" href="http://df4.us/lk4" />
+    <id>tag:daringfireball.net,2013:/linked//6.27940</id>
+    <published>2013-07-14T22:48:52Z</published>
+    <updated>2013-07-14T22:48:54Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Adam Lashinsky:</p>
+
+<blockquote>
+  <p>One of the key learnings of my research on Apple over the past
+five years has been the extraordinary degree to which Apple is
+organized by function. No other company its size has the audacity
+to organize this way as opposed to the typical corporation&#8217;s
+divisional structure. The two most obvious examples of this are
+General Electric and, yes, Microsoft. GE&#8217;s aircraft and medical
+divisions are like companies unto themselves. Ditto Microsoft&#8217;s
+Xbox-purveying entertainment division.</p>
+
+<p>Steve Jobs hated divisionalization. He hated fiefdoms. He wanted
+one Apple, one strategy, one brand, one message. Software
+developers would contribute software across products. Finance
+would keep the books across product groups. And so on.</p>
+</blockquote>
+
+<p>The comparison to Apple&#8217;s organizational structure is obvious, but Lashinsky is correct that this is going to require a significant cultural change for Microsoft.</p>
+
+<p>This bit confuses me, though:</p>
+
+<blockquote>
+  <p>As a small cultural example, consider the pickle Apple is in over
+e-books. In refusing to settle its price-fixing case with the
+Justice Department, Apple under Tim Cook adhered to its Jobsian
+principles. It believed it was right and that its partners, the
+government, its competitors and critics were fools. It apologized
+to no one because, well, Apple doesn&#8217;t apologize because Apple is
+never wrong. All this worked marvelously for the great Steve Jobs.
+For Apple under Tim Cook, it&#8217;s an understandably different
+proposition.</p>
+</blockquote>
+
+<p>Lashinsky is trying to argue that Apple&#8217;s unique product-focused organizational structure depended upon Jobs, individually, to keep it all working. That may prove true, eventually, but I don&#8217;t see how the e-books price-fixing case is any way indicative of that. For one thing, the negotiations between Apple and the publishers all took place while Jobs was still at the helm. And I don&#8217;t see how anything would have played out any differently with the DOJ case if Jobs were still alive and well today. In what way is Apple worse off regarding this case today than it would be if Jobs were still around?</p>
+
+<p>Further, Apple may well be institutionally arrogant, but they&#8217;ve never held themselves as &#8220;never wrong&#8221;. Jobs took this on directly while handling the iPhone 4 &#8220;antennagate&#8221; situation: &#8220;<a href="http://online.wsj.com/article/SB10001424052748704913304575371131458273498.html">We&#8217;re not perfect</a>.&#8221;</p>
+
+<div>
+<a  title="Permanent link to â€˜Seeing Apple in Microsoft&#8217;s Reorganizationâ€™"  href="http://daringfireball.net/linked/2013/07/14/lashinsky">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Quote of the Day: â€˜Apple Canâ€™t Afford to Wait on a Retina iPad Miniâ€™</title>
+    <link rel="alternate" type="text/html" href="http://tech.fortune.cnn.com/2013/07/14/apple-retina-ipad-mini/" />
+    <link rel="shorturl" href="http://df4.us/lk3" />
+    <id>tag:daringfireball.net,2013:/linked//6.27939</id>
+    <published>2013-07-14T22:31:14Z</published>
+    <updated>2013-07-14T22:31:16Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Philip Elmer-DeWitt on the idea that Apple <em>has</em> to go retina on the iPad Mini this year.</p>
+
+<p>(I&#8217;d love to be wrong, but I don&#8217;t think it&#8217;s going to happen this year.)</p>
+
+<div>
+<a  title="Permanent link to â€˜Quote of the Day: &#8216;Apple Can&#8217;t Afford to Wait on a Retina iPad Mini&#8217;â€™"  href="http://daringfireball.net/linked/2013/07/14/ipad-mini-retina">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Igloo</title>
+    <link rel="alternate" type="text/html" href="http://www.igloosoftware.com/campaigns/tts?ref=dfjuly" />
+    <link rel="shorturl" href="http://df4.us/lk2" />
+    <id>tag:daringfireball.net,2013:/linked//6.27938</id>
+    <published>2013-07-12T23:43:04Z</published>
+    <updated>2013-07-12T23:43:06Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>My thanks to Igloo for sponsoring this week&#8217;s DF RSS feed. Igloo bills itself as &#8220;an intranet you&#8217;ll actually like&#8221;, which is a perfect description. Igloo offers blogs, calendars, file sharing, forums, microblogs (think: private Twitter), and wikis. Everything you&#8217;d want. It&#8217;s all modern (including responsive design for mobile devices), and all configurable.</p>
+
+<p>Igloo is free to use with up to ten people, so you can <a href="http://www.igloosoftware.com/try_igloo?ref=dfjuly">start building your
+own Igloo today</a> or
+<a href="http://www.igloosoftware.com/campaigns/tts?ref=dfjuly">check out their Sandwich
+Videos</a>.</p>
+
+<div>
+<a  title="Permanent link to â€˜Iglooâ€™"  href="http://daringfireball.net/linked/2013/07/12/igloo">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>HP Keeps Installing Secret Backdoors in Enterprise Storage</title>
+    <link rel="alternate" type="text/html" href="http://slashdot.org/topic/datacenter/hp-keeps-installing-secret-backdoors-in-enterprise-storage/" />
+    <link rel="shorturl" href="http://df4.us/lk1" />
+    <id>tag:daringfireball.net,2013:/linked//6.27937</id>
+    <published>2013-07-12T21:59:23Z</published>
+    <updated>2013-07-12T22:00:11Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Slashdot:</p>
+
+<blockquote>
+  <p>This isnâ€™t the first time HP has been caught inserting backdoors
+into enterprise products without telling customers. In 2010 it was
+forced to admit a secret backdoor in its StorageWorks systems that
+could be accessed by anyone using the account name â€œadminâ€ and
+password â€œ!adminâ€.</p>
+</blockquote>
+
+<p>That&#8217;s my password for everything: my username with exclamation in the front. Unguessable.</p>
+
+<div>
+<a  title="Permanent link to â€˜HP Keeps Installing Secret Backdoors in Enterprise Storageâ€™"  href="http://daringfireball.net/linked/2013/07/12/hp-backdoors">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Lawyer Sues Apple for Not Protecting Him From Porno Addiction</title>
+    <link rel="alternate" type="text/html" href="http://abovethelaw.com/2013/07/lawyer-apple-should-protect-me-from-my-porn-addiction/" />
+    <link rel="shorturl" href="http://df4.us/lk0" />
+    <id>tag:daringfireball.net,2013:/linked//6.27936</id>
+    <published>2013-07-12T21:47:42Z</published>
+    <updated>2013-07-12T21:47:44Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>From Nashville attorney Chris Sevier&#8217;s legal filing:</p>
+
+<blockquote>
+  <p>UNFAIR COMPETITION AND INTERFERENCE OF THE MARITAL CONTRACT: The
+Plaintiff became totally out of synch in his romantic relationship
+with his wife, which was a consequence of his use of his Apple
+product. The Plaintiff began desiring, younger more beautiful
+girls featured in porn videos than his wife, who was no longer 21.
+His failed marriage caused the Plaintiff to experience emotional
+distress to the point of hospitalization. The Plaintiff could no
+longer tell the difference between internet pornography and
+tangible intercourse due to the content he accessed through the
+Apple products, which failed to provide him with warnings of the
+dangers of online pornography whatsoever.</p>
+</blockquote>
+
+<p>Been a busy week for Apple&#8217;s legal department. <a href="http://verynicewebsite.net/2013/07/apple-should-protect-me-from-my-porn-addiction/">Via John Moltz</a>.</p>
+
+<div>
+<a  title="Permanent link to â€˜Lawyer Sues Apple for Not Protecting Him From Porno Addictionâ€™"  href="http://daringfireball.net/linked/2013/07/12/porno-addiction">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Why Mobile Web Apps Are Slow</title>
+    <link rel="alternate" type="text/html" href="http://sealedabstract.com/rants/why-mobile-web-apps-are-slow/" />
+    <link rel="shorturl" href="http://df4.us/ljy" />
+    <id>tag:daringfireball.net,2013:/linked//6.27934</id>
+    <published>2013-07-12T20:10:35Z</published>
+    <updated>2013-07-12T21:28:22Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Drew Crawford:</p>
+
+<blockquote>
+  <p>So what Iâ€™m going to do in this post is try to bring some actual
+<em>evidence</em> to bear on the problem, instead of just doing the
+shouting match thing. Youâ€™ll see benchmarks, youâ€™ll hear from
+experts, youâ€™ll even read honest-to-God <em>journal papers</em> on point.
+There are &#8212; and this is not a joke &#8212; over 100 citations in this blog
+post. Iâ€™m not going to guarantee that this article will convince
+you, nor even that absolutely everything in here is totally
+correct &#8212; itâ€™s impossible to do in an article this size &#8212; but I can
+guarantee this is the most complete and comprehensive treatment of
+the idea that many iOS developers have &#8212; that mobile web apps are
+slow and will continue to be slow for the foreseeable future.</p>
+</blockquote>
+
+<p>Remarkably detailed analysis. Must-read piece. The comments are rather fascinating as well &#8212; denial runs strong among the web app true believers.</p>
+
+<div>
+<a  title="Permanent link to â€˜Why Mobile Web Apps Are Slowâ€™"  href="http://daringfireball.net/linked/2013/07/12/why-web-apps-are-slow">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Explaining the Apple E-Book Price-Fixing Suit</title>
+    <link rel="alternate" type="text/html" href="http://tidbits.com/article/13912" />
+    <link rel="shorturl" href="http://df4.us/ljx" />
+    <id>tag:daringfireball.net,2013:/linked//6.27933</id>
+    <published>2013-07-11T23:39:45Z</published>
+    <updated>2013-07-11T23:40:54Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>If you read only one take on yesterday&#8217;s e-book price-fixing lawsuit judgment, make it Adam Engst&#8217;s. Comprehensive explanation of the entire saga.</p>
+
+<div>
+<a  title="Permanent link to â€˜Explaining the Apple E-Book Price-Fixing Suitâ€™"  href="http://daringfireball.net/linked/2013/07/11/engst-ebooks">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Skyfall: The Abridged Script</title>
+    <link rel="alternate" type="text/html" href="http://www.the-editing-room.com/skyfall.html" />
+    <link rel="shorturl" href="http://df4.us/ljw" />
+    <id>tag:daringfireball.net,2013:/linked//6.27932</id>
+    <published>2013-07-11T21:11:52Z</published>
+    <updated>2013-07-11T21:11:53Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>The Editing Room:</p>
+
+<blockquote>
+  <p>JUDI DENCH: So are we bringing Goldfinger back into continuity
+now? Because that would open quite the can of worms, if the can
+were 200 miles wide, and the worms were Velociraptors.</p>
+
+<p>DANIEL CRAIG: And over here is my parentsâ€™ grave, so everyone who
+keeps insisting James Bond is just a codename can officially GO
+FUCK THEMSELVES.</p>
+
+<p>ALBERT FINNEY (arriving): Er, hi. This role was supposed to be
+Conneryâ€™s, but he told the producers to gargle walrus balls and so
+instead, itâ€™s me. Sorry.</p>
+</blockquote>
+
+<div>
+<a  title="Permanent link to â€˜Skyfall: The Abridged Scriptâ€™"  href="http://daringfireball.net/linked/2013/07/11/skyfall-abridged">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>The Prodigal Guide: The Three Things Wrong With â€˜Skyfallâ€™</title>
+    <link rel="alternate" type="text/html" href="http://www.theprodigalguide.com/2013/01/21/the-three-things-wrong-with-skyfall-and-the-one-huge-thing-it-got-right/" />
+    <link rel="shorturl" href="http://df4.us/ljv" />
+    <id>tag:daringfireball.net,2013:/linked//6.27931</id>
+    <published>2013-07-11T21:09:59Z</published>
+    <updated>2013-07-11T21:10:00Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>The Prodigal Fool:</p>
+
+<blockquote>
+  <p>Think about it &#8212; Bond is given three missions during the course
+of <em>Skyfall</em> and he cocks each one of them up in turn.</p>
+</blockquote>
+
+<div>
+<a  title="Permanent link to â€˜The Prodigal Guide: The Three Things Wrong With &#8216;Skyfall&#8217;â€™"  href="http://daringfireball.net/linked/2013/07/11/prodigal-bond">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Everything Wrong With â€˜Skyfallâ€™ in 4 Minutes or Less</title>
+    <link rel="alternate" type="text/html" href="http://www.youtube.com/watch?feature=player_detailpage&amp;v=xmoIDKqfY44#t=151s" />
+    <link rel="shorturl" href="http://df4.us/lju" />
+    <id>tag:daringfireball.net,2013:/linked//6.27930</id>
+    <published>2013-07-11T21:08:55Z</published>
+    <updated>2013-07-11T21:08:56Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Don&#8217;t get me wrong, I enjoyed <em>Skyfall</em> very much, but it really was a crap plot. Imagine how much better it could have been if Silva&#8217;s plot had actually been brilliant.</p>
+
+<div>
+<a  title="Permanent link to â€˜Everything Wrong With &#8216;Skyfall&#8217; in 4 Minutes or Lessâ€™"  href="http://daringfireball.net/linked/2013/07/11/wrong-with-skyfall">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Sam Mendes Returning to Direct Bond 24</title>
+    <link rel="alternate" type="text/html" href="http://www.comingsoon.net/news/movienews.php?id=106363" />
+    <link rel="shorturl" href="http://df4.us/ljt" />
+    <id>tag:daringfireball.net,2013:/linked//6.27929</id>
+    <published>2013-07-11T17:59:32Z</published>
+    <updated>2013-07-11T21:03:04Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>But it won&#8217;t hit theaters until late 2015. Would love to see a smarter plot this time; certain inanities were <em>Skyfall</em>&#8217;s only flaw. Stylistically and characteristically, it was nearly perfect &#8212; a well-directed, well-acted, cinematographically gorgeous Bond movie about a rather crap plot riddled with profound logical holes.</p>
+
+<p>I&#8217;m not asking for realism; I&#8217;m just asking for <em>sense</em>. A little more <em>Casino Royale</em> is all it would take.</p>
+
+<div>
+<a  title="Permanent link to â€˜Sam Mendes Returning to Direct Bond 24â€™"  href="http://daringfireball.net/linked/2013/07/11/mendes-bond">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>NPD: Chromebooks Selling Well in Sub-$300 Market</title>
+    <link rel="alternate" type="text/html" href="http://www.bloomberg.com/news/2013-07-10/google-chromebook-under-300-defies-pc-market-with-growth.html" />
+    <link rel="shorturl" href="http://df4.us/ljs" />
+    <id>tag:daringfireball.net,2013:/linked//6.27928</id>
+    <published>2013-07-10T21:01:09Z</published>
+    <updated>2013-07-10T21:32:26Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Brian Womack, reporting for Bloomberg:</p>
+
+<blockquote>
+  <p>Chromebooks have in just the past eight months snagged 20 percent
+to 25 percent of the U.S. market for laptops that cost less than
+$300, according to NPD Group Inc. The devices, which have a full
+keyboard and get regular software updates from Google, are the
+fastest-growing part of the PC industry based on price, NPD said.</p>
+</blockquote>
+
+<p><strong>Update:</strong> Chromebook users apparently aren&#8217;t the market for Daring Fireball. <a href="/misc/2013/07/df-analytics.png">According to Google Analytics</a>, Chrome OS accounting for 0.07 percent of DF visitors over the past month. Still ahead of Firefox OS, though.</p>
+
+<div>
+<a  title="Permanent link to â€˜NPD: Chromebooks Selling Well in Sub-$300 Marketâ€™"  href="http://daringfireball.net/linked/2013/07/10/chromebooks-300">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Judge Rules Against Apple in E-Book Price-Fixing Trial</title>
+    <link rel="alternate" type="text/html" href="http://www.nytimes.com/2013/07/11/technology/judge-rules-against-apple-in-e-books-trial.html?pagewanted=1&amp;_r=0&amp;hp" />
+    <link rel="shorturl" href="http://df4.us/ljr" />
+    <id>tag:daringfireball.net,2013:/linked//6.27927</id>
+    <published>2013-07-10T17:42:29Z</published>
+    <updated>2013-07-11T23:36:29Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Brian X. Chen and Julie Bosman, reporting for the NYT:</p>
+
+<blockquote>
+  <p>A federal judge on Wednesday found that Apple violated antitrust
+law in helping raise the retail price of e-books, saying the
+company â€œplayed a central role in facilitating and executingâ€ a
+conspiracy with five big publishers.</p>
+
+<p>â€œWithout Appleâ€™s orchestration of this conspiracy, it would not
+have succeeded as it did in the spring of 2010,â€ the judge, Denise
+L. Cote of United States District Court in Manhattan, said in her
+ruling. She said a trial for damages would follow.</p>
+</blockquote>
+
+<p><a href="http://www.nysd.uscourts.gov/cases/show.php?db=special&amp;id=306">Cote&#8217;s ruling (PDF)</a> is a cogent read.</p>
+
+<p>Part of the evidence was <a href="http://allthingsd.com/20100128/boomtowns-apple-ipad-day-starring-walt-mossberg-plus-a-steve-jobs-cameo/">this video shot by Kara Swisher of Steve Jobs speaking with Walt Mossberg</a> in the hands-on press area after the introduction of the original iPad in 2010. Mossberg asks Jobs why someone would buy a book for $14.99 from the iBookstore when they could buy the same book from Amazon for $9.99.</p>
+
+<p>Jobs: Well, that won&#8217;t be the case.</p>
+
+<p>Mossberg: Meaning you won&#8217;t be $14.99, or they won&#8217;t be $9.99?</p>
+
+<p>Jobs (smiling): The prices will be the same.</p>
+
+<p>Judge Cote found that damning. From her decision:</p>
+
+<blockquote>
+  <p>Jobsâ€™s purchase of an e-book for $14.99 at the Launch, and his
+explanation to a reporter that day that Amazonâ€™s $9.99 price for
+the same book would be irrelevant because soon all prices will â€œbe
+the sameâ€ is further evidence that Apple understood and intended
+that Amazonâ€™s ability to set retail prices would soon be
+eliminated. When Jobs told his biographer the next day that, in
+light of the MFN, the Publisher Defendants â€œwent to Amazon and
+said, â€˜Youâ€™re going to sign an agency contract or weâ€™re not going
+to give you the books,â€™â€ Jobs was referring to the fact that
+Sargent was in Seattle that very day to deliver Macmillanâ€™s
+ultimatum to Amazon.</p>
+</blockquote>
+
+<p>No wonder Apple executives so seldom speak on the record.</p>
+
+<p><strong>Sidenote</strong>: Pretty sure that&#8217;s me over Mossberg&#8217;s shoulder at the 1:45 mark in the video. <a href="http://www.flickr.com/photos/gruber/4309828383/">Here&#8217;s a photo I took of Jobs and Mossberg</a>. Mossberg remains the only person I&#8217;ve ever seen sit on a table at one of these events.</p>
+
+<div>
+<a  title="Permanent link to â€˜Judge Rules Against Apple in E-Book Price-Fixing Trialâ€™"  href="http://daringfireball.net/linked/2013/07/10/apple-price-fixing">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Maximum Viable Products</title>
+    <link rel="alternate" type="text/html" href="http://www.allenpike.com/2013/maximum-viable-products/" />
+    <link rel="shorturl" href="http://df4.us/ljq" />
+    <id>tag:daringfireball.net,2013:/linked//6.27926</id>
+    <published>2013-07-09T20:54:09Z</published>
+    <updated>2013-07-09T20:54:55Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Allen Pike:</p>
+
+<blockquote>
+  <p>Prosumer software will always be ground zero for Maximum Viable
+Products, and great indie software in general. The consumer aspect
+drives the inspiration to build a <em>maximal</em> app, because developers
+can deeply relate to the users. The pro bent provides the <em>viable</em>
+part of the equation: the appâ€™s purpose is important enough to its
+users that you can make a sustainable business out of creating a
+fantastic version.</p>
+
+<p>If you want your maximal products to be viable, target prosumers.</p>
+</blockquote>
+
+<p>And set your prices accordingly.</p>
+
+<div>
+<a  title="Permanent link to â€˜Maximum Viable Productsâ€™"  href="http://daringfireball.net/linked/2013/07/09/maximum-viable-products">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Tile</title>
+    <link rel="alternate" type="text/html" href="http://www.thetileapp.com/" />
+    <link rel="shorturl" href="http://df4.us/ljp" />
+    <id>tag:daringfireball.net,2013:/linked//6.27925</id>
+    <published>2013-07-09T19:59:11Z</published>
+    <updated>2013-07-09T19:59:12Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Small location-broadcasting fob that ties in with a smartphone app. Looks like a great product.</p>
+
+<div>
+<a  title="Permanent link to â€˜Tileâ€™"  href="http://daringfireball.net/linked/2013/07/09/tile">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Google Releases Fix to OEMs for Blue Security Android Security Hole</title>
+    <link rel="alternate" type="text/html" href="http://www.zdnet.com/google-releases-fix-to-oems-for-blue-security-android-security-hole-7000017782/" />
+    <link rel="shorturl" href="http://df4.us/ljo" />
+    <id>tag:daringfireball.net,2013:/linked//6.27924</id>
+    <published>2013-07-09T19:25:39Z</published>
+    <updated>2013-07-09T19:25:40Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Steven J. Vaughan-Nichols:</p>
+
+<blockquote>
+  <p>Thus, Android users will, as they always have, need to reply upon
+their hardware vendors for this update.</p>
+</blockquote>
+
+<p>I&#8217;m sure they&#8217;ll get right on that.</p>
+
+<div>
+<a  title="Permanent link to â€˜Google Releases Fix to OEMs for Blue Security Android Security Holeâ€™"  href="http://daringfireball.net/linked/2013/07/09/android-security">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Mac Mini and the iOS 7 App Icon Grid</title>
+    <link rel="alternate" type="text/html" href="http://www.flickr.com/photos/gruber/9250506310/" />
+    <link rel="shorturl" href="http://df4.us/ljn" />
+    <id>tag:daringfireball.net,2013:/linked//6.27923</id>
+    <published>2013-07-09T18:25:32Z</published>
+    <updated>2013-07-09T19:32:09Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>I speculated on this week&#8217;s episode of The Talk Show that Apple&#8217;s round-square hardware products might conform to the same grid as the new iOS 7 app icons. Here&#8217;s the grid super-imposed over the bottom of a Mac Mini. The corner radius is quite different, but everything else conforms exactly.</p>
+
+<p>My thanks to DF reader <a href="http://about.me/zachkahn">Zach Kahn</a>, who sent me <a href="https://www.dropbox.com/s/6yvt5ck1zfbss6s/AirPort%20Express.jpg">this image of the grid superimposed on the AirPort Express</a>.</p>
+
+<p><strong>Update:</strong> <a href="http://www.flickr.com/photos/49361977@N06/9246055473/">More here</a>, from Andrew Wood, and <a href="http://i.imgur.com/gqVkI26.jpg">another from StÃ©phan Angoulvant</a> that includes the old iPod Shuffle.</p>
+
+<div>
+<a  title="Permanent link to â€˜Mac Mini and the iOS 7 App Icon Gridâ€™"  href="http://daringfireball.net/linked/2013/07/09/mac-mini-ios-7-grid">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Apple, Amazon End â€˜App Storeâ€™ Lawsuit</title>
+    <link rel="alternate" type="text/html" href="http://www.reuters.com/article/2013/07/09/us-apple-amazon-appstore-lawsuit-idUSBRE9680TT20130709" />
+    <link rel="shorturl" href="http://df4.us/ljm" />
+    <id>tag:daringfireball.net,2013:/linked//6.27922</id>
+    <published>2013-07-09T17:59:39Z</published>
+    <updated>2013-07-09T17:59:41Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Reuters:</p>
+
+<blockquote>
+  <p>U.S. District Judge Phyllis Hamilton in Oakland, California, on
+Tuesday ordered that the case be dismissed at the companies&#8217;
+request. This came after Apple issued to Amazon a covenant not to
+sue, eliminating the need for a related Amazon counterclaim.</p>
+
+<p>&#8220;We no longer see a need to pursue our case,&#8221; Apple spokeswoman
+Kristin Huguet said. &#8220;With more than 900,000 apps and 50
+billion downloads, customers know where they can purchase their
+favorite apps.&#8221;</p>
+
+<p>Martin Glick, a lawyer for Amazon, said in an interview, &#8220;This was
+a decision by Apple to unilaterally abandon the case, and leave
+Amazon free to use &#8216;appstore.&#8217;&#8221;</p>
+</blockquote>
+
+<div>
+<a  title="Permanent link to â€˜Apple, Amazon End &#8216;App Store&#8217; Lawsuitâ€™"  href="http://daringfireball.net/linked/2013/07/09/appstore">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Book Titles Missing a Letter</title>
+    <link rel="alternate" type="text/html" href="http://flavorwire.com/401642/clever-photoshopped-covers-of-book-titles-missing-a-letter/view-all" />
+    <link rel="shorturl" href="http://df4.us/ljl" />
+    <id>tag:daringfireball.net,2013:/linked//6.27921</id>
+    <published>2013-07-09T17:48:05Z</published>
+    <updated>2013-07-09T17:48:07Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p><em>Olive Twist</em> is my favorite.</p>
+
+<div>
+<a  title="Permanent link to â€˜Book Titles Missing a Letterâ€™"  href="http://daringfireball.net/linked/2013/07/09/book-titles">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>â€˜Settledâ€™</title>
+    <link rel="alternate" type="text/html" href="https://xkcd.com/1235/" />
+    <link rel="shorturl" href="http://df4.us/ljk" />
+    <id>tag:daringfireball.net,2013:/linked//6.27920</id>
+    <published>2013-07-09T17:46:06Z</published>
+    <updated>2013-07-09T22:02:36Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>XKCD:</p>
+
+<blockquote>
+  <p>In the last few years, with very little fanfare, we&#8217;ve conclusively settled the questions of flying saucers, lake monsters, ghosts, and Bigfoot.</p>
+</blockquote>
+
+<div>
+<a  title="Permanent link to â€˜&#8216;Settled&#8217;â€™"  href="http://daringfireball.net/linked/2013/07/09/settled">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>â€˜Extreme Minimal Gunsâ€™</title>
+    <link rel="alternate" type="text/html" href="http://www.muleradio.net/thetalkshow/47/" />
+    <link rel="shorturl" href="http://df4.us/ljj" />
+    <id>tag:daringfireball.net,2013:/linked//6.27919</id>
+    <published>2013-07-08T22:02:09Z</published>
+    <updated>2013-07-08T22:02:10Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>New episode of my podcast, The Talk Show, featuring special guest star Christa Mrgan. Topics this week include iOS 7, typography, <a href="http://www.indiegogo.com/projects/app-camp-for-girls">App Camp for Girls</a>, and more.</p>
+
+<p>Brought to you by two outstanding sponsors:</p>
+
+<ul>
+<li><p><a href="http://aneventapart.com/talkshow">An Event Apart</a>: The design conference for people who make websites.</p></li>
+<li><p><a href="http://www.silverwiz.com/">MoneyWiz</a>: Premium personal finance app for your Mac, iPhone and iPad. With automatic sync.</p></li>
+</ul>
+
+<div>
+<a  title="Permanent link to â€˜&#8216;Extreme Minimal Guns&#8217;â€™"  href="http://daringfireball.net/linked/2013/07/08/the-talk-show-047">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Kit FUI</title>
+    <link rel="alternate" type="text/html" href="http://www.noteloop.com/kit/fui/" />
+    <link rel="shorturl" href="http://df4.us/lji" />
+    <id>tag:daringfireball.net,2013:/linked//6.27918</id>
+    <published>2013-07-08T21:41:46Z</published>
+    <updated>2013-07-08T21:41:47Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Great idea:</p>
+
+<blockquote>
+  <p>Fantasy User Interfaces, Fictional User Interfaces, Fake User
+Interfaces, Futuristic User Interfaces. Regardless of what the F
+stands for, they all represent the same thing, the user interfaces
+and heads up displays found in many popular movies and television
+shows. [â€¦]</p>
+
+<p>Kit FUI is an IMDb-like database that makes it easy to find
+screenshots, videos and the designers of these FUIs.</p>
+</blockquote>
+
+<div>
+<a  title="Permanent link to â€˜Kit FUIâ€™"  href="http://daringfireball.net/linked/2013/07/08/kit-fui">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Philip Elmer-DeWitt: How Wrong-Headed Can One Apple Analyst Be?</title>
+    <link rel="alternate" type="text/html" href="http://tech.fortune.cnn.com/2013/07/07/apple-analyst-trip-chowdhry/" />
+    <link rel="shorturl" href="http://df4.us/ljh" />
+    <id>tag:daringfireball.net,2013:/linked//6.27917</id>
+    <published>2013-07-08T21:01:02Z</published>
+    <updated>2013-07-08T21:41:59Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Pretty damn wrong-headed, when the analyst in question is Trip &#8220;Claim&#8221; Chowdhry.</p>
+
+<div>
+<a  title="Permanent link to â€˜Philip Elmer-DeWitt: How Wrong-Headed Can One Apple Analyst Be?â€™"  href="http://daringfireball.net/linked/2013/07/08/chowdry">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Guillermo Del Toro and Charlie Kaufman to Adapt â€˜Slaughterhouse Fiveâ€™</title>
+    <link rel="alternate" type="text/html" href="http://blogs.indiewire.com/theplaylist/guillermo-del-toro-wants-benedict-cumberbatch-for-frankenstein-charlie-kaufman-writing-slaughterhouse-five-20130706" />
+    <link rel="shorturl" href="http://df4.us/ljg" />
+    <id>tag:daringfireball.net,2013:/linked//6.27916</id>
+    <published>2013-07-08T20:45:17Z</published>
+    <updated>2013-07-08T20:45:19Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>This could be great.</p>
+
+<div>
+<a  title="Permanent link to â€˜Guillermo Del Toro and Charlie Kaufman to Adapt &#8216;Slaughterhouse Five&#8217;â€™"  href="http://daringfireball.net/linked/2013/07/08/slaughterhouse">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>The Apps That Get Featured on the iOS App Store</title>
+    <link rel="alternate" type="text/html" href="http://daveaddey.com/appstore/" />
+    <link rel="shorturl" href="http://df4.us/ljf" />
+    <id>tag:daringfireball.net,2013:/linked//6.27915</id>
+    <published>2013-07-08T20:40:59Z</published>
+    <updated>2013-07-08T20:41:01Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Dave Addey:</p>
+
+<blockquote>
+  <p>Over the past few months, I&#8217;ve been researching the kinds of apps
+that get featured on the iTunes App Store home page for different
+countries around the world. Here are my initial findings.</p>
+</blockquote>
+
+<p>Interesting analysis and presentation.</p>
+
+<div>
+<a  title="Permanent link to â€˜The Apps That Get Featured on the iOS App Storeâ€™"  href="http://daringfireball.net/linked/2013/07/08/addey-app-store">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Speaking of iOS 7 and Fonts</title>
+    <link rel="alternate" type="text/html" href="http://www.marco.org/2013/07/08/a-thicker-hope" />
+    <link rel="shorturl" href="http://df4.us/ljd" />
+    <id>tag:daringfireball.net,2013:/linked//6.27913</id>
+    <published>2013-07-08T20:13:36Z</published>
+    <updated>2013-07-08T20:50:26Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Today&#8217;s beta 3 release of iOS 7 changes the system text font from Helvetica Neue Light to Regular. Light and Ultra Light are still used in the system in certain places, but more sparingly and appropriately.</p>
+
+<p>This all comes back to <a href="http://www.loopinsight.com/2013/06/17/dont-worry-about-ios-7/">Dalrymple&#8217;s plea one week after WWDC</a>. All betas are works in progress, but iOS 7 is far more so than usual. They&#8217;re still playing with this stuff.</p>
+
+<div>
+<a  title="Permanent link to â€˜Speaking of iOS 7 and Fontsâ€™"  href="http://daringfireball.net/linked/2013/07/08/ios-7-helvetica">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>TheÂ Real Story Behind Fonts in iOS 7</title>
+    <link rel="alternate" type="text/html" href="http://typographica.org/on-typography/beyond-helvetica-the-real-story-behind-fonts-in-ios-7/" />
+    <link rel="shorturl" href="http://df4.us/ljc" />
+    <id>tag:daringfireball.net,2013:/linked//6.27912</id>
+    <published>2013-07-08T18:52:37Z</published>
+    <updated>2013-07-08T18:52:39Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>JÃ¼rgen Siebert and Maurice Meilleur, writing for Typographica:</p>
+
+<blockquote>
+  <p>Typographic aesthetes will be happy to learn that support for
+kerning and ligatures (Apple calls these macros â€œfont
+descriptorsâ€) will be turned on throughout iOS 7, effortlessly
+accessible even over very advanced visual effects like the
+deceptively real-looking handmade paper texture. [â€¦]</p>
+
+<p>But the hottest typographic number in iOS 7 is Dynamic Type. As
+far as I know, Appleâ€™s mobile products will be the first
+electronic devices that will by default consider a quality of type
+that hasnâ€™t been given so much attention since the age of
+letterpress. Thatâ€™s right: weâ€™re talking about an operating
+system, not an application or a layout job. Itâ€™s true, optical
+sizes were tried in photosetting and desktop publishing &#8212; but
+they werenâ€™t really automatic, and some of the attempts turned out
+to be blind alleys (like Adobe Multiple Masters). And yes, there
+are any number of displays in industry products that use different
+â€˜gradesâ€™ of text for smaller and larger settings. But optical
+sizing in iOS builds on these earlier attempts and offers
+astonishing possibilities.</p>
+</blockquote>
+
+<p>Text Kit makes me very happy.</p>
+
+<div>
+<a  title="Permanent link to â€˜TheÂ Real Story Behind Fonts in iOS 7â€™"  href="http://daringfireball.net/linked/2013/07/08/ios-7-type">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    <title>Japanâ€™s DoCoMo Still Holding Out on iPhone</title>
+    <link rel="alternate" type="text/html" href="http://www.reuters.com/article/2013/07/05/us-docomo-iphone-idUSBRE96404Q20130705" />
+    <link rel="shorturl" href="http://df4.us/ljb" />
+    <id>tag:daringfireball.net,2013:/linked//6.27911</id>
+    <published>2013-07-07T19:10:13Z</published>
+    <updated>2013-07-07T19:23:01Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+    <content type="html" xml:base="http://daringfireball.net/linked/" xml:lang="en"><![CDATA[
+<p>Sophie Knight and Maki Shiraki, reporting for Reuters from Tokyo:</p>
+
+<blockquote>
+  <p>NTT DoCoMo Inc, Japan&#8217;s largest mobile provider and a pioneer of the mobile Internet, is one of just a few holdouts among the world&#8217;s big mobile carriers not offering Apple Inc&#8217;s iPhone to its 60 million customers.</p>
+
+<p>It is paying heavily for that obstinacy - with a net 3.2 million users jumping ship to its two domestic rivals over the last 4-1/2 years â€” but is determined to protect the walled garden of services it has built around its own smartphones.</p>
+
+<p>&#8220;We&#8217;re trying to develop a lifestyle system,&#8221; NTT DoCoMo CEO Kaoru Kato told Reuters in an interview this week.</p>
+</blockquote>
+
+<p>I don&#8217;t see how that strategy makes sense today, especially given Android&#8217;s relative unpopularity in Japan.</p>
+
+<div>
+<a  title="Permanent link to â€˜Japan&#8217;s DoCoMo Still Holding Out on iPhoneâ€™"  href="http://daringfireball.net/linked/2013/07/07/docomo">&nbsp;â˜…&nbsp;</a>
+</div>
+
+    ]]></content>
+  </entry><entry>
+    
+    <link rel="alternate" type="text/html" href="http://daringfireball.net/2013/06/siege_mentality_indeed" />
+    <link rel="shorturl" href="http://df4.us/lhe" />
+    <id>tag:daringfireball.net,2013://1.27842</id>
+    <published>2013-06-20T20:53:57Z</published>
+    <updated>2013-06-21T16:58:09Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+<summary type="html"><![CDATA[<p>&#8220;Siege mentality&#8221;, indeed.</p>
+]]></summary>
+    <content type="html" xml:base="http://daringfireball.net/" xml:lang="en"><![CDATA[
+<p>Google engineer Ray Cromwell, responding a month ago to my &#8220;<a href="http://daringfireball.net/2013/05/google_versus">Google Versus</a>&#8221; piece, &#8220;<a href="https://plus.google.com/110412141990454266397/posts/LS1P3G9jUCz">Hardcore Apple Fans and Siege Mentality</a>&#8221;:</p>
+
+<blockquote>
+  <p>Just got back from I/O and I run into a Twitter thread where
+Farhad Manjoo, John Gruber, et al are criticizing a strawman
+Larry&#8217;s Q&amp;A session where Larry talks about negativity in the
+tech press.</p>
+</blockquote>
+
+<p>Looking forward to hearing what that straw man is.</p>
+
+<blockquote>
+  <p>There&#8217;s an underlying current of siege mentality in the Apple
+blogger world, after years of teetering on the brink, Apple made a
+come back, but its hardcore users lived under a constant perceived
+threat by Microsoft, and Steve Jobs cultivated a cult like
+tribalist view of the community when it came to competing
+ecosystems as a defense, not unlike I think governments that whip
+up nationalist or patriotic fervor.</p>
+</blockquote>
+
+<p><a href="http://daringfireball.net/2013/05/google_versus">My piece</a> he&#8217;s referring to had nothing to do with Apple. I did mention iPhone and Android, but only as one example of Google following the lead of others, commoditizing existing markets, the opposite of Larry Page&#8217;s onstage edict that &#8220;We should be building great things that donâ€™t exist.&#8221;</p>
+
+<blockquote>
+  <p>Now with Apple as the most successful company in the world, they
+still can&#8217;t shake the amygdala urge to fight anyone in their space
+as an enemy. Case in point, John Gruber refers to anyone who
+criticizes Apple in the slightest as a jackass, if you run a
+search restricted to Daring Fireball for that keyword, the search
+results are ten pages long.</p>
+</blockquote>
+
+<p>I have indeed used &#8220;jackass&#8221; to describe numerous people over the years, including a stretch circa 2006-2007 when I regularly named a &#8220;Jackass of the Week&#8221;. But I strongly believe that a <a href="http://www.google.com/search?q=site:daringfireball.net+jackass">perusal of the DF archive</a> would show that I have never used the word jackass to describe &#8220;anyone who criticizes Apple in the slightest&#8221;. There are indeed many search results on Daring Fireball for &#8220;jackass&#8221;, but I regret almost none of them. I&#8217;ve used the word very deliberately, and I hope consistently, to describe people who are, in fact, jackasses. To call a jackass a jackass may be impolite, but it is not inaccurate or unfair.</p>
+
+<p>My dictionary defines <em>jackass</em>, in the non-donkey sense, merely as &#8220;a stupid person&#8221;. To my mind, the word also conveys a sense of willfulness &#8212; to be not merely stupid but willfully stupid. In many cases, I&#8217;ve used it to describe people who wrote stupid things that I suspect they did not actually believe to be true, but that they wrote these stupid things to be purposefully sensational, to draw attention to themselves and to their writing.</p>
+
+<p>I can think of no better word than <em>jackass</em> to describe, to name one recent example, Peter Cohan of Forbes, who has <a href="http://daringfireball.net/linked/2012/10/01/cohan-jackass">argued</a> (<a href="http://daringfireball.net/linked/2013/01/22/cohan-forbes">repeatedly</a>) that Apple&#8217;s board of directors should fire Tim Cook. First, that&#8217;s a preposterously stupid idea. Second, I suspect that Cohan himself knows that it&#8217;s a stupid idea, and that he makes this argument only because making such an argument with an ostensibly straight face draws a lot of attention. He either honestly believes Apple&#8217;s board should fire Tim Cook, or he&#8217;s purposefully wasting his readers&#8217; attention with an argument he knows to be sensational nonsense. Either way, he&#8217;s a jackass.</p>
+
+<p>That said, a perusal of my use of the word <em>jackass</em> on DF will also show that I have used the term much less frequently over the last several years, despite the fact that jackassery (Apple-related or otherwise) is more rampant than ever. It was easier for me to use strong words like <em>jackass</em> years ago, when I was writing in relative obscurity, than it is today. Daring Fireball&#8217;s popularity creates the perception that my calling someone a jackass is not calling a spade a spade &#8212; which is always and only what I&#8217;ve intended &#8212; but rather a form of bullying &#8212; which is clearly how Cromwell, for example, sees it.</p>
+
+<p>My tendency toward bluntness, however warranted by the facts, results in a loss of persuasion among those who confuse bluntness with shrillness.</p>
+
+<blockquote>
+  <p>To a siege mentality, everything is zero sum.</p>
+</blockquote>
+
+<p>Again, I reiterate, my piece that Cromwell is referring to had almost nothing to do with Apple. It really was just about Google, and what I perceive to be their institutional hypocrisy and self-deception. Google is the company that has pitted itself as a rival to every other major player in the industry.</p>
+
+<p>Rational followers, customers, and even fans of Apple are not concerned in the least that Apple will any day soon again &#8220;teeter on the brink&#8221;. (As a point of fact, the company &#8220;teetered on the brink&#8221; just once, from 1996-97, and with the exception of a few hiccup quarters, have been remarkably successful ever since.) In fact, close followers of Apple should be more concerned not with Apple <em>losing</em> its powerful position atop the industry, but rather with their <em>abusing</em> it.</p>
+
+<p>One recent example: this bit, exposed during the e-book price-fixing trial (<a href="http://www.nytimes.com/2013/05/15/technology/us-now-paints-apple-as-ringmaster-in-its-lawsuit-on-e-book-price-fixing.html?pagewanted=all&amp;_r=0">as reported by the New York Times</a>):</p>
+
+<blockquote>
+  <p>In July 2010, Mr. Jobs, Appleâ€™s former chief executive, told the
+chief executive of Random House, Markus Dohle, that the publisher
+would suffer a loss of support from Apple if it held out much
+longer, according to an account of the conversation provided by
+Mr. Dohle in the filing. Two months later, Apple threatened to
+block an e-book application by Random House from appearing in
+Appleâ€™s App Store because it had not agreed to a deal with Apple,
+the filing said.</p>
+
+<p>After Random House finally agreed to a contract on Jan. 18, 2011,
+Eddy Cue, the Apple executive in charge of its e-books deals, sent
+an e-mail to Mr. Jobs attributing the publisherâ€™s capitulation, in
+part, to â€œthe fact that I prevented an app from Random House from
+going live in the app store,â€ the filing reads.</p>
+</blockquote>
+
+<p>I find that worrisome. Not merely because it&#8217;s unfair (though it is; apps submitted to Apple&#8217;s App Store ought to be judged solely on their own merit) but because it is unhealthy. A new endeavor, such as the iBookstore, should be able to succeed on its own, without any unfair help from a separate Apple property such as the App Store. This path leads to hubris, and hubris inevitably leads to a fall.<sup id="fnr1-2013-06-20"><a href="#fn1-2013-06-20">1</a></sup></p>
+
+<blockquote>
+  <p>Steve Jobs once said: &#8220;We did not enter the search business. They
+entered the phone business. Make no mistake they want to kill the
+iPhone. We won&#8217;t let them. This &#8216;don&#8217;t be evil&#8217; mantra is
+bullshit.&#8221; In this world, competition is about utterly destroying
+your enemy until they no longer exist, it&#8217;s evil, and Google and
+Apple were somehow supposed to have an unspoken &#8220;gentleman&#8217;s
+agreement&#8221; not to pursue each other&#8217;s markets.</p>
+</blockquote>
+
+<p>&#8220;Somehow supposed to&#8221;? Eric Schmidt was on Apple&#8217;s board of directors.<sup id="fnr2-2013-06-20"><a href="#fn2-2013-06-20">2</a></sup> There&#8217;s no &#8220;somehow&#8221; or &#8220;gentleman&#8217;s agreement&#8221; about it.</p>
+
+<blockquote>
+  <p>But Larry Page is right, competition need not be a zero sum game,
+especially in circumstances where the market is growing. Note that
+while iPhone and Android are brutally battling it out in the
+smartphone market, both Apple, Google, and Samsung have all been
+enjoying year over year increases in earnings and user base. Yes,
+Nokia and Blackberry lost out, but that&#8217;s mostly because feature
+phones as a category are dying, and iPhone class smartphones were
+launched by them too late.</p>
+
+<p>Overall, as far as Apple vs Android, so far, it has been positive
+sum for the two biggest fighters in the ring. Apple&#8217;s biggest
+problem at this point is not Android, but saturation and overly
+high expectations.</p>
+</blockquote>
+
+<p>Agreed. But, <em>again</em>, I repeat, I never said that Apple&#8217;s biggest problem is Android, nor that competition need be a zero sum game. The gist of my piece was not that Apple is good and Google is bad. The gist of my argument is that Google is a ruthless competitor that enters existing markets, upends them, and isolates itself with a seemingly unquenchable desire to dominate every single market in consumer online services; yet, hypocritically, its leadership describes Google as just wanting to get along, that Google is institutionally a <em>nice</em> company, and that they succeed by &#8220;building great things that donâ€™t exist&#8221;, whereas what they actually do is build free versions of things that already exist and make money selling ads.<sup id="fnr3-2013-06-20"><a href="#fn3-2013-06-20">3</a></sup> Google employees self-identify as not-ruthless while acting ruthlessly, leading to cognitive dissonance.</p>
+
+<blockquote>
+  <p>Gruber and others like to imagine that people who work at Google
+hate hate hate Apple products and want to destroy them, and that
+may be the mentality on the Apple side, but I don&#8217;t know many
+Googlers who spend time trying to devise plans to destroy the
+iPhone, many of them quite like iPads and use MacBooks and would
+be sad to see Apple fold.</p>
+</blockquote>
+
+<p>There is no chance that Apple is going to &#8220;fold&#8221;. No one is worried about that. That&#8217;s a very weird thought to have even occurred to Cromwell. And nobody thinks Google employees &#8220;hate&#8221; Apple products; it&#8217;s common knowledge that many use iPhones (<a href="http://daringfireball.net/linked/2012/07/17/mayer-roundup">including executives</a>) and many more use Macs.</p>
+
+<blockquote>
+  <p>As Larry said, much of the focus is on problem solving, not being
+concerned with &#8220;destroying&#8221; competitors like you&#8217;d read in
+internal Microsoft memos. The world has perhaps never seen a
+corporation with management and culture like Google before in this
+sector, they can&#8217;t process it, and the cynic has to suspect it&#8217;s
+all bullshit, all a show.</p>
+</blockquote>
+
+<p>Consider the industry landscape today. Apple just announced iOS 7; it adds support at the system level for Flickr and Vimeo (in addition to Facebook and Twitter, which came last year). iOS 7 gets weather, sports, and financial news from Yahoo. Siri now integrates with Bing &#8212; Microsoft! &#8212; for web and image search results. Who are Google&#8217;s allies and partners? What services does Android or Chrome OS include at the system level except Google&#8217;s own?</p>
+
+<p>Apple frequently highlights third-party apps in TV commercials and in marketing photos for its devices. When&#8217;s the last time Google has promoted third-party apps for Android? Have they ever?</p>
+
+<blockquote>
+  <p>Speaking of solving problems and doing stuff that&#8217;s never been
+done before, Gruber says:</p>
+
+<blockquote>
+  <p>Google is the company that built Android after the iPhone, Google
+Plus after Facebook, and now a subscription music service after
+Spotify. They entered the RSS reader market, wiped it out, and are
+now just walking away from it. Gmail? Webmail but better. Think
+about even web search: Google search wasnâ€™t something new; it was
+something better. Way, way, way better, but still.</p>
+
+<p>Consider maps. Google Maps entered a market where MapQuest and
+others had been around for years. That wasnâ€™t something great that
+didnâ€™t already exist. It was a better version of something that
+already existed.</p>
+</blockquote>
+
+<p>See the trick here? Google didn&#8217;t do anything that was&#8217;t done
+before. Gmail, Maps, Search, etc. Those are just refinements. But
+the iPhone? That&#8217;s an entirely new thing from wholecloth. We won&#8217;t
+say &#8220;the iPhone came after the Blackberry, after the Nokia
+Smartphones, after the PalmPhones&#8221;, we&#8217;ll just pretend they never
+existed.</p>
+</blockquote>
+
+<p>Clearly, I disagree with Cromwell almost entirely, but up until this point, I have tried to at least give him the benefit of the doubt in terms of his earnestness. But at this point it&#8217;s hard not to suspect that he&#8217;s just trolling.</p>
+
+<p>It was Larry Page who said, on stage at I/O:</p>
+
+<blockquote>
+  <p>Every story I read about Google is â€œus versus some other companyâ€
+or some stupid thing, and I just donâ€™t find that very interesting.
+We should be building great things that donâ€™t exist.</p>
+</blockquote>
+
+<p>I suppose technically Page didn&#8217;t claim that Google actually <em>does</em> build great things that don&#8217;t exist, only that they (and everyone in attendance) <em>should</em>. But the implication certainly is there.</p>
+
+<p>Of course Apple didn&#8217;t invent the smartphone. No one thinks they did; no one has ever claimed they did. That includes Apple. In fact, Steve Jobs specifically and joyfully cited all of the predecessors cited by Cromwell during the iPhone&#8217;s introduction in 2007. He even showed them off:</p>
+
+<p><a href="/misc/2010/03/smartphones.jpg">
+<img
+    src="/misc/2010/03/smartphones-415.jpg"
+    alt="Steve Jobs at Macworld Expo 2007, showing the leading smartphones prior to the iPhone."
+/></a></p>
+
+<p>Nothing better exemplifies what Apple does best: enter an existing market with a product that blows the competition away, through superior design and engineering.</p>
+
+<blockquote>
+  <p>When does executing on something so radically better count as
+&#8220;never been done before&#8221;? Gmail and Maps were some of the first in
+a new class of Web 2.0 applications, a whole new class of
+interactivity for a web app. Do Google&#8217;s datacenters counter as
+having never been done before? Co-loc points for hosting servers
+go back to the first dot.com boom, but to compare one of those
+with the way Google&#8217;s Datacenters are engineered as just refining
+is completely ignoring the depth to which Google reinvented the
+datacenter.</p>
+</blockquote>
+
+<p>I agree with every word of this. Google&#8217;s success in these markets is based on the superiority of their offerings: the best web search, the best webmail, the best maps. <em>Enter an existing market with an overwhelmingly superior and hard-to-duplicate new product and destroy the competition.</em> That&#8217;s what Apple does, and that&#8217;s what Google does. That&#8217;s what almost all successful companies do. But it&#8217;s Page who expresses disinterest in and considers &#8220;stupid&#8221; stories that pit Google &#8220;versus some other company&#8221;.</p>
+
+<p>The difference with Google is not the competitiveness, it&#8217;s the hypocrisy of denying the competitiveness. It feels trite to accuse Cromwell of <a href="http://en.wikipedia.org/wiki/Psychological_projection">projection</a>, but if there&#8217;s a company and its &#8220;fans&#8221; who are engaged in a &#8220;siege mentality&#8221;, it&#8217;s not Apple.</p>
+
+<blockquote>
+  <p>I for one am proud to be a googler because of things like the way
+Larry acquitted himself humbly, thoughtfully, and authentically at
+I/O. I&#8217;m glad he doesn&#8217;t engage in bitterness. Even if you think
+it&#8217;s fake spin, it&#8217;s still better than being an angry public
+jackass.</p>
+</blockquote>
+
+<p>Uh, exactly?</p>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1-2013-06-20">
+<p>When I linked to this NYT report a month ago, I quoted the same passage as above, but for my own commentary merely quipped, &#8220;Eddy Cue, hardball player.&#8221; That&#8217;s true, but it was lazy &#8212; and in hindsight I regret it, insofar as it does not suggest that I see this as the least bit troubling, when in fact I do.&nbsp;<a href="#fnr1-2013-06-20"  class="footnoteBackLink"  title="Jump back to footnote 1 in the text.">&#8617;</a></p>
+</li>
+
+<li id="fn2-2013-06-20">
+<p>Perhaps Apple&#8217;s (and Steve Jobs&#8217;s) folly in this case &#8212; of Eric Schmidt serving on the Apple board while Google was working on Android &#8212; was not in trusting Schmidt to keep Android on track as a BlackBerry-like platform, but in thinking that this was even possible. In hindsight it should have been obvious to Apple that all phones would soon be modeled after the iPhone. Android would have failed along with Symbian, Windows Mobile, Palm, and BlackBerry had it stuck to its roots rather than scramble to catch up to the iPhone as a fundamentally touchscreen-driven platform.&nbsp;<a href="#fnr2-2013-06-20"  class="footnoteBackLink"  title="Jump back to footnote 2 in the text.">&#8617;</a></p>
+</li>
+
+<li id="fn3-2013-06-20">
+<p>Google Glass is a new thing. Self-driving cars are a new thing. But for all the hype surrounding Google&#8217;s experiments, these things are just that: experimental. Neither are even products on the market, let alone successful ones.&nbsp;<a href="#fnr3-2013-06-20"  class="footnoteBackLink"  title="Jump back to footnote 3 in the text.">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+
+
+    ]]></content>
+  <title>â˜… Itâ€™s Been a While Since Iâ€™ve Done the Thing Where I Quote the Entirety (or Nearly So) of an Article and Then Dissect/Comment Upon It Line-by-Line, but I Do Still Have a Taste for It, Even Though in This Particular Case Itâ€™s a Month Late</title></entry><entry>
+    
+    <link rel="alternate" type="text/html" href="http://daringfireball.net/2013/06/ios_7_signature" />
+    <link rel="shorturl" href="http://df4.us/lg3" />
+    <id>tag:daringfireball.net,2013://1.27795</id>
+    <published>2013-06-10T23:37:58Z</published>
+    <updated>2013-06-11T19:01:21Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+<summary type="html"><![CDATA[<p>The software is now of a piece with the hardware. Two sides of the same coin. Not hardware design and software design. Just design.</p>
+]]></summary>
+    <content type="html" xml:base="http://daringfireball.net/" xml:lang="en"><![CDATA[
+<p>No one has questioned whether Jony Ive can lead a hardware design team. Whether he could lead a software design team, however, has been the biggest question facing Apple over <a href="http://daringfireball.net/2012/10/forstall_out">the last eight months</a>. In fact, it might be the biggest question facing Apple, ever, because it&#8217;s another way of asking whether the company could produce innovative software without you-know-who at the helm of the ship.</p>
+
+<p>Today, we have our answer, and it is a resounding yes. Jony Ive can lead a software team.</p>
+
+<p>The key, I think, is that his approach, and Apple&#8217;s as a whole under its post-Forstall organizational structure, is not to view this as two different things, hardware and software, but rather as a single thing: design.</p>
+
+<p>There is a deep intellectual rigor to the design of iOS 7, and it&#8217;s hard not to see it as being profoundly informed by Ive&#8217;s background in hardware. In hardware, design is limited by physics: weight, density, size, connections, seams. Software doesn&#8217;t face those design limits. The old design of iOS 6 took advantage of that lack of limits, to its detriment. In iOS 6, you open a folder on the home screen, and linen is something you see <em>underneath</em>. You pull down Notification Center, and linen is something you see <em>over</em>. It&#8217;s both over and under. Hardware doesn&#8217;t work like that, but software can, because software can show you anything, conceptual logic be damned.</p>
+
+<p>The design of iOS 7 is based on rules. There&#8217;s an intricate system at work, a Z-axis of layers organized in a logical way. There is a profound reduction in the use of faux-3D visual effects and textures, but iOS 7 is anything but flat. It is three dimensional not just visually but logically. It uses translucency not to show off, but to provide you with a sense of place. When you pull the new Control Center panel up from the bottom of the screen, its translucency lets you know that you haven&#8217;t gone somewhere new, you&#8217;re just looking at something <em>over</em> where you were.</p>
+
+<p>There&#8217;s a sense of place, depth, and spatiality in iOS 7 that makes it feel like hardware. A real thing, not pixels rendered on glass. It&#8217;s as though Ive has brought the same design goals that have always informed Apple&#8217;s hardware to software. And here, his team isn&#8217;t limited by physics. Planes can have zero thickness. But it&#8217;s a <em>system</em>, in the truest sense of the word.</p>
+
+<p>iOS 7 is not perfect; this new design framework will evolve and improve over time, just like iOS&#8217;s original aesthetic did. But it&#8217;s a conceptual foundation that corrects all of the excesses of the original iOS aesthetic. It&#8217;s radically different but not disorienting. Less flashy, less bling, more subtle, more refined. </p>
+
+<p>This is the first product of the post-Jobs Apple. The result shows that in some ways Apple&#8217;s software design has gotten <em>better</em>, because it was Jobs (and Forstall) who had a penchant for exuberant textures and gimmickry. Jobs&#8217;s taste in hardware was nearly perfect, but his taste in software <a href="http://daringfireball.net/linked/2011/10/26/more-texture">had a weakness for the saccharine</a>. Wood grain, linen, Rich Corinthian leather, etc. It was all just sugar for the eyes. This is a weakness Jony Iveâ€™s software taste clearly does not suffer.</p>
+
+<p>The software is now of a piece with the hardware. Two sides of the same coin. Not hardware design and software design. Just design.</p>
+
+
+
+    ]]></content>
+  <title>â˜… â€˜This Is Our Signatureâ€™: iOS 7</title></entry><entry>
+    
+    <link rel="alternate" type="text/html" href="http://daringfireball.net/2013/06/wwdc_2013_expectations" />
+    <link rel="shorturl" href="http://df4.us/lg0" />
+    <id>tag:daringfireball.net,2013://1.27792</id>
+    <published>2013-06-09T21:13:28Z</published>
+    <updated>2013-06-15T00:11:12Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+<summary type="html"><![CDATA[<p>The primary problem Apple faced with the iPhone in 2007 was building familiarity with a new way of using computers. That problem has now been solved. It is time to solve new problems.</p>
+]]></summary>
+    <content type="html" xml:base="http://daringfireball.net/" xml:lang="en"><![CDATA[
+<p>Tim Cook, one year ago, <a href="http://www.theverge.com/2012/5/29/3051521/tim-cook-apple-will-double-down-on-secrecy-on-products">to Walt Mossberg</a>: &#8220;We&#8217;re going to double down on secrecy on products.&#8221;</p>
+
+<p>12 months later, here we are, on the cusp of WWDC 2013, and nobody outside Apple seems to have any idea what Apple is set to show tomorrow. Cook&#8217;s words to Mossberg were anything but empty. The most secretive company in the industry got more secretive. We know Jony Ive has been leading the software design of iOS and OS X. We can be pretty sure they&#8217;re going to show us what they&#8217;ve been up to. But no one seems to know just what that is. </p>
+
+<p>Yours truly included &#8212; and I couldn&#8217;t be happier. I haven&#8217;t been this in the dark about what Apple was set to announce in a keynote since the original iPhone introduction in January 2007. I&#8217;ve seen some speculation over the past few days that <a href="http://vesperapp.co/">Vesper</a>&#8217;s UI was informed by advanced knowledge of iOS 7. It was not. In fact, if anything, I expect Apple to zig where we (Q Branch) have zagged, in some ways. (And if iOS 7&#8217;s reveal does make Vesper seem at least somewhat presciently designed, chalk it up simply to our being able to tell which way the design wind is blowing.)</p>
+
+<p>The thing to focus on &#8212; now, during the anticipatory lull, and tomorrow, once we have the actual design before us &#8212; is not merely what it looks like. The quote I keep coming back to is this classic from Steve Jobs, 10 years ago: &#8220;Most people make the mistake of thinking design is what it looks like. People think it&#8217;s this veneer &#8212; that the designers are handed this box and told, &#8216;Make it look good!&#8217; That&#8217;s not what we think design is. It&#8217;s not just what it looks like and feels like. Design is how it works.&#8221;</p>
+
+<p>Whatever has changed in iOS 7 has changed for reasons other than fashion, or difference for the sake of difference.</p>
+
+<p>The original iPhone was designed for a world where smartphones were horrid little button- and scroll-wheel-driven devices, and where proper humane computer interfaces were driven by mouse and trackpad cursors. The iPhone blended the two &#8212; the size and cellular networking of the smartphone, the humaneness of Mac-style UI design &#8212; and did so by introducing something new. The touchscreen.<sup id="fnr1-2013-06-09"><a href="#fn1-2013-06-09">1</a></sup></p>
+
+<p>The design of the iPhone software was entirely informed by the fact that this was a new experience, it was nothing like using an existing smartphone, nor anything like using a Mac or Windows PC. It needed training wheels to get people up to speed. Thus, to name one small example, why iOS buttons have tended to look so very button-y. To inform the user, as clearly as possible, that this is a button that can be tapped.</p>
+
+<p>Look around you. Any street corner. Any office. Any shopping mall. Any restaurant. You will see people tapping on touchscreens. We all get it now. iOS-style computing is no longer novel; it is now the standard interaction model for personal computing.</p>
+
+<p>The primary problem Apple faced with the iPhone in 2007 was building familiarity with a new way of using computers. That problem has now been solved. It is time to solve new problems.</p>
+
+<p>The training wheels can now come off. That&#8217;s what I think Apple&#8217;s going to do tomorrow.<sup id="fnr2-2013-06-09"><a href="#fn2-2013-06-09">2</a></sup></p>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1-2013-06-09">
+<p>No, Apple did not invent the touchscreen. But the iPhone was first product to bring a touchscreen to the mass market. It was the first touchscreen device that mattered.&nbsp;<a href="#fnr1-2013-06-09"  class="footnoteBackLink"  title="Jump back to footnote 1 in the text.">&#8617;</a></p>
+</li>
+<li id="fn2-2013-06-09">
+<p>I&#8217;ve been thinking mostly about iOS 7. But a new version of OS X is due as well. Last year they showed 10.8 months in advance; this year, nothing. So I think big changes are coming to the Mac as well. But what? I have no idea. None.</p>
+
+<p>Exciting.&nbsp;<a href="#fnr2-2013-06-09"  class="footnoteBackLink"  title="Jump back to footnote 2 in the text.">&#8617;</a></p>
+</li>
+
+</ol>
+</div>
+
+
+
+    ]]></content>
+  <title>â˜… WWDC 2013 Expectations</title></entry><entry>
+    
+    <link rel="alternate" type="text/html" href="http://daringfireball.net/2013/05/all_the_mashed_potatoes" />
+    <link rel="shorturl" href="http://df4.us/lcg" />
+    <id>tag:daringfireball.net,2013://1.27664</id>
+    <published>2013-05-17T03:59:59Z</published>
+    <updated>2013-05-17T17:24:42Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+<summary type="html"><![CDATA[<p>The difference between Google&#8217;s predatory rapaciousness and Microsoft&#8217;s of yore is that Microsoft wore it on their sleeve, they owned it.</p>
+]]></summary>
+    <content type="html" xml:base="http://daringfireball.net/" xml:lang="en"><![CDATA[
+<p><a href="http://www.technovia.co.uk/2013/05/apple-versus-after-john-gruber.html">Ian Betteridge spoofed my &#8220;Google Versus&#8221; piece from yesterday</a>, using this oft-cited quote from Steve Jobs speaking at Macworld Expo back in 1997:</p>
+
+<blockquote>
+  <p>â€œWe have to let go of this notion that for Apple to win, Microsoft
+has to lose,â€ Jobs said. â€œWe have to embrace the notion that for
+Apple to win, Apple has to do a really good job. If others are
+going to help us, thatâ€™s great. Because we need all the help we
+can get. [â€¦] The era of setting this up as a competition between
+Apple and Microsoft is over.â€</p>
+</blockquote>
+
+<p>Betteridge is off the mark on this one. That quote from Jobs was very specific. It came at a time when Apple was <em>not</em> making great products, and when Apple&#8217;s fans and perhaps even employees were locked into a mindset that the wrong platform &#8212; Windows &#8212; had won. That Windows&#8217;s almost unimaginable success, its spectacular rise to worldwide ubiquity, was an injustice &#8212; one that only Apple could right. He wasn&#8217;t claiming that for Apple to succeed <em>no one</em> had to lose, only Microsoft (and, really, Windows in particular &#8212; as opposed to then-future initiatives like MP3 players and mobile phones, where for Apple to succeed it certainly helped that Microsoft lost).</p>
+
+<p>Note too that Jobs&#8217;s message was bitter medicine. He was surrendering a war that the audience wanted Apple to continue fighting. As Jason Breitkopf noted in a comment on Betteridge&#8217;s piece, Jobs was booed, resoundingly,<sup id="fnr1-2013-05-16"><a href="#fn1-2013-05-16">1</a></sup> by the Macworld audience several times during his announcement. Page&#8217;s message at I/O was greeted with applause. Page was telling the I/O audience what they wanted to hear, that Google is something other than a ruthless, greedy competitor.</p>
+
+<p>I&#8217;m not arguing that Apple is not also a ruthless and greedy competitor. In fact, <a href="http://daringfireball.net/2013/05/google_versus">my piece yesterday</a> had nothing to do with Apple &#8212; only Google. (I should have left Android and the iPhone out of it, as that was the only oblique reference to Apple.) The difference is that Apple hasn&#8217;t claimed otherwise. Again, Jobs wasn&#8217;t claiming in 1997 that <em>no one</em> had to lose for Apple to win. The drum I&#8217;m trying to bang here is not that Google is a greedy competitor, but rather that Google is a greedy competitor that presents itself as anything but &#8212; as a sort of peaceful, whimsical, happy-go-lucky techno-futurist corporate utopian &#8212; and that rather than see this pose as absurd, many people, Googlers and Google users alike, buy it.</p>
+
+<p>All organizations have aspirations. You&#8217;re welcome to roll your eyes at <a href="http://www.youtube.com/watch?v=AZeOhnTuq2I">Steve Jobs&#8217;s spiel about Apple existing at the intersection of technology and the liberal arts</a>, or <a href="http://www.wired.co.uk/news/archive/2012-07/30/jonathan-ive-revenue-good-design">this from Jony Ive</a>:</p>
+
+<blockquote>
+  <p>&#8220;We are really pleased with our revenues but our goal isn&#8217;t to
+make money. It sounds a little flippant, but it&#8217;s the truth. Our
+goal and what makes us excited is to make great products. If we
+are successful people will like them and if we are operationally
+competent, we will make money,&#8221; he said.</p>
+</blockquote>
+
+<p>Mere spin? Perhaps. But those statements from Jobs and Ive are not absurd. If they&#8217;re not the absolute truth, they&#8217;re at least truthy. Whereas Larry Page&#8217;s pablum regarding Google not being pitted against other companies is farcical. <a href="http://www.macdevcenter.com/lpt/a/2387">Tim O&#8217;Reilly had a good line about Microsoft</a> a decade ago:</p>
+
+<blockquote>
+  <p>Microsoft gets a lot of heat for not leaving enough on the table
+for others. My mother, who&#8217;s English, and quite a character, once
+said of Bill Gates, &#8220;He sounds like someone who would come to your
+house for dinner and say, &#8216;Thank you. I think I&#8217;ll have all the
+mashed potatoes.&#8217;&#8221;</p>
+</blockquote>
+
+<p>That&#8217;s Google today. What major tech giant has Google <em>not</em> pitted itself against? Whose mashed potatoes <a href="http://arstechnica.com/business/2013/03/google-slips-accidentally-unveils-evernote-like-google-keep-service/">do they not seek to take</a>? Apple, Microsoft, Yahoo, Oracle, Facebook, Twitter, Amazon &#8212; Google has made enemies of all of them. The difference between Google&#8217;s predatory rapaciousness today and Microsoft&#8217;s of yore is that Microsoft wore it on their sleeve, they owned it, celebrated it.</p>
+
+<p>What rankles about Google is their hypocrisy.</p>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1-2013-05-16">
+<p>Seriously, <a href="https://www.youtube.com/watch?v=WxOp5mBY9IY">watch the video</a>. E.g., around the 2:30 mark, when Jobs announces that Internet Explorer will be the new default browser for Mac OS. The audience is outraged. (And Jobs, clearly, was prepared for the reaction.)&nbsp;<a href="#fnr1-2013-05-16"  class="footnoteBackLink"  title="Jump back to footnote 1 in the text.">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+
+
+    ]]></content>
+  <title>â˜… All the Mashed Potatoes</title></entry><entry>
+    
+    <link rel="alternate" type="text/html" href="http://daringfireball.net/2013/05/google_versus" />
+    <link rel="shorturl" href="http://df4.us/lc4" />
+    <id>tag:daringfireball.net,2013://1.27652</id>
+    <published>2013-05-16T03:59:00Z</published>
+    <updated>2013-05-17T04:54:49Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+<summary type="html"><![CDATA[<p>Google is a hyper-competitive company, and they repeatedly enter markets that already exist and crush competitors. Nothing wrong with that.</p>
+]]></summary>
+    <content type="html" xml:base="http://daringfireball.net/" xml:lang="en"><![CDATA[
+<p>Larry Page, <a href="http://thenextweb.com/google/2013/05/15/google-glass/">on stage at I/O today</a>:</p>
+
+<blockquote>
+  <p>Every story I read about Google is &#8220;us versus some other company&#8221;
+or some stupid thing, and I just donâ€™t find that very interesting.
+We should be building great things that donâ€™t exist. Being
+negative isnâ€™t how we make progress. Most important things are not
+zero sum, there is a lot of opportunity out there.</p>
+</blockquote>
+
+<p>Google fans seem to eat this kumbaya stuff up, to really believe it. But Google is the company that built Android after the iPhone, Google Plus after Facebook, and now a subscription music service after Spotify. They entered the RSS reader market, wiped it out, and are now just walking away from it. Gmail? Webmail but better. Think about even web search: Google search wasn&#8217;t something new; it was something better. Way, way, way better, but still. </p>
+
+<p>Consider maps. Google Maps entered a market where MapQuest and others had been around for years. That wasn&#8217;t something great that didn&#8217;t already exist. It was a better version of something that already existed. Google is a hyper-competitive company, and they repeatedly enter markets that already exist and crush competitors. Nothing wrong with that. That&#8217;s how capitalism is supposed to work, and Google&#8217;s successes are admirable. But there&#8217;s nothing stupid about seeing Google being pitted &#8220;versus&#8221; other companies. They want everything; their ambition is boundless.</p>
+
+
+
+    ]]></content>
+  <title>â˜… Google Versus</title></entry><entry>
+    
+    <link rel="alternate" type="text/html" href="http://daringfireball.net/2013/05/facebook_home_dogfooding" />
+    <link rel="shorturl" href="http://df4.us/lbz" />
+    <id>tag:daringfireball.net,2013://1.27647</id>
+    <published>2013-05-15T03:14:05Z</published>
+    <updated>2013-05-15T03:43:45Z</updated>
+    <author>
+        <name>John Gruber</name>
+        <uri>http://daringfireball.net/</uri>
+    </author>
+<summary type="html"><![CDATA[<p>Turn Facebook Home into an interface that Facebook designers and engineers <em>want</em> to use, not merely feel obligated to use, and then they&#8217;ll have something.</p>
+]]></summary>
+    <content type="html" xml:base="http://daringfireball.net/" xml:lang="en"><![CDATA[
+<p><a href="http://techcrunch.com/2013/05/12/droidfooding-home/">Josh Constine, writing for AOL/TechCrunch</a>:</p>
+
+<blockquote>
+  <p>Facebook didnâ€™t realize just how important widgets, docks, and app
+folders were to Android users, and that leaving them out of Home
+was a huge mistake. Thatâ€™s because some of the Facebookers who
+built and tested Home normally carry iPhones, Iâ€™ve confirmed. Lack
+of â€œdroidfoodingâ€ has left Facebook scrambling to add these
+features, whose absence have led Home to just 1 million downloads
+since launching a month ago. [â€¦]</p>
+
+<p>The lack of droidfooders didnâ€™t have serious consequences until
+Home, Facebookâ€™s new â€œapperating systemâ€. It replaces the lock
+screen, homescreen, and app launcher of compatible Android phones
+with a Facebook-centric experience. It offers Cover Feed, a big,
+beautiful way to browser the news feed the second you bring your
+phone out of sleep. Itâ€™s missing the ability to build real-time
+information widgets, put your most used apps in a persistently
+visible dock, or organize your collection of apps into folders.</p>
+</blockquote>
+
+<p>Constine is jumping to some unsupported conclusions here. Is it possible that Facebook Home has fallen flat on Android because it was designed by iPhone users? That&#8217;s certainly possible. But more likely, it seems to me, is that Facebook Home is just a bad idea. As I said <a href="http://daringfireball.net/linked/2013/05/10/facebook-flop">last week</a>, it&#8217;s a well-designed implementation of an idea no one wants. Would iPhone users want this? I can&#8217;t see why. And if the problem is that Facebook Home designers are iPhone users, it might explain why they didn&#8217;t see the appeal of widgets, but how would it explain the lack of a persistent app dock or app folders? The iPhone has those. I suspect most iPhone users would miss them if they were able to install Facebook Home.</p>
+
+<p>Facebook Home isn&#8217;t an iPhone idea. It&#8217;s just a bad idea. <a href="http://stratechery.com/2013/facebook-phones-and-the-future-of-mobile-communication/">Facebook is an app, not a platform.</a> A good home screen interface is one that accommodates any app or service, not just one.</p>
+
+<p>There is a <a href="http://en.wikipedia.org/wiki/Eating_your_own_dog_food">dogfooding</a> lesson here, though. Does Mark Zuckerberg carry an HTC First, or any other Android phone with Facebook Home installed? Does Mike Matas? (Doesn&#8217;t look like it, judging by the &#8220;via Twitter for iPhone&#8221; metadata on his <a href="https://twitter.com/mike_matas/status/324186555390513154">recent</a> <a href="https://twitter.com/mike_matas/status/327681441796325376">tweets</a>.) Why not?</p>
+
+<p>It&#8217;s always a sign of trouble when you&#8217;ve built something you don&#8217;t want to use yourself. Why does everyone I know who works at Apple carry an iPhone? Every single one? Not because they have to. It&#8217;s because they <em>want</em> to.</p>
+
+<p>Turn Facebook Home into an interface that Facebook designers and engineers <em>want</em> to use, not merely feel obligated to use, and then they&#8217;ll have something. But if it remains something that even Facebook&#8217;s own designers and engineers do not prefer over the iPhone (or stock Android, or any other platform), if it remains something that the company needs propaganda posters to promote even among its own employees, then Facebook Home will remain what it is now. A dud.</p>
+
+
+
+    ]]></content>
+  <title>â˜… Facebook Home and Dogfooding</title></entry></feed><!-- THE END -->

@@ -89,20 +89,22 @@ def feed_create():
 def feed_preview():
     """preview a feed"""
     feed_url = request.args.get('feed_url')
-    include_summary = request.args.get('include_summary', 'false') == 'true'
+    linked_list_mode = request.args.get('linked_list_mode', 'false') == 'true'
     if not feed_url:
         return jsonify(status='error', message='You must pass a feed url')
 
     exsisting_feeds = []
     error = None
+
     try:
-        exsisting_feeds = Entry.entry_preview_for_feed(feed_url=feed_url, include_summary=include_summary)
+        exsisting_feeds = Entry.entry_preview_for_feed(feed_url=feed_url, linked_list_mode=linked_list_mode)
     except urlfetch.DownloadError:
         error = 'Failed to fetch that URL.'
         logger.info('Feed Preview: Failed to download feed: %s', feed_url)
     except urlfetch.DeadlineExceededError:
         error = 'URL took to long to fetch.'
         logger.info('Feed Preview: Feed took too long: %s', feed_url)
+        raise
     except urlfetch.InvalidURLError:
         error = 'The URL for this feeds seems to be invalid.'
     except FetchException, e:
@@ -111,7 +113,6 @@ def feed_preview():
     except Exception, e:
         error = 'Something went wrong while fetching your URL.'
         logger.exception('Feed Preview: Failed to update feed:%s' % (feed_url, ))
-        raise
 
     if not exsisting_feeds and not error:
         error = 'The feed doesn\'t have any entries'
@@ -139,7 +140,6 @@ def feed(feed_id):
 @app.route('/api/feeds/<int:feed_id>', methods=['POST'])
 def feed_change(feed_id):
     """Get a feed"""
-
     form = FeedCreate(request.form)
     if not form.validate():
         return jsonify_error(message="Invalid update data")
@@ -200,11 +200,12 @@ def published_entries_for_feed(feed_id):
 @app.route('/api/feeds/<int:feed_id>/preview', methods=['GET'])
 def save_feed_preview(feed_id):
     """preview a saved feed"""
+    linked_list_mode = request.args.get('linked_list_mode', 'false') == 'true'
     feed = Feed.get_by_id(feed_id, parent=g.user.key)
     if not feed:
         return jsonify_error(message="Can't find that feed")
-
-    preview_entries = Entry.entry_preview(Entry.latest_published(feed).fetch(3))
+    logger.info('Linked List mode: %s', linked_list_mode)
+    preview_entries = Entry.entry_preview(Entry.latest_published(feed).fetch(3), feed.feed_url, linked_list_mode)
 
     return jsonify(status='ok', data=preview_entries)
 

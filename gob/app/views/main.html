@@ -33,7 +33,7 @@
               <div class="control-group">
                   <label class="control-label" for="inputEmail">Feed URL</label>
                   <div class="controls">
-                    <div class=''>
+                    <div class='' ng-hide='feed.feed_id'>
                       <input type="text" id="inputEmail" placeholder="https://example.com/rss" ng-model='feed.feed_url' ng-show='!feed.feed_id'>
                       <span class='loading-icon' style='display: none;'>
                         <i class="icon-refresh icon-spin"></i>
@@ -42,6 +42,9 @@
                     <p ng-show='feed.feed_id'>
                       <a ng-href='{{feed.feed_url}}' ng-bind='feed.feed_url' class='ellipses'></a>
                     </p>
+                    <label class='checkbox'>
+                      <input type='checkbox' name='linked_list' ng-model='feed.linked_list_mode'> Linked List Mode
+                    </label>
                   </div>
               </div>
             </form>

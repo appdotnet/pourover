@@ -6,6 +6,8 @@ import unittest
 import json
 from datetime import timedelta
 
+import inspect, os
+
 from google.appengine.ext import testbed
 from google.appengine.api import memcache
 
@@ -353,7 +355,19 @@ class BusterTestCase(MockUrlfetchTest):
         assert 1 == len(json.loads(resp.data)['data'])
         self.set_rss_response('http://techcrunch.com/feed/2', content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=500)
         resp = self.app.get('/api/feed/preview?feed_url=http://techcrunch.com/feed/2', headers=self.authHeaders())
-        assert 0 == len(json.loads(resp.data)['data'])
+        assert json.loads(resp.data)['message']
+
+    def testLinkedListMode(self):
+        data = open(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + '/data/df_feed.xml').read()
+        self.set_rss_response('http://daringfireball.net/index.xml', content=data)
+        resp = self.app.get('/api/feed/preview?feed_url=http://daringfireball.net/index.xml', headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0] == "<span><a href='http://blog.app.net/2013/07/15/pourover-for-app-net-is-now-available/?utm_medium=App.net&utm_source=PourOver'>PourOver for App.net</a></span>"
+
+        resp = self.app.get('/api/feed/preview?linked_list_mode=true&feed_url=http://daringfireball.net/index.xml', headers=self.authHeaders())
+        data = json.loads(resp.data)
+
+        assert data['data'][0] == "<span><a href='http://daringfireball.net/linked/2013/07/17/pourover?utm_medium=App.net&utm_source=PourOver'>PourOver for App.net</a></span>"
 
 if __name__ == '__main__':
     unittest.main()

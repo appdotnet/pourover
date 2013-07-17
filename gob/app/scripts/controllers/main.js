@@ -75,6 +75,14 @@ angular.module('frontendApp')
   if (!client) {
     return;
   }
+
+  var serialize_feed = function (feed) {
+    if (!feed.linked_list_mode) {
+      delete feed.linked_list_mode;
+    }
+
+    return feed;
+  };
   $scope.feed_error = undefined;
   $scope.$watch('feed', _.debounce(function () {
     var preview_url = 'feed/preview';
@@ -88,10 +96,10 @@ angular.module('frontendApp')
     jQuery('.loading-icon').show();
     apiRequest({
       url: preview_url,
-      data: $scope.feed,
+      data: serialize_feed($scope.feed),
     }, client, window.location + 'api/').done(function (resp) {
       $scope.$apply(function (scope) {
-        if (resp.status == 'ok') {
+        if (resp.status === 'ok') {
           scope.posts = resp.data;
           scope.feed_error = undefined;
         } else {
@@ -169,7 +177,7 @@ angular.module('frontendApp')
     }
     apiRequest({
       url: url,
-      data: $scope.feed,
+      data: serialize_feed($scope.feed),
       method: 'POST',
     }, client, window.location + 'api/').done(function (resp) {
       if (resp.data && resp.data.feed_id) {

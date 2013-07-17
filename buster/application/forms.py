@@ -36,5 +36,6 @@ class FeedCreate(Form):
     feed_url = fields.TextField(validators=[validators.DataRequired(), validators.URL(), valid_feed])
     # Someday we can turn this back on if we want.
     # include_summary = fields.BooleanField(default=False, filters=[boolean_filter])
+    linked_list_mode = fields.BooleanField(default=False, filters=[boolean_filter])
     max_stories_per_period = fields.IntegerField(default=1, validators=[validators.NumberRange(1, 5)])
     schedule_period = fields.IntegerField(default=PERIOD_SCHEDULE.MINUTE_5, validators=[validators.AnyOf(PERIOD_SCHEDULE)])

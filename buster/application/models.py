@@ -12,7 +12,7 @@ from google.appengine.ext import ndb
 from google.appengine.api import urlfetch
 from django.utils.text import Truncator
 import urllib
-
+from urlparse import urlparse
 import feedparser
 import json
 
@@ -242,6 +242,62 @@ def find_thumbnail(item):
     return None
 
 
+def get_link_for_item(feed_link, item, linked_list_mode):
+    main_item_link = item.get('link')
+
+    # If the user hasn't turned on linked list mode
+    # return the main_item_link
+    if not linked_list_mode:
+        return main_item_link
+
+    # if the feed is so malformed it doesn't link to it's self then
+    # just return the main item link
+    if not feed_link:
+        return main_item_link
+
+    parsed_feed_link = urlparse(feed_link)
+    parsed_item_link = urlparse(main_item_link)
+
+    # If the main link has the same root domain as the feed
+    # This is linking back to the blog already so return
+    # The main link.
+    if parsed_feed_link.netloc == parsed_item_link.netloc:
+        return main_item_link
+
+    # If we are still here, we should now look through the alternate links
+    links = item.get('links', [])
+    for link in links:
+        href = link.get('href')
+        if not href:
+            continue
+
+        parsed_link = urlparse(href)
+        # If we find an alternate link that matches domains
+        # we make the assumption that this is the permalink back to the blog
+        if parsed_link.netloc == parsed_feed_link.netloc:
+            return href
+
+    # If we are still here we now need to look through the links that are in the content
+    soup = BeautifulSoup(item.get('summary', ''))
+    links = soup.findAll('a')
+
+    # No links, then we are out of look return the main_item_link
+    if not links:
+        return main_item_link
+
+    # Right now lets just try this on the last link
+    last_link = links[-1]
+    # logger.info('Last link: %s', last_link)
+    href = last_link.get('href')
+    parsed_link = urlparse(href)
+    # logger.info('Last link parsed: %s %s %s', parsed_link.netloc, parsed_feed_link.netloc, parsed_link)
+    # If the domains match lets use this as the URL
+    if parsed_link.netloc == parsed_feed_link.netloc:
+        return href
+
+    return main_item_link
+
+
 class User(ndb.Model):
     access_token = ndb.StringProperty()
 
@@ -271,6 +327,8 @@ class Entry(ndb.Model):
     thumbnail_image_width = ndb.IntegerProperty()
     thumbnail_image_height = ndb.IntegerProperty()
 
+    feed_item = ndb.PickleProperty()
+
     def to_json(self, include=None):
         include = include or []
         data = {}
@@ -284,7 +342,7 @@ class Entry(ndb.Model):
 
         return data
 
-    def format_for_adn(self, include_summary=False, include_thumb=False):
+    def format_for_adn(self, feed_url, include_summary=False, include_thumb=False, linked_list_mode=False):
         post_text = self.title
         links = []
         if include_summary:
@@ -300,8 +358,12 @@ class Entry(ndb.Model):
             post_text = u'%s\n%s' % (post_text, summary_text)
 
         post_text = ellipse_text(post_text, MAX_CHARS)
-
-        link = append_query_string(self.link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
+        if self.feed_item:
+            link = get_link_for_item(feed_url, self.feed_item, linked_list_mode=linked_list_mode)
+        else:
+            link = self.link
+        logger.info("Whats the link %s %s", link, linked_list_mode)
+        link = append_query_string(link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
 
         # logger.info(u'Text Len: %s text: %s entry_title:%s entry_title_len:%s', len(post_text), post_text, entry.title, len(entry.title))
         links.insert(0, (link, self.title))
@@ -355,22 +417,22 @@ class Entry(ndb.Model):
         return post
 
     @classmethod
-    def entry_preview(cls, entries):
-        return [build_html_from_post(entry.format_for_adn()) for entry in entries]
+    def entry_preview(cls, entries, feed_url, linked_list_mode=False):
+        return [build_html_from_post(entry.format_for_adn(feed_url, linked_list_mode=linked_list_mode)) for entry in entries]
 
     @classmethod
-    def entry_preview_for_feed(cls, feed_url, include_summary):
+    def entry_preview_for_feed(cls, feed_url, linked_list_mode=False):
         parsed_feed, resp = fetch_feed_url(feed_url)
         entries = []
         for item in parsed_feed.entries:
-            entry = cls.prepare_entry_from_item(item)
+            entry = cls.prepare_entry_from_item(parsed_feed, item, linked_list_mode=linked_list_mode)
             if entry:
                 entries.append(entry)
 
-        return cls.entry_preview(entries)
+        return cls.entry_preview(entries, feed_url, linked_list_mode=linked_list_mode)
 
     @classmethod
-    def prepare_entry_from_item(cls, item, overflow=False, overflow_reason=None, published=False, feed=None):
+    def prepare_entry_from_item(cls, rss_feed, item, overflow=False, overflow_reason=None, published=False, linked_list_mode=False, feed=None):
         title_detail = item.get('title_detail')
         title = item.get('title', 'No Title')
 
@@ -380,6 +442,9 @@ class Entry(ndb.Model):
             if title_detail['type'] == u'text/html':
                 title = BeautifulSoup(title).text
 
+        feed_link = rss_feed.get('feed') and rss_feed.feed.get('link')
+        link = get_link_for_item(feed_link, item, linked_list_mode=linked_list_mode)
+
         # We can only store a title up to 500 chars
         title = title[0:499]
         guid = guid_for_item(item)
@@ -387,7 +452,10 @@ class Entry(ndb.Model):
             logger.warn('Found a guid > 500 chars link: %s item: %s', guid, item)
             return None
 
-        link = item.get('link')
+        if not link:
+            logger.warn("Item found without link skipping item: %s", item)
+            return None
+
         if len(link) > 500:
             logger.warn('Found a link > 500 chars link: %s item: %s', link, item)
             return None
@@ -396,11 +464,8 @@ class Entry(ndb.Model):
             logger.warn("Item found without guid skipping item: %s", item)
             return None
 
-        if not link:
-            logger.warn("Item found without link skipping item: %s", item)
-            return None
-
-        kwargs = dict(guid=guid, title=title, summary=item.get('summary', ''), link=link,
+        summary = item.get('summary', '')
+        kwargs = dict(guid=guid, title=title, summary=summary, link=link,
                       published=published, overflow=overflow, overflow_reason=overflow_reason)
         if feed:
             kwargs['parent'] = feed.key
@@ -412,18 +477,20 @@ class Entry(ndb.Model):
         except Exception, e:
             logger.info("Exception while trying to find thumbnail %s", e)
 
+        kwargs['feed_item'] = item
+
         entry = cls(**kwargs)
 
         return entry
 
     @classmethod
-    def create_from_feed_and_item(cls, feed, item, overflow=False, overflow_reason=None):
+    def create_from_feed_and_item(cls, feed, item, overflow=False, overflow_reason=None, rss_feed=None):
         entry = cls.query(cls.guid == guid_for_item(item), ancestor=feed.key).get()
         published = False
         if overflow:
             published = True
         if not entry:
-            entry = cls.prepare_entry_from_item(item, overflow, overflow_reason, published, feed=feed)
+            entry = cls.prepare_entry_from_item(rss_feed, item, overflow, overflow_reason, published, feed=feed)
             if entry:
                 entry.put()
 
@@ -433,7 +500,7 @@ class Entry(ndb.Model):
         feed = self.key.parent().get()
         user = feed.key.parent().get()
         # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
-        post = self.format_for_adn(feed.include_summary, feed.include_thumb)
+        post = self.format_for_adn(feed.feed_url, feed.include_summary, feed.include_thumb, feed.linked_list_mode)
         logger.info('Post: %s', post)
         resp = urlfetch.fetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), method='POST', headers={
             'Authorization': 'Bearer %s' % (user.access_token, ),
@@ -478,7 +545,7 @@ class Entry(ndb.Model):
             feed.put()
 
         for item in parsed_feed.entries:
-            entry = cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason)
+            entry = cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason, rss_feed=parsed_feed)
 
         if publish:
             # How many stories have been published in the last period_length
@@ -539,6 +606,7 @@ class Feed(ndb.Model):
     status = ndb.IntegerProperty(default=FEED_STATE.ACTIVE)
     include_summary = ndb.BooleanProperty(default=False)
     include_thumb = ndb.BooleanProperty(default=False)
+    linked_list_mode = ndb.BooleanProperty(default=False)
     template = ndb.TextProperty(default='')
     added = ndb.DateTimeProperty(auto_now_add=True)
     update_interval = ndb.IntegerProperty(default=UPDATE_INTERVAL.MINUTE_5)
@@ -613,6 +681,7 @@ class Feed(ndb.Model):
             'feed_url': self.feed_url,
             'feed_id': self.key.id(),
             # 'include_summary': self.include_summary,
+            'linked_list_mode': self.linked_list_mode,
             'schedule_period': self.schedule_period,
             'max_stories_per_period': self.max_stories_per_period,
         }
