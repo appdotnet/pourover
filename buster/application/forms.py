@@ -20,9 +20,15 @@ def valid_feed(form, field):
     except Exception, e:
         logger.exception('failed validation')
         raise ValidationError(message='Failed to fetch feed')
+    # logger.info(parsed_feed)
+    # logger.info('href: %s', parsed_feed.feed.get('subtitle'))
 
-    if not parsed_feed.feed.get('title'):
-        logger.info('Failed to find a feed title')
+    title = parsed_feed.feed.get('title')
+    if not title:
+        title = parsed_feed.feed.get('subtitle')
+
+    if not title:
+        logger.info('Failed to find a feed title: %s' % (feed))
         raise ValidationError(message='Invalid RSS feed')
 
 
