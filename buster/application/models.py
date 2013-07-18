@@ -132,7 +132,7 @@ def build_html_from_post(post):
     return '<span>%s</span>' % (''.join(html_pieces), )
 
 
-def fetch_feed_url(feed_url, etag=None, update_url=False):
+def _prepare_request(feed_url, etag, async=False):
     # logger.info('Fetching feed feed_url:%s etag:%s', feed_url, etag)
     kwargs = {
         'url': feed_url,
@@ -144,7 +144,20 @@ def fetch_feed_url(feed_url, etag=None, update_url=False):
     if etag:
         kwargs['headers']['If-None-Match'] = etag
 
-    resp = urlfetch.fetch(**kwargs)
+    if async:
+        rpc = urlfetch.create_rpc(deadline=30)
+        urlfetch.make_fetch_call(rpc, **kwargs)
+
+        return rpc
+    else:
+        return urlfetch.fetch(**kwargs)
+
+
+def fetch_feed_url(feed_url, etag=None, update_url=False, rpc=None):
+    if rpc is None:
+        resp = _prepare_request(feed_url, etag, async=False)
+    else:
+        resp = rpc.get_result()
 
     if resp.status_code not in VALID_STATUS:
         raise FetchException('Could not fetch feed. feed_url:%s status_code:%s final_url:%s' % (feed_url, resp.status_code, resp.final_url))
@@ -213,8 +226,8 @@ def find_thumbnail(item):
 
     soup = BeautifulSoup(item.get('summary', ''))
     for image in soup.findAll('img'):
-        w = image.get('width');
-        h = image.get('height');
+        w = image.get('width')
+        h = image.get('height')
         if not (w and h):
             style = parse_style_tag(image.get('style'))
             if style:
@@ -537,7 +550,7 @@ class Entry(ndb.Model):
 
     @classmethod
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
-        parsed_feed, resp = fetch_feed_url(feed.feed_url, feed.etag)
+        parsed_feed, resp = fetch_feed_url(feed.feed_url, feed.etag, rpc=getattr(feed, 'rpc', None))
         # There should be no data in here anyway
         if resp.status_code == 304:
             return parsed_feed
@@ -684,6 +697,9 @@ class Feed(ndb.Model):
         feed = cls(parent=user.key, feed_url=feed_url, include_summary=include_summary)
         feed.put()
         return cls.process_new_feed(feed)
+
+    def prepare_request(self):
+        self.rpc = _prepare_request(self.feed_url, self.etag, async=True)
 
     def to_json(self):
         return {

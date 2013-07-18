@@ -288,6 +288,10 @@ def update_all_feeds(interval_id):
         return jsonify_error(message='Not a cron call')
 
     feeds = Feed.for_interval(interval_id)
+
+    for feed in feeds:
+        feed.prepare_request()
+
     errors = 0
     success = 0
     for feed in feeds:
