@@ -693,7 +693,8 @@ class Feed(ndb.Model):
 
                 logger.info('Hub: %s Subscribe Data: %s', hub_url, subscribe_data)
                 form_data = urllib.urlencode(subscribe_data)
-                urlfetch.fetch(hub_url, method='POST', payload=form_data)
+                resp = urlfetch.fetch(hub_url, method='POST', payload=form_data)
+                logger.info('PuSH Subscribe request hub:%s status_code:%s response:%s', hub_url, resp.status_code, resp.content)
 
         return feed
 
