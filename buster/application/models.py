@@ -145,7 +145,7 @@ def _prepare_request(feed_url, etag, async=False):
         kwargs['headers']['If-None-Match'] = etag
 
     if async:
-        rpc = urlfetch.create_rpc(deadline=30)
+        rpc = urlfetch.create_rpc(deadline=20)
         urlfetch.make_fetch_call(rpc, **kwargs)
 
         return rpc

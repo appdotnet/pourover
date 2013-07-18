@@ -4,7 +4,7 @@ cron:
   schedule: every 1 minutes
 - description: fast poll
   url: /api/feeds/all/update/1
-  schedule: every 5 minutes
+  schedule: every 1 minutes
 - description: kinda fast poll
   url: /api/feeds/all/update/2
   schedule: every 15 minutes
