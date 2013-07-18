@@ -295,6 +295,14 @@ def get_link_for_item(feed_link, item, linked_list_mode):
     if parsed_link.netloc == parsed_feed_link.netloc:
         return href
 
+    # Finally lets try a last ditch custom method
+    # we can just ask the user to change up their content so we can find something in it
+    permalink = soup.find('a', {'rel': 'permalink'})
+    if permalink:
+        href = permalink.get('href')
+        if href:
+            return href
+
     return main_item_link
 
 
