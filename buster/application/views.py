@@ -204,7 +204,7 @@ def save_feed_preview(feed_id):
     feed = Feed.get_by_id(feed_id, parent=g.user.key)
     if not feed:
         return jsonify_error(message="Can't find that feed")
-    logger.info('Linked List mode: %s', linked_list_mode)
+
     preview_entries = Entry.entry_preview(Entry.latest_published(feed).fetch(3), feed.feed_url, linked_list_mode)
 
     return jsonify(status='ok', data=preview_entries)

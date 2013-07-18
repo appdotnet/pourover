@@ -362,7 +362,7 @@ class Entry(ndb.Model):
             link = get_link_for_item(feed_url, self.feed_item, linked_list_mode=linked_list_mode)
         else:
             link = self.link
-        logger.info("Whats the link %s %s", link, linked_list_mode)
+
         link = append_query_string(link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
 
         # logger.info(u'Text Len: %s text: %s entry_title:%s entry_title_len:%s', len(post_text), post_text, entry.title, len(entry.title))
@@ -634,7 +634,8 @@ class Feed(ndb.Model):
 
         parsed_feed = Entry.update_for_feed(feed, overflow=overflow, overflow_reason=overflow_reason)
         hub_url = None
-        for link in parsed_feed.feed.links:
+        feed_links = parsed_feed.feed.links if 'links' in parsed_feed.feed else []
+        for link in feed_links:
             if link['rel'] == 'hub':
                 hub_url = link['href']
                 feed.hub = hub_url

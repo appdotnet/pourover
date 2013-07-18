@@ -97,7 +97,9 @@ angular.module('frontendApp')
     apiRequest({
       url: preview_url,
       data: serialize_feed($scope.feed),
-    }, client, window.location + 'api/').done(function (resp) {
+    }, client, window.location + 'api/').always(function () {
+        jQuery('.loading-icon').hide();
+    }).done(function (resp) {
       $scope.$apply(function (scope) {
         if (resp.status === 'ok') {
           scope.posts = resp.data;
@@ -106,7 +108,6 @@ angular.module('frontendApp')
           scope.posts = undefined;
           scope.feed_error = resp.message;
         }
-        jQuery('.loading-icon').hide();
       });
     });
   }, 300), true);
