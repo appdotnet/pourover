@@ -168,7 +168,7 @@ def fetch_feed_url(feed_url, etag=None, update_url=False, rpc=None):
         return None, resp
 
     feed = feedparser.parse(resp.content)
-    if feed.bozo == 1 and len(feed.entries) == 0:
+    if rpc is None and feed.bozo == 1 and len(feed.entries) == 0:
         content_type = resp.headers.get('Content-Type')
         logger.info('Feed failed bozo detection feed_url:%s content_type:%s', feed_url, content_type)
         if content_type and content_type.startswith('text/html'):
@@ -558,21 +558,21 @@ class Entry(ndb.Model):
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
         parsed_feed, resp = fetch_feed_url(feed.feed_url, feed.etag, rpc=getattr(feed, 'rpc', None))
         # There should be no data in here anyway
-        if resp.status_code == 304:
-            return parsed_feed
+        if resp.status_code != 304:
+            etag = resp.headers.get('ETag')
 
-        # Update feed location
-        if parsed_feed.update_url:
-            feed.feed_url = parsed_feed.update_url
-            feed.put()
+            # Update feed location
+            if parsed_feed.update_url:
+                feed.feed_url = parsed_feed.update_url
+                feed.put()
+                publish = False
+            elif etag and feed.etag != etag:
+                feed.etag = etag
+                feed.put()
 
-        etag = resp.headers.get('ETag')
-        if etag and feed.etag != etag:
-            feed.etag = etag
-            feed.put()
-
-        for item in parsed_feed.entries:
-            entry = cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason, rss_feed=parsed_feed)
+            for item in parsed_feed.entries:
+                entry = cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason,
+                                                      rss_feed=parsed_feed)
 
         if publish:
             # How many stories have been published in the last period_length
