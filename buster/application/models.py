@@ -50,6 +50,7 @@ ENTRY_STATE = DjangoEnum(
 
 FEED_STATE = DjangoEnum(
     (1, 'ACTIVE', 'Active'),
+    (2, 'NEEDS_REAUTH', 'Needs reauth'),
     (10, 'INACTIVE', 'Inactive'),
 )
 
@@ -522,14 +523,19 @@ class Entry(ndb.Model):
         user = feed.key.parent().get()
         # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
         post = self.format_for_adn(feed.feed_url, feed.include_summary, feed.include_thumb, feed.linked_list_mode)
-        logger.info('Post: %s', post)
         resp = urlfetch.fetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), method='POST', headers={
             'Authorization': 'Bearer %s' % (user.access_token, ),
             'Content-Type': 'application/json',
         })
 
-        if resp.status_code != 200:
-            logger.warn("Couldn't post entry. Error: %s Post:%s", resp.content, post)
+        if resp.status_code == 401:
+            feed.status = FEED_STATE.NEEDS_REAUTH
+            feed.put()
+        elif resp.status_code == 200:
+            post_obj = json.loads(resp.content)
+            logger.info('Published entry key=%s -> post_id=%s: %s', self.key.urlencoded(), post_obj['data']['id'], post)
+        else:
+            logger.warn("Couldn't post entry key=%s. Error: %s Post:%s", self.key.urlencoded(), resp.content, post)
             raise Exception(resp.content)
 
         self.published = True
@@ -647,7 +653,13 @@ class Feed(ndb.Model):
 
     @classmethod
     def for_interval(cls, interval_id):
-        return cls.query(cls.update_interval == interval_id)
+        return cls.query(cls.update_interval == interval_id, cls.status == FEED_STATE.ACTIVE)
+
+    @classmethod
+    def reauthorize(cls, user):
+        for feed in cls.query(cls.status == FEED_STATE.NEEDS_REAUTH, ancestor=user.key):
+            feed.status = FEED_STATE.ACTIVE
+            feed.put()
 
     @classmethod
     def process_new_feed(cls, feed, overflow, overflow_reason):

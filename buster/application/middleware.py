@@ -5,7 +5,7 @@ import logging
 from google.appengine.api import urlfetch, memcache
 from flask import g, request, abort, current_app
 
-from .models import User
+from .models import User, Feed
 
 MEMCACHE_USER_KEY = 'user:%s'
 
@@ -82,6 +82,8 @@ class ADNTokenAuthMiddleware(object):
             if user.access_token != access_token:
                 user.access_token = access_token
                 user.put()
+
+                Feed.reauthorize(user)
 
             g.adn_user = adn_user
             g.user = user

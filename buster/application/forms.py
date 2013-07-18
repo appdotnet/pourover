@@ -5,7 +5,7 @@ from wtforms import fields
 from wtforms import validators
 from wtforms.validators import ValidationError
 
-from .models import PERIOD_SCHEDULE, fetch_feed_url, VALID_STATUS
+from .models import PERIOD_SCHEDULE, fetch_feed_url
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ def boolean_filter(value):
 def valid_feed(form, field):
     try:
         parsed_feed, resp = fetch_feed_url(field.data)
-    except Exception, e:
+    except:
         logger.exception('failed validation')
         raise ValidationError(message='Failed to fetch feed')
     # logger.info(parsed_feed)
@@ -28,7 +28,7 @@ def valid_feed(form, field):
         title = parsed_feed.feed.get('subtitle')
 
     if not title:
-        logger.info('Failed to find a feed title: %s' % (feed))
+        logger.info('Failed to find a feed title: %s', parsed_feed)
         raise ValidationError(message='Invalid RSS feed')
 
 
