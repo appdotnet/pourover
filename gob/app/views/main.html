@@ -89,7 +89,7 @@
               </div>
             </div>
         </div>
-        <div class='span8' ng-show='posts'>
+        <div class='span8' ng-show='posts && feed.feed_url'>
             <h3>Feed Preview</h3>
             <div class="media" ng-repeat="post in posts">
               <span class="pull-left">
@@ -101,7 +101,7 @@
               </div>
             </div>
         </div>
-        <div class='span8' ng-hide='posts'>
+        <div class='span8' ng-hide='posts && feed.feed_url'>
           <h3>Feed Preview</h3>
           <p ng-hide='feed_error && feed.feed_url'>Add a feed url to see an approximation of what the App.net posts would look like.</p>
           <p ng-show='feed_error && feed.feed_url' class='alert error' ng-bind='feed_error'></p>
