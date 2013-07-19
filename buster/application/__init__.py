@@ -38,6 +38,6 @@ if app.debug:
 else:
     import logging
     import email_logger
-    requests_log = logging.getLogger("requests")
-    requests_log.setLevel(logging.WARNING)
+    #requests_log = logging.getLogger("requests")
+    #requests_log.setLevel(logging.WARNING)
     email_logger.register_logger(app.config['ADMIN_EMAIL'])
