@@ -19,9 +19,22 @@
 </div>
 <div class="hero-unit" ng-show="!authenticated">
   <h1>PourOver <small>from App.net</small></h1>
-  <p>PourOver is an easy to use RSS/Atom to App.net syndicator.</p>
-  <p>You can create an account or sign in by clicking the Authorize with App.net button.</p>
-  <a href='https://account.app.net/oauth/authenticate?client_id={{client_id}}&response_type=token&scope=write_post&redirect_uri={{ redirect_uri }}' class='adn-button' data-type='authorize_v2' data-width="147" data-height="22">Authorize with App.net</a>
+  <p>PourOver is a tool that allows you to publish any RSS feed to App.net.</p>
+  <ul class='unstyled'>
+    <li><b>Step 1</b> Click the Authorize with App.net button below</li>
+    <li><b>Step 2</b> Sign up or Log in</li>
+    <li><b>Step 3</b> Enter your RSS feed</li>
+  </ul>
+  <p>
+    <a href='https://account.app.net/oauth/authenticate?client_id={{client_id}}&response_type=token&scope=write_post&redirect_uri={{ redirect_uri }}' class='adn-button' data-type='authorize_v2' data-width="147" data-height="22">Authorize with App.net</a>
+  </p>
+  <p>It's an easy to way to syndicate whatever you are publishing to the growing community of App.net users.  Getting started is easy, even if you don't yet have an App.net account. <a href='http://join.app.net'>Learn more about App.net.</a>
+  <p>Some examples:</P>
+  <ul class='unstyled'>
+    <li><img src='https://plus.google.com/_/favicon?domain=http://arstechnica.com/' width='16px'> <a href='https://alpha.app.net/arstechnica'>Arstechnica</a></li>
+    <li><img src='https://plus.google.com/_/favicon?domain=http://daringfireball.net' width='16px'> <a href='https://alpha.app.net/daringfireball'>Daring Fireball</a></li>
+    <li><img src='https://plus.google.com/_/favicon?domain=http://the-magazine.org/' width='16px'> <a href='https://alpha.app.net/themagazinerss'>The Magazine</a></li>
+  </ul>
 <script>(function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='//d2zh9g63fcvyrq.cloudfront.net/adn.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'adn-button-js'));</script>
 </div>
 <div class='authenticated-app' ng-show="authenticated">
