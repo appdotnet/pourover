@@ -531,14 +531,16 @@ class Entry(ndb.Model):
     def create_from_feed_and_item(cls, feed, item, overflow=False, overflow_reason=None, rss_feed=None):
         entry = cls.query(cls.guid == guid_for_item(item), ancestor=feed.key).get()
         published = False
+        created = False
         if overflow:
             published = True
         if not entry:
             entry = cls.prepare_entry_from_item(rss_feed, item, feed, overflow, overflow_reason, published)
             if entry:
                 entry.put()
+                created = True
 
-        return entry
+        return entry, created
 
     def publish_entry(self, feed):
         feed = self.key.parent().get()
@@ -585,6 +587,7 @@ class Entry(ndb.Model):
             if new_feed_url:
                 parsed_feed, resp = fetch_feed_url(new_feed_url, update_url=new_feed_url)
 
+        drain_queue = False
         # There should be no data in here anyway
         if resp.status_code != 304:
             etag = resp.headers.get('ETag')
@@ -598,9 +601,16 @@ class Entry(ndb.Model):
                 feed.etag = etag
                 feed.put()
 
+            num_created_entries = 0
             for item in parsed_feed.entries:
-                entry = cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason,
-                                                      rss_feed=parsed_feed)
+                entry, created = cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason,
+                                                               rss_feed=parsed_feed)
+                if created:
+                    num_created_entries += 1
+
+            if len(parsed_feed.entries) >= 5 and len(parsed_feed.entries) == num_created_entries:
+                # could be a pretty epic fail
+                drain_queue = True
 
         if publish:
             # How many stories have been published in the last period_length
@@ -619,8 +629,9 @@ class Entry(ndb.Model):
 
                 for entry in latest_entries:
                     entry.publish_entry(feed)
-            else:
-                cls.drain_queue(feed)
+
+        if drain_queue:
+            cls.drain_queue(feed)
 
         return parsed_feed
 
