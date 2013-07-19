@@ -154,29 +154,25 @@ def _prepare_request(feed_url, etag, async=False):
         return urlfetch.fetch(**kwargs)
 
 
-def find_feed_url_from_response(resp):
-    soup = BeautifulSoup(resp.content)
-    # The thinking here is that the main RSS feed will be shorter in length then any others
-    links = [x.get('href') for x in soup.findAll('link', type='application/rss+xml')]
-    links += [x.get('href') for x in soup.findAll('link', type='application/atom+xml')]
-    shortest_link = None
-    for link in links:
-        if shortest_link is None:
-            shortest_link = link
-        elif len(link) < len(shortest_link):
-            shortest_link = link
-
-    return shortest_link
-
-
-def should_find_feed_url(feed, resp):
+def find_feed_url(feed, resp):
     if feed.bozo == 1 and len(feed.entries) == 0:
         content_type = resp.headers.get('Content-Type')
         logger.info('Feed failed bozo detection feed_url:%s content_type:%s', resp.final_url, content_type)
         if content_type and content_type.startswith('text/html'):
             # If we have this lets try and find a feed
             logger.info('Feed might be a web page trying to find feed_url:%s', resp.final_url)
-            return find_feed_url_from_response(resp)
+            soup = BeautifulSoup(resp.content)
+            # The thinking here is that the main RSS feed will be shorter in length then any others
+            links = [x.get('href') for x in soup.findAll('link', type='application/rss+xml')]
+            links += [x.get('href') for x in soup.findAll('link', type='application/atom+xml')]
+            shortest_link = None
+            for link in links:
+                if shortest_link is None:
+                    shortest_link = link
+                elif len(link) < len(shortest_link):
+                    shortest_link = link
+
+            return shortest_link
 
     return None
 
@@ -206,10 +202,6 @@ def fetch_feed_url(feed_url, etag=None, update_url=False, rpc=None):
         return None, resp
 
     feed = feedparser.parse(resp.content)
-    if rpc is None:
-        found_feed_url = should_find_feed_url(feed, resp)
-        if found_feed_url:
-            return fetch_feed_url(found_feed_url, update_url=found_feed_url)
 
     if resp.status_code == 301 and feed_url != resp.final_url:
         update_url = resp.final_url
@@ -239,8 +231,8 @@ def find_thumbnail(item):
     max_d = 1000
     media_thumbnails = item.get('media_thumbnail') or []
     for thumb in media_thumbnails:
-        w = int(thumb.get('width'))
-        h = int(thumb.get('height'))
+        w = int(thumb.get('width', 0))
+        h = int(thumb.get('height', 0))
         if all([w, h, w >= min_d, w <= max_d, h >= min_d, w <= max_d]):
             return {
                 'thumbnail_image_url': thumb['url'],
@@ -250,8 +242,8 @@ def find_thumbnail(item):
 
     soup = BeautifulSoup(item.get('summary', ''))
     for image in soup.findAll('img'):
-        w = image.get('width')
-        h = image.get('height')
+        w = image.get('width', 0)
+        h = image.get('height', 0)
         if not (w and h):
             style = parse_style_tag(image.get('style'))
             if style:
@@ -469,6 +461,12 @@ class Entry(ndb.Model):
     @classmethod
     def entry_preview_for_feed(cls, feed):
         parsed_feed, resp = fetch_feed_url(feed.feed_url)
+
+        # Try and fix bad feed_urls on the fly
+        new_feed_url = find_feed_url(parsed_feed, resp)
+        if new_feed_url:
+            parsed_feed, resp = fetch_feed_url(new_feed_url, update_url=new_feed_url)
+
         entries = []
         for item in parsed_feed.entries:
             entry = cls.prepare_entry_from_item(parsed_feed, item, feed=feed)
@@ -581,6 +579,12 @@ class Entry(ndb.Model):
     @classmethod
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
         parsed_feed, resp = fetch_feed_url(feed.feed_url, feed.etag, rpc=getattr(feed, 'rpc', None))
+        if getattr(feed, 'first_time', None):
+            # Try and fix bad feed_urls on the fly
+            new_feed_url = find_feed_url(parsed_feed, resp)
+            if new_feed_url:
+                parsed_feed, resp = fetch_feed_url(new_feed_url, update_url=new_feed_url)
+
         # There should be no data in here anyway
         if resp.status_code != 304:
             etag = resp.headers.get('ETag')
@@ -727,6 +731,10 @@ class Feed(ndb.Model):
         feed = cls(parent=user.key)
         form.populate_obj(feed)
         feed.put()
+
+        # This triggers special first time behavior when fetching the feed
+        feed.first_time = True
+
         return cls.process_new_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
 
     @classmethod

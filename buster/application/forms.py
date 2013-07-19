@@ -13,25 +13,6 @@ logger = logging.getLogger(__name__)
 def boolean_filter(value):
     return value is True or value == 'true'
 
-
-def valid_feed(form, field):
-    try:
-        parsed_feed, resp = fetch_feed_url(field.data)
-    except:
-        logger.exception('failed validation')
-        raise ValidationError(message='Failed to fetch feed')
-    # logger.info(parsed_feed)
-    # logger.info('href: %s', parsed_feed.feed.get('subtitle'))
-
-    title = parsed_feed.feed.get('title')
-    if not title:
-        title = parsed_feed.feed.get('subtitle')
-
-    if not title:
-        logger.info('Failed to find a feed title: %s', parsed_feed)
-        raise ValidationError(message='Invalid RSS feed')
-
-
 class FeedUpdate(Form):
     # Someday we can turn this back on if we want.
     # include_summary = fields.BooleanField(default=False, filters=[boolean_filter])
@@ -45,4 +26,4 @@ class FeedPreview(FeedUpdate):
 
 
 class FeedCreate(FeedUpdate):
-    feed_url = fields.TextField(validators=[validators.DataRequired(), validators.URL(), valid_feed])
+    feed_url = fields.TextField(validators=[validators.DataRequired(), validators.URL()])
