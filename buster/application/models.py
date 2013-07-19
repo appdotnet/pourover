@@ -155,10 +155,21 @@ def _prepare_request(feed_url, etag, async=False):
 
 
 def fetch_feed_url(feed_url, etag=None, update_url=False, rpc=None):
-    if rpc is None:
-        resp = _prepare_request(feed_url, etag, async=False)
-    else:
-        resp = rpc.get_result()
+    # Handle network issues here, handle other exceptions where this is called from
+    try:
+        if rpc is None:
+            resp = _prepare_request(feed_url, etag, async=False)
+        else:
+            resp = rpc.get_result()
+    except urlfetch.DownloadError:
+        logger.info('Failed to download feed: %s', feed_url)
+        raise FetchException('Failed to fetch that URL.')
+    except urlfetch.DeadlineExceededError:
+        logger.info('Feed took too long: %s', feed_url)
+        raise FetchException('URL took to long to fetch.')
+    except urlfetch.InvalidURLError:
+        logger.info('Invalud URL: %s', feed_url)
+        raise FetchException('The URL for this feeds seems to be invalid.')
 
     if resp.status_code not in VALID_STATUS:
         raise FetchException('Could not fetch feed. feed_url:%s status_code:%s final_url:%s' % (feed_url, resp.status_code, resp.final_url))

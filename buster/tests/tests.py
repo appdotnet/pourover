@@ -74,6 +74,13 @@ HTML_PAGE_TEMPLATE = """
 </html>
 """
 
+
+def get_file_from_data(fname):
+    return open(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + fname).read()
+
+
+FAKE_POST_OBJ_RESP = get_file_from_data('/data/post_resp.json')
+
 FAKE_ACCESS_TOKEN = 'theres_always_posts_in_the_banana_stand'
 
 
@@ -85,6 +92,7 @@ class BusterTestCase(MockUrlfetchTest):
         app.config['CSRF_ENABLED'] = False
         self.app = app.test_client()
 
+        self.set_response("https://alpha-api.app.net/stream/0/posts", content=FAKE_POST_OBJ_RESP, status_code=200, method="POST")
         self.clear_datastore()
 
     def tearDown(self):
@@ -140,7 +148,6 @@ class BusterTestCase(MockUrlfetchTest):
 
     def testFeed(self):
         self.setMockUser()
-        self.set_response("https://alpha-api.app.net/stream/0/posts", content='', status_code=200, method="POST")
         resp = self.app.get('/api/feeds', headers=self.authHeaders())
         json_resp = json.loads(resp.data)
         assert len(json_resp['data']) == 0
@@ -195,7 +202,6 @@ class BusterTestCase(MockUrlfetchTest):
         self.setMockUser()
         another_fake_access_token = 'another_banana_stand'
         self.setMockUser(access_token=another_fake_access_token, username='george', id=2)
-        self.set_response("https://alpha-api.app.net/stream/0/posts", content='', status_code=200, method="POST")
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
         resp = self.app.post('/api/feeds', data=dict(
@@ -224,7 +230,6 @@ class BusterTestCase(MockUrlfetchTest):
 
     def testPush(self):
         self.setMockUser()
-        self.set_response("https://alpha-api.app.net/stream/0/posts", content='', status_code=200, method="POST")
         self.set_response('http://pubsubhubbub.appspot.com', content='', status_code=200, method="POST")
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1', use_hub=True), status_code=200)
@@ -270,8 +275,6 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert 0 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
-        self.set_response("https://alpha-api.app.net/stream/0/posts", content='', status_code=200, method="POST")
-
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_2', 'test_2'), status_code=200)
         resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
 
@@ -307,7 +310,6 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == True).count()
 
-        self.set_response("https://alpha-api.app.net/stream/0/posts", content='', status_code=200, method="POST")
 
         resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_2', 'test_2'), status_code=200)
@@ -358,7 +360,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert json.loads(resp.data)['message']
 
     def testLinkedListMode(self):
-        data = open(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + '/data/df_feed.xml').read()
+        data = get_file_from_data('/data/df_feed.xml')
         self.set_rss_response('http://daringfireball.net/index.xml', content=data)
         resp = self.app.get('/api/feed/preview?feed_url=http://daringfireball.net/index.xml', headers=self.authHeaders())
         data = json.loads(resp.data)

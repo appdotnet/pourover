@@ -98,18 +98,8 @@ def feed_preview():
 
     try:
         exsisting_feeds = Entry.entry_preview_for_feed(feed_url=feed_url, linked_list_mode=linked_list_mode)
-    except urlfetch.DownloadError:
-        error = 'Failed to fetch that URL.'
-        logger.info('Feed Preview: Failed to download feed: %s', feed_url)
-    except urlfetch.DeadlineExceededError:
-        error = 'URL took to long to fetch.'
-        logger.info('Feed Preview: Feed took too long: %s', feed_url)
-        raise
-    except urlfetch.InvalidURLError:
-        error = 'The URL for this feeds seems to be invalid.'
     except FetchException, e:
-        error = 'URL took to long to fetch.'
-        logger.info('Feed Preview: Returned a bad response code: %s', e)
+        error = unicode(e)
     except Exception, e:
         error = 'Something went wrong while fetching your URL.'
         logger.exception('Feed Preview: Failed to update feed:%s' % (feed_url, ))
@@ -298,15 +288,9 @@ def update_all_feeds(interval_id):
         try:
             Entry.update_for_feed(feed, publish=True)
             success += 1
-        except urlfetch.DownloadError:
-            errors += 1
-            logger.info('Failed to download feed: %s', feed)
-        except urlfetch.DeadlineExceededError:
-            errors += 1
-            logger.info('Feed took too long: %s', feed)
         except FetchException, e:
             errors += 1
-            logger.info('Returned a bad response code: %s', e)
+            pass
         except Exception, e:
             errors += 1
             logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
