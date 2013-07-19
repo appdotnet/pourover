@@ -103,6 +103,7 @@ def feed_preview():
     except FetchException, e:
         error = unicode(e)
     except Exception, e:
+        raise
         error = 'Something went wrong while fetching your URL.'
         logger.exception('Feed Preview: Failed to update feed:%s' % (feed.feed_url, ))
 
@@ -132,7 +133,7 @@ def feed(feed_id):
 @app.route('/api/feeds/<int:feed_id>', methods=['POST'])
 def feed_change(feed_id):
     """Get a feed"""
-    form = FeedCreate(request.form)
+    form = FeedUpdate(request.form)
     if not form.validate():
         return jsonify_error(message="Invalid update data")
 
@@ -192,10 +193,15 @@ def published_entries_for_feed(feed_id):
 @app.route('/api/feeds/<int:feed_id>/preview', methods=['GET'])
 def save_feed_preview(feed_id):
     """preview a saved feed"""
-    linked_list_mode = request.args.get('linked_list_mode', 'false') == 'true'
+    form = FeedUpdate(request.args)
+    if not form.validate():
+        return jsonify_error(message="Invalid update data")
+
     feed = Feed.get_by_id(feed_id, parent=g.user.key)
     if not feed:
         return jsonify_error(message="Can't find that feed")
+
+    form.populate_obj(feed)
 
     preview_entries = Entry.entry_preview(Entry.latest_published(feed).fetch(3), feed)
 

@@ -154,6 +154,33 @@ def _prepare_request(feed_url, etag, async=False):
         return urlfetch.fetch(**kwargs)
 
 
+def find_feed_url_from_response(resp):
+    soup = BeautifulSoup(resp.content)
+    # The thinking here is that the main RSS feed will be shorter in length then any others
+    links = [x.get('href') for x in soup.findAll('link', type='application/rss+xml')]
+    links += [x.get('href') for x in soup.findAll('link', type='application/atom+xml')]
+    shortest_link = None
+    for link in links:
+        if shortest_link is None:
+            shortest_link = link
+        elif len(link) < len(shortest_link):
+            shortest_link = link
+
+    return shortest_link
+
+
+def should_find_feed_url(feed, resp):
+    if feed.bozo == 1 and len(feed.entries) == 0:
+        content_type = resp.headers.get('Content-Type')
+        logger.info('Feed failed bozo detection feed_url:%s content_type:%s', resp.final_url, content_type)
+        if content_type and content_type.startswith('text/html'):
+            # If we have this lets try and find a feed
+            logger.info('Feed might be a web page trying to find feed_url:%s', resp.final_url)
+            return find_feed_url_from_response(resp)
+
+    return None
+
+
 def fetch_feed_url(feed_url, etag=None, update_url=False, rpc=None):
     # Handle network issues here, handle other exceptions where this is called from
     try:
@@ -179,25 +206,10 @@ def fetch_feed_url(feed_url, etag=None, update_url=False, rpc=None):
         return None, resp
 
     feed = feedparser.parse(resp.content)
-    if rpc is None and feed.bozo == 1 and len(feed.entries) == 0:
-        content_type = resp.headers.get('Content-Type')
-        logger.info('Feed failed bozo detection feed_url:%s content_type:%s', feed_url, content_type)
-        if content_type and content_type.startswith('text/html'):
-            # If we have this lets try and find a feed
-            logger.info('Feed might be a web page trying to find feed_url:%s', feed_url)
-            soup = BeautifulSoup(resp.content)
-            # The thinking here is that the main RSS feed will be shorter in length then any others
-            links = [x.get('href') for x in soup.findAll('link', type='application/rss+xml')]
-            links += [x.get('href') for x in soup.findAll('link', type='application/atom+xml')]
-            shortest_link = None
-            for link in links:
-                if shortest_link is None:
-                    shortest_link = link
-                elif len(link) < len(shortest_link):
-                    shortest_link = link
-
-            if shortest_link:
-                return fetch_feed_url(shortest_link, update_url=shortest_link)
+    if rpc is None:
+        found_feed_url = should_find_feed_url(feed, resp)
+        if found_feed_url:
+            return fetch_feed_url(found_feed_url, update_url=found_feed_url)
 
     if resp.status_code == 301 and feed_url != resp.final_url:
         update_url = resp.final_url
@@ -535,7 +547,7 @@ class Entry(ndb.Model):
         user = feed.key.parent().get()
         # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
         post = self.format_for_adn(feed)
-        resp = urlfetch.fetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), method='POST', headers={
+        resp = urlfetch.fetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), deadline=15, method='POST', headers={
             'Authorization': 'Bearer %s' % (user.access_token, ),
             'Content-Type': 'application/json',
         })
