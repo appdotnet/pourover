@@ -17,7 +17,7 @@ from flask_cache import Cache
 
 from application import app
 from models import Entry, Feed, UPDATE_INTERVAL, FetchException
-from forms import FeedCreate
+from forms import FeedCreate, FeedUpdate, FeedPreview
 
 logger = logging.getLogger(__name__)
 
@@ -88,29 +88,31 @@ def feed_create():
 @app.route('/api/feed/preview', methods=['GET'])
 def feed_preview():
     """preview a feed"""
-    feed_url = request.args.get('feed_url')
-    linked_list_mode = request.args.get('linked_list_mode', 'false') == 'true'
-    if not feed_url:
-        return jsonify(status='error', message='You must pass a feed url')
+    form = FeedPreview(request.args)
+    if not form.validate():
+        return jsonify(status='error', form_errors=form.errors)
 
-    exsisting_feeds = []
+    feed = Feed()
+    form.populate_obj(feed)
+
+    entries = []
     error = None
 
     try:
-        exsisting_feeds = Entry.entry_preview_for_feed(feed_url=feed_url, linked_list_mode=linked_list_mode)
+        entries = Entry.entry_preview_for_feed(feed)
     except FetchException, e:
         error = unicode(e)
     except Exception, e:
         error = 'Something went wrong while fetching your URL.'
-        logger.exception('Feed Preview: Failed to update feed:%s' % (feed_url, ))
+        logger.exception('Feed Preview: Failed to update feed:%s' % (feed.feed_url, ))
 
-    if not exsisting_feeds and not error:
+    if not entries and not error:
         error = 'The feed doesn\'t have any entries'
 
     if error:
         return jsonify(status='error', message=error)
 
-    return jsonify(status='ok', data=exsisting_feeds[0:3])
+    return jsonify(status='ok', data=entries[0:3])
 
 
 @app.route('/api/feeds/<int:feed_id>', methods=['GET'])

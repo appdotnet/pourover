@@ -267,12 +267,13 @@ def find_thumbnail(item):
     return None
 
 
-def get_link_for_item(feed_link, item, linked_list_mode):
+def get_link_for_item(feed, item):
+    feed_link = feed.feed_url
     main_item_link = item.get('link')
 
     # If the user hasn't turned on linked list mode
     # return the main_item_link
-    if not linked_list_mode:
+    if not feed.linked_list_mode:
         return main_item_link
 
     # if the feed is so malformed it doesn't link to it's self then
@@ -375,10 +376,10 @@ class Entry(ndb.Model):
 
         return data
 
-    def format_for_adn(self, feed_url, include_summary=False, include_thumb=False, linked_list_mode=False):
+    def format_for_adn(self, feed):
         post_text = self.title
         links = []
-        if include_summary:
+        if feed.include_summary:
             summary_text = strip_html_tags(self.summary)
             summary_text = ellipse_text(summary_text, 140)
 
@@ -392,7 +393,7 @@ class Entry(ndb.Model):
 
         post_text = ellipse_text(post_text, MAX_CHARS)
         if self.feed_item:
-            link = get_link_for_item(feed_url, self.feed_item, linked_list_mode=linked_list_mode)
+            link = get_link_for_item(feed, self.feed_item)
         else:
             link = self.link
 
@@ -431,7 +432,7 @@ class Entry(ndb.Model):
                 'links': link_entities,
             }
         # logger.info('Info %s, %s', include_thumb, self.thumbnail_image_url)
-        if include_thumb and self.thumbnail_image_url:
+        if feed.include_thumb and self.thumbnail_image_url:
             post['annotations'].append({
                 "type": "net.app.core.oembed",
                 "value": {
@@ -450,22 +451,22 @@ class Entry(ndb.Model):
         return post
 
     @classmethod
-    def entry_preview(cls, entries, feed_url, linked_list_mode=False):
-        return [build_html_from_post(entry.format_for_adn(feed_url, linked_list_mode=linked_list_mode)) for entry in entries]
+    def entry_preview(cls, entries, feed):
+        return [build_html_from_post(entry.format_for_adn(feed)) for entry in entries]
 
     @classmethod
-    def entry_preview_for_feed(cls, feed_url, linked_list_mode=False):
-        parsed_feed, resp = fetch_feed_url(feed_url)
+    def entry_preview_for_feed(cls, feed):
+        parsed_feed, resp = fetch_feed_url(feed.feed_url)
         entries = []
         for item in parsed_feed.entries:
-            entry = cls.prepare_entry_from_item(parsed_feed, item, linked_list_mode=linked_list_mode)
+            entry = cls.prepare_entry_from_item(parsed_feed, item, feed=feed)
             if entry:
                 entries.append(entry)
 
-        return cls.entry_preview(entries, feed_url, linked_list_mode=linked_list_mode)
+        return cls.entry_preview(entries, feed)
 
     @classmethod
-    def prepare_entry_from_item(cls, rss_feed, item, overflow=False, overflow_reason=None, published=False, linked_list_mode=False, feed=None):
+    def prepare_entry_from_item(cls, rss_feed, item, feed, overflow=False, overflow_reason=None, published=False):
         title_detail = item.get('title_detail')
         title = item.get('title', 'No Title')
 
@@ -476,7 +477,7 @@ class Entry(ndb.Model):
                 title = BeautifulSoup(title).text
 
         feed_link = rss_feed.get('feed') and rss_feed.feed.get('link')
-        link = get_link_for_item(feed_link, item, linked_list_mode=linked_list_mode)
+        link = get_link_for_item(feed, item)
 
         # We can only store a title up to 500 chars
         title = title[0:499]
@@ -523,17 +524,17 @@ class Entry(ndb.Model):
         if overflow:
             published = True
         if not entry:
-            entry = cls.prepare_entry_from_item(rss_feed, item, overflow, overflow_reason, published, feed=feed)
+            entry = cls.prepare_entry_from_item(rss_feed, item, feed, overflow, overflow_reason, published)
             if entry:
                 entry.put()
 
         return entry
 
-    def publish_entry(self):
+    def publish_entry(self, feed):
         feed = self.key.parent().get()
         user = feed.key.parent().get()
         # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
-        post = self.format_for_adn(feed.feed_url, feed.include_summary, feed.include_thumb, feed.linked_list_mode)
+        post = self.format_for_adn(feed)
         resp = urlfetch.fetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), method='POST', headers={
             'Authorization': 'Bearer %s' % (user.access_token, ),
             'Content-Type': 'application/json',
@@ -601,7 +602,7 @@ class Entry(ndb.Model):
                 latest_entries = cls.latest_unpublished(feed).fetch(max_stories_to_publish)
 
                 for entry in latest_entries:
-                    entry.publish_entry()
+                    entry.publish_entry(feed)
             else:
                 cls.drain_queue(feed)
 
