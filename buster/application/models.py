@@ -178,13 +178,6 @@ def find_feed_url(feed, resp):
 
 
 def fetch_feed_url(feed_url, etag=None, update_url=False, rpc=None):
-    try:
-        import requests
-        resp = requests.get('http://example.com')
-        logger.info('Got the awesomeness %s', resp)
-    except Exception, e:
-        logger.exception()
-
     # Handle network issues here, handle other exceptions where this is called from
     try:
         if rpc is None:
