@@ -547,10 +547,13 @@ class Entry(ndb.Model):
         user = feed.key.parent().get()
         # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
         post = self.format_for_adn(feed)
-        resp = urlfetch.fetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), deadline=30, method='POST', headers={
-            'Authorization': 'Bearer %s' % (user.access_token, ),
-            'Content-Type': 'application/json',
-        })
+        try:
+            resp = urlfetch.fetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), deadline=30, method='POST', headers={
+                'Authorization': 'Bearer %s' % (user.access_token, ),
+                'Content-Type': 'application/json',
+            })
+        except Exception, e:
+            logger.exception('Failed to post Post: %s' % (post))
 
         if resp.status_code == 401:
             feed.status = FEED_STATE.NEEDS_REAUTH
