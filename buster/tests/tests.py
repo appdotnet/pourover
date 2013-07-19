@@ -310,7 +310,6 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == True).count()
 
-
         resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_2', 'test_2'), status_code=200)
         resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
@@ -359,6 +358,20 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.get('/api/feed/preview?feed_url=http://techcrunch.com/feed/2', headers=self.authHeaders())
         assert json.loads(resp.data)['message']
 
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            include_summary=True,
+            max_stories_per_period=2,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        assert 1 == Entry.query(Entry.published == True, Entry.overflow == True).count()
+        feed = Feed.query().get()
+        resp = self.app.get('/api/feeds/%s/preview' % (feed.key.id(), ), headers=self.authHeaders())
+        assert 'data' in json.loads(resp.data)
+
     def testLinkedListMode(self):
         data = get_file_from_data('/data/df_feed.xml')
         self.set_rss_response('http://daringfireball.net/index.xml', content=data)
@@ -369,6 +382,21 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.get('/api/feed/preview?linked_list_mode=true&feed_url=http://daringfireball.net/index.xml', headers=self.authHeaders())
         data = json.loads(resp.data)
         assert data['data'][0] == "<span><a href='http://daringfireball.net/linked/2013/07/17/pourover?utm_medium=App.net&utm_source=PourOver'>PourOver for App.net</a></span>"
+
+    def testSingleItemPublish(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', 'test', 'test_1', 'test_1'), status_code=200)
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            include_summary=True,
+            max_stories_per_period=2,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        entry = Entry.query().get()
+        feed = Feed.query().get()
+        resp = self.app.post('/api/feeds/%s/entries/%s/publish' % (feed.key.id(), entry.key.id()), headers=self.authHeaders())
 
 if __name__ == '__main__':
     unittest.main()

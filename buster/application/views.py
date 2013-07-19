@@ -197,7 +197,7 @@ def save_feed_preview(feed_id):
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
-    preview_entries = Entry.entry_preview(Entry.latest_published(feed).fetch(3), feed.feed_url, linked_list_mode)
+    preview_entries = Entry.entry_preview(Entry.latest_published(feed).fetch(3), feed)
 
     return jsonify(status='ok', data=preview_entries)
 
@@ -215,7 +215,7 @@ def feed_entry_publish(feed_id, entry_id):
     if not entry:
         return jsonify_error(message="Can't find that entry")
 
-    entry.publish_entry()
+    entry.publish_entry(feed)
     entry.overflow = False
     entry.put()
 
