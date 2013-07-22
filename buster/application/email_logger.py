@@ -34,6 +34,7 @@ import os
 
 from google.appengine.api import memcache
 from google.appengine.api import mail
+from google.appengine.runtime import apiproxy_errors
 
 LOG_FORMAT = '%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s] %(message)s'
 
@@ -134,7 +135,8 @@ class EmailLoggingHandler(logging.Handler):
                 message.subject = '(%s) error reported for %s, version %s' % (record.levelname, app_id, app_ver)
                 message.body = formatted_record
                 message.send()
-
+        except apiproxy_errors.OverQuotaError:
+            logger.warn('Over email quota here is the message: %s', message.body)
         except Exception:
             self.handleError(record)
 
