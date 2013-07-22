@@ -111,8 +111,8 @@ class BusterTestCase(MockUrlfetchTest):
 
         return XML_TEMPLATE % ({'hub': hub, 'items': ''.join(items)})
 
-    def set_rss_response(self, url, content='', status_code=200):
-        self.set_response(url, content=content, status_code=status_code)
+    def set_rss_response(self, url, content='', status_code=200, headers=None):
+        self.set_response(url, content=content, status_code=status_code, headers=headers)
 
     def buildMockUserResponse(self, username='voidfiles', id=3):
         return {
@@ -418,6 +418,35 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
         assert 2 == Entry.query(Entry.published == True, Entry.overflow == False).count()
         assert 10 == Entry.query(Entry.published == True, Entry.overflow == True).count()
+
+
+    def testFeedRedirect(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=6), status_code=200)
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            include_summary=True,
+            max_stories_per_period=2,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+        assert feed.feed_url == test_feed_url
+
+        test_feed_url2 = 'http://example.com/rss2'
+        self.set_rss_response(test_feed_url, content='', status_code=302, headers={'Location': test_feed_url2})
+        self.set_rss_response(test_feed_url2, content=self.buildRSS('test', items=6), status_code=200)
+        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+
+        feed = Feed.query().get()
+        assert feed.feed_url == test_feed_url
+
+        self.set_rss_response(test_feed_url, content='', status_code=301, headers={'Location': test_feed_url2})
+        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+
+        feed = Feed.query().get()
+        assert feed.feed_url == test_feed_url2
 
 
 if __name__ == '__main__':
