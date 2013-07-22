@@ -378,6 +378,7 @@ class Entry(ndb.Model):
     overflow_reason = ndb.IntegerProperty(default=0)
     published_at = ndb.DateTimeProperty()
     status = ndb.IntegerProperty(default=ENTRY_STATE.ACTIVE)
+    language = ndb.StringProperty()
     extra_info = ndb.JsonProperty()
 
     image_url = ndb.StringProperty()
@@ -475,6 +476,15 @@ class Entry(ndb.Model):
                     "embeddable_url": self.link,
                 }
             })
+
+        if self.language:
+            post['annotations'].append({
+                "type": "net.app.core.language",
+                "value": {
+                    "language": self.language,
+                }
+            })
+
         return post
 
     @classmethod
@@ -545,6 +555,9 @@ class Entry(ndb.Model):
             logger.info("Exception while trying to find thumbnail %s", e)
 
         kwargs['feed_item'] = item
+
+        if feed.language:
+            kwargs['language'] = feed.language
 
         entry = cls(**kwargs)
 
@@ -618,13 +631,21 @@ class Entry(ndb.Model):
         if resp.status_code != 304:
             etag = resp.headers.get('ETag')
 
+            modified_feed = False
             # Update feed location
             if parsed_feed.update_url:
                 feed.feed_url = parsed_feed.update_url
-                feed.put()
+                modified_feed = True
                 publish = False
             elif etag and feed.etag != etag:
                 feed.etag = etag
+                modified_feed = True
+
+            if 'language' in parsed_feed.feed and parsed_feed.feed.language != feed.language:
+                feed.language = parsed_feed.feed.language
+                modified_feed = True
+
+            if modified_feed:
                 feed.put()
 
             num_created_entries = 0
@@ -706,6 +727,7 @@ class Feed(ndb.Model):
     schedule_period = ndb.IntegerProperty(default=PERIOD_SCHEDULE.MINUTE_5)
     max_stories_per_period = ndb.IntegerProperty(default=1)
     etag = ndb.StringProperty()
+    language = ndb.StringProperty()
     hub_secret = ndb.StringProperty()
 
     @classmethod

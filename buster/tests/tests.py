@@ -60,6 +60,7 @@ XML_TEMPLATE = """
         <description>
             Hi, my name is Buster.
         </description>
+        %(language)s
         <atom:link href="http://example.com/buster/rss" type="application/rss+xml" rel="self"/>
         %(items)s
     </channel>
@@ -102,14 +103,18 @@ class BusterTestCase(MockUrlfetchTest):
     def tearDown(self):
         self.testbed.deactivate()
 
-    def buildRSS(self, unique_key, use_hub=False, items=1):
+    def buildRSS(self, unique_key, use_hub=False, items=1, use_lang=None):
         hub = ''
         if use_hub:
             hub = '<link rel="hub" href="http://pubsubhubbub.appspot.com"/>'
 
+        language = ''
+        if use_lang:
+            language = '<language>%s</language>' % use_lang
+
         items = [RSS_ITEM % {'unique_key': '%s_%s' % (unique_key, x)} for x in xrange(0, items)]
 
-        return XML_TEMPLATE % ({'hub': hub, 'items': ''.join(items)})
+        return XML_TEMPLATE % ({'hub': hub, 'items': ''.join(items), 'language': language})
 
     def set_rss_response(self, url, content='', status_code=200, headers=None):
         self.set_response(url, content=content, status_code=status_code, headers=headers)
@@ -448,6 +453,25 @@ class BusterTestCase(MockUrlfetchTest):
         feed = Feed.query().get()
         assert feed.feed_url == test_feed_url2
 
+    def testLanguage(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=6), status_code=200)
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            include_summary=True,
+            max_stories_per_period=2,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+        assert feed.language == None
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=6, use_lang='en-US'), status_code=200)
+        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+
+        feed = Feed.query().get()
+        assert feed.language == 'en-US'
 
 if __name__ == '__main__':
     unittest.main()
