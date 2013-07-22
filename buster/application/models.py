@@ -81,6 +81,25 @@ OVERFLOW_REASON = DjangoEnum(
 MAX_CHARS = 256
 VALID_STATUS = (200, 304)
 
+# From here https://github.com/appdotnet/api-spec/wiki/Language-codes
+VALID_LANGUAGES = 'ar az bg bn bs ca cs cy da de el en en_GB es es_AR es_MX es_NI et eu fa fi fr fy_NL ga gl he hi hr hu id is it ja ka kk km kn ko lt lv mk ml mn nb ne nl nn no pa pl pt pt_BR ro ru sk sl sq sr sr_Latn sv sw ta te th tr tt uk ur vi zh_CN zh_TW'.split(' ')
+
+
+def get_language(lang=None):
+    if not lang:
+        return lang
+
+    if '-' in lang:
+        lang = lang.replace('-', '_')
+
+    if lang == 'en_US':
+        lang = 'en'
+
+    if lang in VALID_LANGUAGES:
+        return lang
+
+    return None
+
 
 class FetchException(Exception):
     pass
@@ -477,11 +496,12 @@ class Entry(ndb.Model):
                 }
             })
 
-        if self.language:
+        lang = get_language(self.language)
+        if lang:
             post['annotations'].append({
                 "type": "net.app.core.language",
                 "value": {
-                    "language": self.language,
+                    "language": lang,
                 }
             })
 
@@ -641,9 +661,11 @@ class Entry(ndb.Model):
                 feed.etag = etag
                 modified_feed = True
 
-            if 'language' in parsed_feed.feed and parsed_feed.feed.language != feed.language:
-                feed.language = parsed_feed.feed.language
-                modified_feed = True
+            if 'language' in parsed_feed.feed:
+                lang = get_language(parsed_feed.feed.language)
+                if lang != feed.language:
+                    feed.language = lang
+                    modified_feed = True
 
             if modified_feed:
                 feed.put()
