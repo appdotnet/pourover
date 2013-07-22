@@ -408,6 +408,9 @@ class Entry(ndb.Model):
     thumbnail_image_width = ndb.IntegerProperty()
     thumbnail_image_height = ndb.IntegerProperty()
 
+    tags = ndb.StringProperty(repeated=True)
+    author = ndb.StringProperty()
+
     feed_item = ndb.PickleProperty()
 
     def to_json(self, include=None):
@@ -505,6 +508,22 @@ class Entry(ndb.Model):
                 }
             })
 
+        if self.author:
+            post['annotations'].append({
+                "type": "com.appspot.pourover-adn.item.author",
+                "value": {
+                    "author": self.author,
+                }
+            })
+
+        if self.tags:
+            post['annotations'].append({
+                "type": "com.appspot.pourover-adn.item.tags",
+                "value": {
+                    "tags": self.tags,
+                }
+            })
+
         return post
 
     @classmethod
@@ -574,10 +593,16 @@ class Entry(ndb.Model):
         except Exception, e:
             logger.info("Exception while trying to find thumbnail %s", e)
 
-        kwargs['feed_item'] = item
-
         if feed.language:
             kwargs['language'] = feed.language
+
+        if 'tags' in item:
+            kwargs['tags'] = [x['term'] for x in item.tags]
+
+        if 'author' in item and item.author:
+            kwargs['author'] = item.author
+
+        kwargs['feed_item'] = item
 
         entry = cls(**kwargs)
 

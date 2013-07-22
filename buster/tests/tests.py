@@ -47,6 +47,8 @@ RSS_ITEM = """
         <pubDate>Wed, 19 Jun 2013 17:59:53 -0000</pubDate>
         <guid>http://example.com/buster/%(unique_key)s</guid>
         <link>http://example.com/buster/%(unique_key)s</link>
+        %(tags)s
+        %(author)s
     </item>
 """
 
@@ -103,7 +105,7 @@ class BusterTestCase(MockUrlfetchTest):
     def tearDown(self):
         self.testbed.deactivate()
 
-    def buildRSS(self, unique_key, use_hub=False, items=1, use_lang=None):
+    def buildRSS(self, unique_key, use_hub=False, items=1, use_lang=None, tags=None, author=None):
         hub = ''
         if use_hub:
             hub = '<link rel="hub" href="http://pubsubhubbub.appspot.com"/>'
@@ -112,7 +114,17 @@ class BusterTestCase(MockUrlfetchTest):
         if use_lang:
             language = '<language>%s</language>' % use_lang
 
-        items = [RSS_ITEM % {'unique_key': '%s_%s' % (unique_key, x)} for x in xrange(0, items)]
+        if tags:
+            tags = '\n'.join(["<category><![CDATA[%s]]></category>" % tag for tag in tags])
+        else:
+            tags = ''
+
+        if author:
+            author = '<dc:creator>%s</dc:creator>' % author
+        else:
+            author = ''
+
+        items = [RSS_ITEM % {'unique_key': '%s_%s' % (unique_key, x), 'tags': tags, 'author': author} for x in xrange(0, items)]
 
         return XML_TEMPLATE % ({'hub': hub, 'items': ''.join(items), 'language': language})
 
@@ -471,7 +483,48 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
 
         feed = Feed.query().get()
-        assert feed.language == 'en-US'
+        assert feed.language == 'en'
+
+    def testAuthor(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            include_summary=True,
+            max_stories_per_period=2,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        entry = Entry.query().get()
+        assert None == entry.author
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1, author='Alex Kessinger'), status_code=200)
+        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        entry = Entry.query().fetch(2)[1]
+
+        assert 'Alex Kessinger' == entry.author
+
+
+    def testTags(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            include_summary=True,
+            max_stories_per_period=2,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        entry = Entry.query().get()
+        assert [] == entry.tags
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1, tags=['example', 'feed']), status_code=200)
+        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        entry = Entry.query().fetch(2)[1]
+
+        assert ['example', 'feed'] == entry.tags
 
 if __name__ == '__main__':
     unittest.main()
