@@ -237,6 +237,7 @@ def feed_subscribe(feed_key):
     if mode == 'subscribe':
         feed = ndb.Key(urlsafe=feed_key).get()
         if verify_token != feed.verify_token:
+            logger.info('Failed verification feed.verify_token:%s GET verify_token:%s', feed.verify_token, verify_token)
             return "Failed Verification", 400
 
         if not feed:

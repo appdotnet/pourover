@@ -803,6 +803,22 @@ class Feed(ndb.Model):
             feed.status = FEED_STATE.ACTIVE
             feed.put()
 
+    def subscribe_to_hub(self):
+        subscribe_data = {
+            "hub.callback": url_for('feed_subscribe', feed_key=self.key.urlsafe(), _external=True),
+            "hub.mode": 'subscribe',
+            "hub.topic": self.feed_url,
+            'hub.verify_token': self.verify_token,
+        }
+
+        if self.hub_secret:
+            subscribe_data['hub.secret'] = self.hub_secret
+
+        logger.info('Hub: %s Subscribe Data: %s', self.hub, subscribe_data)
+        form_data = urllib.urlencode(subscribe_data)
+        resp = urlfetch.fetch(self.hub, method='POST', payload=form_data)
+        logger.info('PuSH Subscribe request hub:%s status_code:%s response:%s', self.hub, resp.status_code, resp.content)
+
     @classmethod
     def process_new_feed(cls, feed, overflow, overflow_reason):
         # Sync pull down the latest feeds
@@ -822,21 +838,8 @@ class Feed(ndb.Model):
 
                 feed.verify_token = uuid.uuid4().hex
                 feed.put()
+                feed.subscribe_to_hub()
 
-                subscribe_data = {
-                    "hub.callback": url_for('feed_subscribe', feed_key=feed.key.urlsafe(), _external=True),
-                    "hub.mode": 'subscribe',
-                    "hub.topic": feed.feed_url,
-                    'hub.verify_token': feed.verify_token,
-                }
-
-                if feed.hub_secret:
-                    subscribe_data['hub.secret'] = feed.hub_secret
-
-                logger.info('Hub: %s Subscribe Data: %s', hub_url, subscribe_data)
-                form_data = urllib.urlencode(subscribe_data)
-                resp = urlfetch.fetch(hub_url, method='POST', payload=form_data)
-                logger.info('PuSH Subscribe request hub:%s status_code:%s response:%s', hub_url, resp.status_code, resp.content)
 
         return feed
 
