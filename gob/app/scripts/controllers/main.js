@@ -77,7 +77,7 @@ angular.module('frontendApp')
   }
 
   var serialize_feed = function (feed) {
-    _.each(['linked_list_mode', 'include_thumb'], function (el) {
+    _.each(['linked_list_mode', 'include_thumb', 'include_summary'], function (el) {
       if (!feed[el]) {
         delete feed[el];
       }
