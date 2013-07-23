@@ -148,8 +148,10 @@ def build_html_from_post(post):
 
     # clean up any remaining text
     html_pieces.append(post.get('text', "")[text_idx:])
+    html = ''.join(html_pieces)
+    html = html.replace('\n', '<br>')
     # TODO: link to schema
-    return '<span>%s</span>' % (''.join(html_pieces), )
+    return '<span>%s</span>' % (html)
 
 
 def _prepare_request(feed_url, etag, async=False, follow_redirects=True):
@@ -862,7 +864,7 @@ class Feed(ndb.Model):
         return {
             'feed_url': self.feed_url,
             'feed_id': self.key.id(),
-            # 'include_summary': self.include_summary,
+            'include_summary': self.include_summary,
             'include_thumb': self.include_thumb,
             'linked_list_mode': self.linked_list_mode,
             'schedule_period': self.schedule_period,

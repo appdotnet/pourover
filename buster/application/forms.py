@@ -15,8 +15,7 @@ def boolean_filter(value):
 
 
 class FeedUpdate(Form):
-    # Someday we can turn this back on if we want.
-    # include_summary = fields.BooleanField(default=False, filters=[boolean_filter])
+    include_summary = fields.BooleanField(default=False, filters=[boolean_filter])
     linked_list_mode = fields.BooleanField(default=False, filters=[boolean_filter])
     include_thumb = fields.BooleanField(default=False, filters=[boolean_filter])
     max_stories_per_period = fields.IntegerField(default=1, validators=[validators.NumberRange(1, 5)])

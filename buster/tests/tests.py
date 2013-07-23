@@ -505,7 +505,6 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert 'Alex Kessinger' == entry.author
 
-
     def testTags(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
@@ -525,6 +524,19 @@ class BusterTestCase(MockUrlfetchTest):
         entry = Entry.query().fetch(2)[1]
 
         assert ['example', 'feed'] == entry.tags
+
+    def testIncludeSummary(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        resp = self.app.get('/api/feed/preview?feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
+
+        resp = self.app.get('/api/feed/preview?include_summary=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>test_0</span>"
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -87,17 +87,22 @@
                   <div class="control-group">
                       <div class="controls">
                         <label class='checkbox'>
-                          <input type='checkbox' name='linked_list' ng-model='feed.linked_list_mode'> Linked List Mode
+                          <input type='checkbox' name='include_summary' ng-model='feed.include_summary'> Include Summary
                         </label>
                         <p class='help-block'>
-                          <small>Use Linked List Mode if you run a link blog and you want the title to be linked to your website instead of the post permalink.</small>
+                          <small>Include a portion of the feed item body.</small>
                         </p>
                         <label class='checkbox'>
                           <input type='checkbox' name='include_thumb' ng-model='feed.include_thumb'> Include Image
                         </label>
                         <p class='help-block'>
-                          <small>If PourOver can find an image in an feed item it will be attached to a post as
-                          an oEmbed annotation. It uses the following methods: <a href='http://en.wikipedia.org/wiki/Media_RSS'>Media RSS</a> and first image in the body of the post. Dimensions Min (200 x 200 px) Max (1000 x 1000 px).</small>
+                          <small>If an image is included in the feed item it will be attached to the App.net post as an oEmbed annotation. To be included the image must specify its width and height. Dimension constraints: Min (200 x 200 px) Max (1000 x 1000 px).</small>
+                        </p>
+                        <label class='checkbox'>
+                          <input type='checkbox' name='linked_list' ng-model='feed.linked_list_mode'> Linked List Mode
+                        </label>
+                        <p class='help-block'>
+                          <small>Use Linked List Mode if you run a link blog and you want the title to be linked to your website instead of the post permalink.</small>
                         </p>
                       </div>
                   </div>
