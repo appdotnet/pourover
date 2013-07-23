@@ -77,9 +77,11 @@ angular.module('frontendApp')
   }
 
   var serialize_feed = function (feed) {
-    if (!feed.linked_list_mode) {
-      delete feed.linked_list_mode;
-    }
+    _.each(['linked_list_mode', 'include_thumb'], function (el) {
+      if (!feed[el]) {
+        delete feed[el];
+      }
+    });
 
     return feed;
   };

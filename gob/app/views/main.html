@@ -92,6 +92,13 @@
                         <p class='help-block'>
                           <small>Use Linked List Mode if you run a link blog and you want the title to be linked to your website instead of the post permalink.</small>
                         </p>
+                        <label class='checkbox'>
+                          <input type='checkbox' name='include_thumb' ng-model='feed.include_thumb'> Include Image
+                        </label>
+                        <p class='help-block'>
+                          <small>If PourOver can find an image in an feed item it will be attached to a post as
+                          an oEmbed annotation. It uses the following methods: <a href='http://en.wikipedia.org/wiki/Media_RSS'>Media RSS</a> and first image in the body of the post. Dimensions Min (200 x 200 px) Max (1000 x 1000 px).</small>
+                        </p>
                       </div>
                   </div>
                 </form>
@@ -110,7 +117,12 @@
               </span>
               <div class="media-body">
                 <b class="media-heading"><span ng-bind="current_user.username"></span></b>
-                <p ng-bind-html-unsafe='post'></p>
+                <span class='pull-right' ng-show='post.thumbnail_image_url'>
+                  <img class='media-object' ng-src='{{ post.thumbnail_image_url }}' width='100px'>
+                </span>
+                <div class='media-body'>
+                  <p ng-bind-html-unsafe='post.html'></p>
+                </div>
               </div>
             </div>
         </div>

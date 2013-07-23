@@ -398,11 +398,11 @@ class BusterTestCase(MockUrlfetchTest):
         self.set_rss_response('http://daringfireball.net/index.xml', content=data)
         resp = self.app.get('/api/feed/preview?feed_url=http://daringfireball.net/index.xml', headers=self.authHeaders())
         data = json.loads(resp.data)
-        assert data['data'][0] == "<span><a href='http://blog.app.net/2013/07/15/pourover-for-app-net-is-now-available/?utm_medium=App.net&utm_source=PourOver'>PourOver for App.net</a></span>"
+        assert data['data'][0]['html'] == "<span><a href='http://blog.app.net/2013/07/15/pourover-for-app-net-is-now-available/?utm_medium=App.net&utm_source=PourOver'>PourOver for App.net</a></span>"
 
         resp = self.app.get('/api/feed/preview?linked_list_mode=true&feed_url=http://daringfireball.net/index.xml', headers=self.authHeaders())
         data = json.loads(resp.data)
-        assert data['data'][0] == "<span><a href='http://daringfireball.net/linked/2013/07/17/pourover?utm_medium=App.net&utm_source=PourOver'>PourOver for App.net</a></span>"
+        assert data['data'][0]['html'] == "<span><a href='http://daringfireball.net/linked/2013/07/17/pourover?utm_medium=App.net&utm_source=PourOver'>PourOver for App.net</a></span>"
 
     def testSingleItemPublish(self):
         self.setMockUser()

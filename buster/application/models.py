@@ -413,7 +413,7 @@ class Entry(ndb.Model):
 
     feed_item = ndb.PickleProperty()
 
-    def to_json(self, include=None):
+    def to_json(self, include=None, feed=None):
         include = include or []
         data = {}
         for attr in include:
@@ -422,7 +422,13 @@ class Entry(ndb.Model):
         if self.overflow:
             data['overflow_reason'] = OVERFLOW_REASON.for_display(self.overflow_reason)
 
-        data['id'] = self.key.id()
+        if self.key:
+            data['id'] = self.key.id()
+
+        feed = feed or self.key.parent().get()
+        data['html'] = build_html_from_post(self.format_for_adn(feed))
+        if feed.include_thumb and self.thumbnail_image_url:
+            data['thumbnail_image_url'] = self.thumbnail_image_url
 
         return data
 
@@ -528,7 +534,7 @@ class Entry(ndb.Model):
 
     @classmethod
     def entry_preview(cls, entries, feed):
-        return [build_html_from_post(entry.format_for_adn(feed)) for entry in entries]
+        return [entry.to_json(feed=feed) for entry in entries]
 
     @classmethod
     def entry_preview_for_feed(cls, feed):
@@ -597,7 +603,7 @@ class Entry(ndb.Model):
             kwargs['language'] = feed.language
 
         if 'tags' in item:
-            kwargs['tags'] = [x['term'] for x in item.tags]
+            kwargs['tags'] = filter(None, [x['term'] for x in item.tags])
 
         if 'author' in item and item.author:
             kwargs['author'] = item.author
@@ -857,6 +863,7 @@ class Feed(ndb.Model):
             'feed_url': self.feed_url,
             'feed_id': self.key.id(),
             # 'include_summary': self.include_summary,
+            'include_thumb': self.include_thumb,
             'linked_list_mode': self.linked_list_mode,
             'schedule_period': self.schedule_period,
             'max_stories_per_period': self.max_stories_per_period,
