@@ -54,6 +54,10 @@ FEED_STATE = DjangoEnum(
     (10, 'INACTIVE', 'Inactive'),
 )
 
+FORMAT_MODE = DjangoEnum(
+    (1, 'LINKED_TITLE', 'Linked Title'),
+    (2, 'TITLE_THEN_LINK', 'Title then Link'),
+)
 
 UPDATE_INTERVAL = DjangoEnum(
     (5, 'MINUTE_1', '1 min'),
@@ -437,19 +441,11 @@ class Entry(ndb.Model):
     def format_for_adn(self, feed):
         post_text = self.title
         links = []
+        summary_text = ''
         if feed.include_summary:
             summary_text = strip_html_tags(self.summary)
             summary_text = ellipse_text(summary_text, 140)
 
-        else:
-            links = []
-            summary_text = ''
-
-        # Should be some room for a description
-        if len(post_text) < (MAX_CHARS - 40) and summary_text:
-            post_text = u'%s\n%s' % (post_text, summary_text)
-
-        post_text = ellipse_text(post_text, MAX_CHARS)
         if self.feed_item:
             link = get_link_for_item(feed, self.feed_item)
         else:
@@ -457,8 +453,27 @@ class Entry(ndb.Model):
 
         link = append_query_string(link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
 
-        # logger.info(u'Text Len: %s text: %s entry_title:%s entry_title_len:%s', len(post_text), post_text, entry.title, len(entry.title))
-        links.insert(0, (link, self.title))
+        # Starting out it should be as long as it can be
+        max_chars = MAX_CHARS
+        max_link_chars = 40
+        ellipse_link_text = ellipse_text(link, max_link_chars)
+        # If the link is to be included in the text we need to make sure we reserve enough space at the end
+        if feed.format_mode == FORMAT_MODE.TITLE_THEN_LINK:
+            max_chars -= len(' ' + ellipse_link_text)
+
+        # Should be some room for a description
+        if len(post_text) < (max_chars - 40) and summary_text:
+            post_text = u'%s\n%s' % (post_text, summary_text)
+
+        post_text = ellipse_text(post_text, max_chars)
+        if feed.format_mode == FORMAT_MODE.TITLE_THEN_LINK:
+            post_text += ' ' + ellipse_link_text
+
+        if feed.format_mode == FORMAT_MODE.TITLE_THEN_LINK:
+            links.insert(0, (link, ellipse_link_text))
+        else:
+            links.insert(0, (link, self.title))
+
         link_entities = []
         index = 0
         for href, link_text in links:
@@ -775,6 +790,7 @@ class Feed(ndb.Model):
     include_summary = ndb.BooleanProperty(default=False)
     include_thumb = ndb.BooleanProperty(default=False)
     linked_list_mode = ndb.BooleanProperty(default=False)
+    format_mode = ndb.IntegerProperty(default=FORMAT_MODE.LINKED_TITLE)
     template = ndb.TextProperty(default='')
     added = ndb.DateTimeProperty(auto_now_add=True)
     update_interval = ndb.IntegerProperty(default=UPDATE_INTERVAL.MINUTE_5)
@@ -868,6 +884,7 @@ class Feed(ndb.Model):
             'feed_url': self.feed_url,
             'feed_id': self.key.id(),
             'include_summary': self.include_summary,
+            'format_mode': self.format_mode,
             'include_thumb': self.include_thumb,
             'linked_list_mode': self.linked_list_mode,
             'schedule_period': self.schedule_period,

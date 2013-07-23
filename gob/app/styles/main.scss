@@ -70,7 +70,11 @@
 
 
 .input-super-mini { width: 22px; }
-
+.like-link {
+    cursor: pointer;
+    color: #1abc9c;
+    text-decoration: none;
+}
 .schedule {
     .input-super-mini {
         padding-left: 1px;
@@ -92,6 +96,9 @@
 }
 .ta-right {text-align: right;}
 
+.tab-content > .active, .pill-content > .active {
+    padding-left: 2px;
+}
 
 .loading-icon {
     padding: 5px;

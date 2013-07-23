@@ -39,7 +39,8 @@ angular.module('frontendApp')
 
   $scope.feed = {
     max_stories_per_period: 1,
-    schedule_period: 1
+    schedule_period: 1,
+    format_mode: 1
   };
 
   // initialize and store user data in localStorage
