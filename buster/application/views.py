@@ -232,11 +232,12 @@ def feed_entry_publish(feed_id, entry_id):
 def feed_subscribe(feed_key):
     mode = request.args['hub.mode']
     challenge = request.args['hub.challenge']
-    verify_token = request.args.get('hub.verify_token', '')
+    verify_token = request.args.get('hub.verify_token')
 
     if mode == 'subscribe':
         feed = ndb.Key(urlsafe=feed_key).get()
-        if verify_token != feed.verify_token:
+        # Only check this they send back a verify token
+        if verify_token and verify_token != feed.verify_token:
             logger.info('Failed verification feed.verify_token:%s GET verify_token:%s', feed.verify_token, verify_token)
             return "Failed Verification", 400
 
