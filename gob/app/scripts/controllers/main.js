@@ -26,7 +26,8 @@ var getUserData = function (client) {
 var DEFAULT_FEED_OBJ = {
     max_stories_per_period: 1,
     schedule_period: 1,
-    format_mode: 1
+    format_mode: 1,
+    include_thumb: true,
 };
 
 angular.module('frontendApp')
