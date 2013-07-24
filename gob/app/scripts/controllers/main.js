@@ -23,6 +23,12 @@ var getUserData = function (client) {
 };
 
 
+var DEFAULT_FEED_OBJ = {
+    max_stories_per_period: 1,
+    schedule_period: 1,
+    format_mode: 1
+};
+
 angular.module('frontendApp')
 .controller('MainCtrl', ['$scope', function ($scope) {
   // Developers should change this client_id to their own app.
@@ -37,11 +43,7 @@ angular.module('frontendApp')
     {label: '60 mins', value: 60},
   ];
 
-  $scope.feed = {
-    max_stories_per_period: 1,
-    schedule_period: 1,
-    format_mode: 1
-  };
+  $scope.feed = DEFAULT_FEED_OBJ;
 
   // initialize and store user data in localStorage
   $scope.local = JSON.parse(localStorage.data || '{}');
@@ -78,7 +80,7 @@ angular.module('frontendApp')
   }
 
   var serialize_feed = function (feed) {
-    _.each(['linked_list_mode', 'include_thumb', 'include_summary'], function (el) {
+    _.each(['linked_list_mode', 'include_thumb', 'include_summary', 'include_video'], function (el) {
       if (!feed[el]) {
         delete feed[el];
       }
@@ -209,12 +211,9 @@ angular.module('frontendApp')
       method: 'DELETE',
     }, client, window.location + 'api/').done(function () {
       $scope.$apply(function (scope) {
-        scope.feed = {
-          max_stories_per_period: 1,
-          schedule_period: 1
-        };
-        scope.published_entries = undefined;
-        scope.unpublished_entries = undefined;
+        scope.feed = DEFAULT_FEED_OBJ;
+        scope.published_entries = [];
+        scope.unpublished_entries = [];
       });
     });
   };

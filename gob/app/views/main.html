@@ -100,7 +100,7 @@
                         </p>
                         <p>
                           <label class='radio'>
-                            <input type='radio' ng-model='feed.format_mode' value='2'> The Story Title By It's Self Then A <span class='like-link'>link.com</span>
+                            <input type='radio' ng-model='feed.format_mode' value='2'> The Story Title By Its Self Then A <span class='like-link'>link.com</span>
                           </label>
                         </p>
                       </div>
@@ -119,6 +119,12 @@
                             </label>
                             <p class='help-block'>
                               <small>If an image is included in the feed item it will be attached to the App.net post as an oEmbed annotation. To be included the image must specify its width and height. Dimension constraints: Min (200 x 200 px) Max (1000 x 1000 px).</small>
+                            </p>
+                            <label class='checkbox'>
+                              <input type='checkbox' name='include_video' ng-model='feed.include_video'> Include Video
+                            </label>
+                            <p class='help-block'>
+                              <small>If a video(Youtube/Vimeo) is embedded in the feed item it will be attached to the App.net post as an oEmbed annotation. If both include video, and include image are checked include video will win.</small>
                             </p>
                             <label class='checkbox'>
                               <input type='checkbox' name='linked_list' ng-model='feed.linked_list_mode'> Linked List Mode

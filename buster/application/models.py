@@ -22,6 +22,8 @@ from .utils import append_query_string
 
 logger = logging.getLogger(__name__)
 
+# Monkeypatch feedparser
+feedparser._HTMLSanitizer.acceptable_elements = set(list(feedparser._HTMLSanitizer.acceptable_elements) + ["object", "embed", "iframe", "param"])
 
 class DjangoEnum(object):
     def __init__(self, *string_list):
@@ -319,6 +321,86 @@ def find_thumbnail(item):
     return None
 
 
+def find_video_src_url(item):
+    summary = item.get('summary', item.get('content'))
+    if not summary:
+        return None, None
+
+    soup = BeautifulSoup(summary)
+
+    possible_embeds = soup.findAll('iframe')
+    possible_embeds += soup.findAll('embed')
+
+    for embed in possible_embeds:
+        src_url = embed.get('src')
+        urlparts = urlparse(src_url)
+        logger.info('Potnetial vidoe: %s', src_url)
+        if urlparts.netloc.endswith('youtube.com'):
+            return src_url, 'youtube'
+
+        if urlparts.netloc.endswith('vimeo.com'):
+            return src_url, 'vimeo'
+
+    return None, None
+
+# http://stackoverflow.com/questions/4356538/how-can-i-extract-video-id-from-youtubes-link-in-python
+def normalize_youtube_link(url):
+    """
+    Examples:
+    - http://youtu.be/SA2iWivDJiE
+    - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
+    - http://www.youtube.com/embed/SA2iWivDJiE
+    - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;hl=en_US
+    """
+    video_id = None
+    query = urlparse(url)
+    if query.hostname == 'youtu.be':
+        video_id = query.path[1:]
+    if query.hostname in ('www.youtube.com', 'youtube.com'):
+        if query.path == '/watch':
+            p = parse_qs(query.query)
+            video_id = p['v'][0]
+        if query.path[:7] == '/embed/':
+            video_id = query.path.split('/')[2]
+        if query.path[:3] == '/v/':
+            video_id = query.path.split('/')[2]
+    # fail?
+    return 'http://www.youtube.com/watch?v=%s' % (video_id)
+
+
+OEMBED_ENDPOINTS = {
+    'vimeo': 'http://vimeo.com/api/oembed.json',
+    'youtube': 'http://www.youtube.com/oembed',
+}
+
+
+def find_video_oembed(item):
+    url, oembed_provider = find_video_src_url(item)
+    if not url or not oembed_provider:
+        return None
+
+    if url.startswith('//'):
+        url = 'http:' + url
+
+    if oembed_provider == 'youtube':
+        url = normalize_youtube_link(url)
+
+    if not url:
+        return None
+
+    params = {
+        'url': url
+    }
+
+    query_string = urllib.urlencode(params)
+    resp = urlfetch.fetch(url='%s?%s' % (OEMBED_ENDPOINTS[oembed_provider], query_string), method='GET')
+    # logger.info('Trying to fetch oembed data url:%s status_code:%s', url, resp.status_code)
+    if resp.status_code != 200:
+        return None
+    # logger.info('Found video provider:%s url:%s embed:%s', oembed_provider, url, json.loads(resp.content))
+    return json.loads(resp.content)
+
+
 def get_link_for_item(feed, item):
     feed_link = feed.feed_url
     main_item_link = item.get('link')
@@ -413,6 +495,7 @@ class Entry(ndb.Model):
     thumbnail_image_url = ndb.StringProperty()
     thumbnail_image_width = ndb.IntegerProperty()
     thumbnail_image_height = ndb.IntegerProperty()
+    video_oembed = ndb.PickleProperty()
 
     tags = ndb.StringProperty(repeated=True)
     author = ndb.StringProperty()
@@ -435,6 +518,9 @@ class Entry(ndb.Model):
         data['html'] = build_html_from_post(self.format_for_adn(feed))
         if feed.include_thumb and self.thumbnail_image_url:
             data['thumbnail_image_url'] = self.thumbnail_image_url
+
+        if feed.include_video and self.video_oembed:
+            data['thumbnail_image_url'] = self.video_oembed['thumbnail_url']
 
         return data
 
@@ -504,9 +590,11 @@ class Entry(ndb.Model):
             post['entities'] = {
                 'links': link_entities,
             }
+
+        media_annotation = None
         # logger.info('Info %s, %s', include_thumb, self.thumbnail_image_url)
         if feed.include_thumb and self.thumbnail_image_url:
-            post['annotations'].append({
+            media_annotation = {
                 "type": "net.app.core.oembed",
                 "value": {
                     "version": "1.0",
@@ -520,7 +608,18 @@ class Entry(ndb.Model):
                     "thumbnail_url": self.thumbnail_image_url,
                     "embeddable_url": self.link,
                 }
-            })
+            }
+
+        if feed.include_video and self.video_oembed:
+            oembed = self.video_oembed
+            oembed['embeddable_url'] = self.link
+            media_annotation = {
+                "type": "net.app.core.oembed",
+                "value": oembed
+            }
+
+        if media_annotation:
+            post['annotations'].append(media_annotation)
 
         lang = get_language(self.language)
         if lang:
@@ -624,6 +723,11 @@ class Entry(ndb.Model):
 
         if 'author' in item and item.author:
             kwargs['author'] = item.author
+
+        if feed.include_video:
+            embed = find_video_oembed(item)
+            if embed:
+                kwargs['video_oembed'] = embed
 
         kwargs['feed_item'] = item
 
@@ -789,6 +893,7 @@ class Feed(ndb.Model):
     status = ndb.IntegerProperty(default=FEED_STATE.ACTIVE)
     include_summary = ndb.BooleanProperty(default=False)
     include_thumb = ndb.BooleanProperty(default=False)
+    include_video = ndb.BooleanProperty(default=False)
     linked_list_mode = ndb.BooleanProperty(default=False)
     format_mode = ndb.IntegerProperty(default=FORMAT_MODE.LINKED_TITLE)
     template = ndb.TextProperty(default='')

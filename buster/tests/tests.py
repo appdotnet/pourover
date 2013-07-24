@@ -42,7 +42,7 @@ RSS_ITEM = """
             %(unique_key)s
         </title>
         <description>
-            %(unique_key)s
+            %(description)s
         </description>
         <pubDate>Wed, 19 Jun 2013 17:59:53 -0000</pubDate>
         <guid>http://example.com/buster/%(unique_key)s</guid>
@@ -81,6 +81,8 @@ HTML_PAGE_TEMPLATE = """
 </html>
 """
 
+YOUTUBE_OEMBED_RESPONSE = json.dumps({u'provider_url': u'http://www.youtube.com/', u'title': u'Auto-Tune the News #8: dragons. geese. Michael Vick. (ft. T-Pain)', u'html': u'<iframe width="459" height="344" src="http://www.youtube.com/embed/bDOYN-6gdRE?feature=oembed" frameborder="0" allowfullscreen></iframe>', u'author_name': u'schmoyoho', u'height': 344, u'thumbnail_width': 480, u'width': 459, u'version': u'1.0', u'author_url': u'http://www.youtube.com/user/schmoyoho', u'thumbnail_height': 360, u'thumbnail_url': u'http://i1.ytimg.com/vi/bDOYN-6gdRE/hqdefault.jpg', u'type': u'video', u'provider_name': u'YouTube'})
+VIMEO_OEMBED_RESPONSE = json.dumps({u'is_plus': u'0', u'provider_url': u'https://vimeo.com/', u'description': u'Brad finally gets the attention he deserves.', u'title': u'Brad!', u'video_id': 7100569, u'html': u'<iframe src="http://player.vimeo.com/video/7100569" width="1280" height="720" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>', u'author_name': u'Casey Donahue', u'height': 720, u'thumbnail_width': 1280, u'width': 1280, u'version': u'1.0', u'author_url': u'http://vimeo.com/caseydonahue', u'duration': 118, u'provider_name': u'Vimeo', u'thumbnail_url': u'http://b.vimeocdn.com/ts/294/128/29412830_1280.jpg', u'type': u'video', u'thumbnail_height': 720})
 
 def get_file_from_data(fname):
     return open(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + fname).read()
@@ -105,7 +107,7 @@ class BusterTestCase(MockUrlfetchTest):
     def tearDown(self):
         self.testbed.deactivate()
 
-    def buildRSS(self, unique_key, use_hub=False, items=1, use_lang=None, tags=None, author=None):
+    def buildRSS(self, unique_key, use_hub=False, items=1, use_lang=None, tags=None, author=None, description=None):
         hub = ''
         if use_hub:
             hub = '<link rel="hub" href="http://pubsubhubbub.appspot.com"/>'
@@ -124,7 +126,8 @@ class BusterTestCase(MockUrlfetchTest):
         else:
             author = ''
 
-        items = [RSS_ITEM % {'unique_key': '%s_%s' % (unique_key, x), 'tags': tags, 'author': author} for x in xrange(0, items)]
+        description = description or unique_key
+        items = [RSS_ITEM % {'unique_key': '%s_%s' % (unique_key, x), 'tags': tags, 'author': author, 'description': description} for x in xrange(0, items)]
 
         return XML_TEMPLATE % ({'hub': hub, 'items': ''.join(items), 'language': language})
 
@@ -535,8 +538,27 @@ class BusterTestCase(MockUrlfetchTest):
 
         resp = self.app.get('/api/feed/preview?include_summary=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
         data = json.loads(resp.data)
-        assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>test_0</span>"
+        assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>test</span>"
 
+
+    def testIncludeVideo(self):
+        self.setMockUser()
+        self.set_response('http://vimeo.com/api/oembed.json?url=http%3A%2F%2Fvimeo.com%2F7100569', content=VIMEO_OEMBED_RESPONSE)
+        self.set_response('http://www.youtube.com/oembed?url=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DPTHS7qjEDTs', content=YOUTUBE_OEMBED_RESPONSE)
+        urls = [
+            ('//www.youtube.com/v/PTHS7qjEDTs?version=3&amp;hl=en_US&amp;rel=0', 'http://i1.ytimg.com/vi/bDOYN-6gdRE/hqdefault.jpg'),
+            ('//vimeo.com/7100569', 'http://b.vimeocdn.com/ts/294/128/29412830_1280.jpg')
+        ]
+        embed_types = ['<embed height="360" src="%s" type="application/x-shockwave-flash" width="640" />', '<iframe src="%s"></iframe>']
+        test_feed_url = 'http://example.com/rss'
+        for url, thumbnail_url in urls:
+            for embed_type in embed_types:
+                description = embed_type % url
+                self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
+                resp = self.app.get('/api/feed/preview?include_video=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+                data = json.loads(resp.data)
+                assert data['data'][0]['thumbnail_image_url'] == thumbnail_url
+                assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
 
 if __name__ == '__main__':
     unittest.main()
