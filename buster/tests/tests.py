@@ -83,6 +83,7 @@ HTML_PAGE_TEMPLATE = """
 
 YOUTUBE_OEMBED_RESPONSE = json.dumps({u'provider_url': u'http://www.youtube.com/', u'title': u'Auto-Tune the News #8: dragons. geese. Michael Vick. (ft. T-Pain)', u'html': u'<iframe width="459" height="344" src="http://www.youtube.com/embed/bDOYN-6gdRE?feature=oembed" frameborder="0" allowfullscreen></iframe>', u'author_name': u'schmoyoho', u'height': 344, u'thumbnail_width': 480, u'width': 459, u'version': u'1.0', u'author_url': u'http://www.youtube.com/user/schmoyoho', u'thumbnail_height': 360, u'thumbnail_url': u'http://i1.ytimg.com/vi/bDOYN-6gdRE/hqdefault.jpg', u'type': u'video', u'provider_name': u'YouTube'})
 VIMEO_OEMBED_RESPONSE = json.dumps({u'is_plus': u'0', u'provider_url': u'https://vimeo.com/', u'description': u'Brad finally gets the attention he deserves.', u'title': u'Brad!', u'video_id': 7100569, u'html': u'<iframe src="http://player.vimeo.com/video/7100569" width="1280" height="720" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>', u'author_name': u'Casey Donahue', u'height': 720, u'thumbnail_width': 1280, u'width': 1280, u'version': u'1.0', u'author_url': u'http://vimeo.com/caseydonahue', u'duration': 118, u'provider_name': u'Vimeo', u'thumbnail_url': u'http://b.vimeocdn.com/ts/294/128/29412830_1280.jpg', u'type': u'video', u'thumbnail_height': 720})
+BIT_LY_RESPONSE = """{ "status_code": 200, "status_txt": "OK", "data": { "long_url": "http:\/\/daringfireball.net\/2013\/05\/facebook_home_dogfooding?utm_medium=App.net&utm_source=PourOver", "url": "http:\/\/bit.ly\/123", "hash": "1c3ehlA", "global_hash": "1c3ehlB", "new_hash": 0 } }"""
 
 def get_file_from_data(fname):
     return open(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + fname).read()
@@ -528,6 +529,26 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert ['example', 'feed'] == entry.tags
 
+    def testTags(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            include_summary=True,
+            max_stories_per_period=2,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        entry = Entry.query().get()
+        assert [] == entry.tags
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1, tags=['example', 'feed']), status_code=200)
+        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        entry = Entry.query().fetch(2)[1]
+
+        assert ['example', 'feed'] == entry.tags
+
     def testIncludeSummary(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
@@ -559,6 +580,28 @@ class BusterTestCase(MockUrlfetchTest):
                 data = json.loads(resp.data)
                 assert data['data'][0]['thumbnail_image_url'] == thumbnail_url
                 assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
+
+    def testShortUrl(self):
+        self.setMockUser()
+        self.set_rss_response("https://api-ssl.bitly.com/v3/shorten?login=example&apiKey=R_123&longUrl=http%3A%2F%2Fexample.com%2Fbuster%2Ftest1_0%3Futm_medium%3DApp.net%26utm_source%3DPourOver", content=BIT_LY_RESPONSE)
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            include_summary=True,
+            max_stories_per_period=2,
+            schedule_period=5,
+            bitly_login='example',
+            bitly_api_key='R_123',
+        ), headers=self.authHeaders())
+
+        entry = Entry.query().get()
+        assert [] == entry.tags
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1), status_code=200)
+        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        entry = Entry.query().fetch(2)[1]
+
+        assert entry.short_url == 'http://bit.ly/123'
 
 if __name__ == '__main__':
     unittest.main()

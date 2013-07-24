@@ -94,7 +94,7 @@ def feed_preview():
 
     feed = Feed()
     form.populate_obj(feed)
-
+    feed.preview = True
     entries = []
     error = None
 
@@ -202,8 +202,8 @@ def save_feed_preview(feed_id):
         return jsonify_error(message="Can't find that feed")
 
     form.populate_obj(feed)
-
-    preview_entries = Entry.entry_preview(Entry.latest_published(feed).fetch(3), feed)
+    feed.preview = True
+    preview_entries = Entry.entry_preview(Entry.latest_published(feed).fetch(3), feed, format=True)
 
     return jsonify(status='ok', data=preview_entries)
 

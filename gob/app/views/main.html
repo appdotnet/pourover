@@ -104,6 +104,22 @@
                           </label>
                         </p>
                       </div>
+                      <hr>
+                      <div class='control-group format-mode'>
+                        <p><small>Enter your Bit.ly credentials to turn on link shortening. <a href='https://bitly.com/a/your_api_key' target='_blank'>Find your API Key information.</a></small></p>
+                        <div class="control-group">
+                          <label class="control-label" for="bitly_login">Bit.ly Login</label>
+                          <div class="controls">
+                            <input type='text' name='bitly_login' ng-model='feed.bitly_login'>
+                          </div>
+                        </div>
+                        <div class="control-group">
+                          <label class="control-label" for='bitly_api_key'>Bit.ly API Key</label>
+                          <div class="controls">
+                            <input type='text' name='bitly_api_key' ng-model='feed.bitly_api_key'>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div class="tab-pane" id="options">
                       <div class="control-group">
@@ -160,6 +176,7 @@
                 </div>
               </div>
             </div>
+            <p ng-shpw='feed.bitly_api_key && feed.bitly_login'><small>Links will be shortened with Bit.ly when they are published.</small></p>
         </div>
         <div class='span8' ng-hide='posts && feed.feed_url'>
           <h3>Feed Preview</h3>

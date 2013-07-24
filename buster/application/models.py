@@ -479,6 +479,7 @@ class Entry(ndb.Model):
     title = ndb.StringProperty()
     summary = ndb.TextProperty()
     link = ndb.StringProperty()
+    short_url = ndb.StringProperty()
     added = ndb.DateTimeProperty(auto_now_add=True)
     published = ndb.BooleanProperty(default=False)
     overflow = ndb.BooleanProperty(default=False)
@@ -502,7 +503,7 @@ class Entry(ndb.Model):
 
     feed_item = ndb.PickleProperty()
 
-    def to_json(self, include=None, feed=None):
+    def to_json(self, include=None, feed=None, format=False):
         include = include or []
         data = {}
         for attr in include:
@@ -515,14 +516,38 @@ class Entry(ndb.Model):
             data['id'] = self.key.id()
 
         feed = feed or self.key.parent().get()
-        data['html'] = build_html_from_post(self.format_for_adn(feed))
-        if feed.include_thumb and self.thumbnail_image_url:
-            data['thumbnail_image_url'] = self.thumbnail_image_url
+        if format:
+            data['html'] = build_html_from_post(self.format_for_adn(feed))
+            if feed.include_thumb and self.thumbnail_image_url:
+                data['thumbnail_image_url'] = self.thumbnail_image_url
 
-        if feed.include_video and self.video_oembed:
-            data['thumbnail_image_url'] = self.video_oembed['thumbnail_url']
+            if feed.include_video and self.video_oembed:
+                data['thumbnail_image_url'] = self.video_oembed['thumbnail_url']
 
         return data
+
+    def get_short_url(self, link, feed):
+        if self.short_url:
+            return self.short_url
+
+        params = {
+            'login': feed.bitly_login,
+            'apiKey': feed.bitly_api_key,
+            'longUrl': link,
+        }
+
+        query_string = urllib.urlencode(params)
+        resp = urlfetch.fetch(url='https://api-ssl.bitly.com/v3/shorten?%s' % (query_string), method='GET')
+        if resp.status_code == 200:
+            logger.info('url: %s Resp content: %s', 'https://api-ssl.bitly.com/v3/shorten?%s' % (query_string), resp.content)
+            resp_json = json.loads(resp.content)
+            if resp_json['status_code'] == 200:
+                link = resp_json['data']['url']
+                self.short_url = link
+                self.put()
+                return link
+
+        return None
 
     def format_for_adn(self, feed):
         post_text = self.title
@@ -538,6 +563,13 @@ class Entry(ndb.Model):
             link = self.link
 
         link = append_query_string(link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
+
+        # If viewing feed from preview don't shorten urls
+        preview = getattr(feed, 'preview', False)
+        if feed.bitly_login and feed.bitly_api_key and not preview:
+            short_url = self.get_short_url(link, feed)
+            if short_url:
+                link = short_url
 
         # Starting out it should be as long as it can be
         max_chars = MAX_CHARS
@@ -649,8 +681,8 @@ class Entry(ndb.Model):
         return post
 
     @classmethod
-    def entry_preview(cls, entries, feed):
-        return [entry.to_json(feed=feed) for entry in entries]
+    def entry_preview(cls, entries, feed, format=False):
+        return [entry.to_json(feed=feed, format=format) for entry in entries]
 
     @classmethod
     def entry_preview_for_feed(cls, feed):
@@ -667,7 +699,7 @@ class Entry(ndb.Model):
             if entry:
                 entries.append(entry)
 
-        return cls.entry_preview(entries, feed)
+        return cls.entry_preview(entries, feed, format=True)
 
     @classmethod
     def prepare_entry_from_item(cls, rss_feed, item, feed, overflow=False, overflow_reason=None, published=False):
@@ -705,6 +737,7 @@ class Entry(ndb.Model):
         summary = item.get('summary', '')
         kwargs = dict(guid=guid, title=title, summary=summary, link=link,
                       published=published, overflow=overflow, overflow_reason=overflow_reason)
+
         if feed:
             kwargs['parent'] = feed.key
 
@@ -762,6 +795,7 @@ class Entry(ndb.Model):
             })
         except Exception, e:
             logger.exception('Failed to post Post: %s' % (post))
+            return
 
         if resp.status_code == 401:
             feed.status = FEED_STATE.NEEDS_REAUTH
@@ -905,6 +939,8 @@ class Feed(ndb.Model):
     etag = ndb.StringProperty()
     language = ndb.StringProperty()
     hub_secret = ndb.StringProperty()
+    bitly_login = ndb.StringProperty()
+    bitly_api_key = ndb.StringProperty()
 
     @classmethod
     def for_user(cls, user):
@@ -961,7 +997,6 @@ class Feed(ndb.Model):
                 feed.put()
                 feed.subscribe_to_hub()
 
-
         return feed
 
     @classmethod
@@ -994,4 +1029,6 @@ class Feed(ndb.Model):
             'linked_list_mode': self.linked_list_mode,
             'schedule_period': self.schedule_period,
             'max_stories_per_period': self.max_stories_per_period,
+            'bitly_login': self.bitly_login,
+            'bitly_api_key': self.bitly_api_key,
         }
