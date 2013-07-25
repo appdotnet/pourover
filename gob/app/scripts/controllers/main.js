@@ -24,10 +24,10 @@ var getUserData = function (client) {
 
 
 var DEFAULT_FEED_OBJ = {
-    max_stories_per_period: 1,
-    schedule_period: 1,
-    format_mode: 1,
-    include_thumb: true,
+  max_stories_per_period: 1,
+  schedule_period: 1,
+  format_mode: 1,
+  include_thumb: true
 };
 
 angular.module('pourOver')
@@ -78,7 +78,7 @@ angular.module('pourOver')
       url: preview_url,
       data: serialize_feed($scope.feed),
     }, client, window.location + 'api/').always(function () {
-        jQuery('.loading-icon').hide();
+      jQuery('.loading-icon').hide();
     }).done(function (resp) {
       $scope.$apply(function (scope) {
         if (resp.status === 'ok') {

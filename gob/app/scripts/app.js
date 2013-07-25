@@ -46,7 +46,7 @@ pourOver.run(['$rootScope', '$location', 'Auth', function ($rootScope, $location
   $rootScope.client_id = '6kmFxf2JrEqmFRQ4WncLfN8WWx7FnUS8';
   $rootScope.redirect_uri = window.location.origin + '/login/';
 
-  $rootScope.$on("$routeChangeStart", function (event, next, current) {
+  $rootScope.$on('$routeChangeStart', function (event, next) {
     $rootScope.error = null;
     var loggedIn = Auth.isLoggedIn();
     if (!loggedIn && next.auth) {
