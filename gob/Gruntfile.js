@@ -173,7 +173,7 @@ module.exports = function (grunt) {
         options: {
           base: '.tmp',
           concat: 'dist/scripts/scripts.js',
-          module: 'frontendApp',
+          module: 'pourOver',
         },
         src: '.tmp/views/*.html',
         dest: '.tmp/scripts/templates.js'
