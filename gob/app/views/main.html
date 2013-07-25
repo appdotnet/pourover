@@ -170,7 +170,7 @@
       <div class='span6'>
         <h4>Future Entries</h4>
         <div ng-show='unpublished_entries'>
-          <div ng-repeat='entry in unpublished_entries' ng-include="'views/entry.html'"></div>
+          <div ng-repeat='entry in unpublished_entries' ng-include="'/views/entry.html'"></div>
         </div>
         <div ng-show='!unpublished_entries || unpublished_entries == []'>
           <p>There are no unpublished entries at this time.</p>
@@ -179,7 +179,7 @@
       <div class='span6'>
         <h4>Past Entries</h4>
         <div ng-show='published_entries'>
-          <div ng-repeat='entry in published_entries' ng-include="'views/entry.html'"></div>
+          <div ng-repeat='entry in published_entries' ng-include="'/views/entry.html'"></div>
         </div>
         <div ng-show='!published_entries || published_entries == []'>
           <p>There are no past entries at this time.</p>

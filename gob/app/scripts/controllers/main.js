@@ -21,6 +21,7 @@ angular.module('pourOver')
   ];
 
   $scope.feed = DEFAULT_FEED_OBJ;
+  $scope.feeds = [];
 
   var serialize_feed = function (feed) {
     _.each(['linked_list_mode', 'include_thumb', 'include_summary', 'include_video'], function (el) {
@@ -62,16 +63,15 @@ angular.module('pourOver')
   ApiClient.get({
     url: 'feeds'
   }).success(function (resp, status, headers, config) {
-    console.log(resp);
     if (resp.data && resp.data.length) {
       $scope.feed = resp.data[0];
+      $scope.feeds = resp.data;
     }
   });
 
   ApiClient.get({
     url: 'me'
   }).success(function (resp, status, headers, config) {
-    console.log(arguments);
     $scope.current_user = resp.data;
   });
 
