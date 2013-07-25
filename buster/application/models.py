@@ -1026,6 +1026,7 @@ class Feed(ndb.Model):
             'include_summary': self.include_summary,
             'format_mode': self.format_mode,
             'include_thumb': self.include_thumb,
+            'include_video': self.include_video,
             'linked_list_mode': self.linked_list_mode,
             'schedule_period': self.schedule_period,
             'max_stories_per_period': self.max_stories_per_period,
