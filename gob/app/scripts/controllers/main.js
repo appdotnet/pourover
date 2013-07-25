@@ -1,27 +1,6 @@
 'use strict';
 
 
-var authedAjax = function (accessToken) {
-  return function (conf) {
-    conf.headers = conf.headers || {};
-    conf.headers.Authorization = 'Bearer ' + accessToken;
-
-    return jQuery.ajax(conf);
-  };
-};
-
-var apiRequest = function (conf, client, base) {
-  base = base || 'https://alpha-api.app.net/stream/0';
-  conf.url = base + conf.url;
-  return client(conf);
-};
-
-var getUserData = function (client) {
-  return apiRequest({
-    url: '/users/me',
-  }, client);
-};
-
 
 var DEFAULT_FEED_OBJ = {
   max_stories_per_period: 1,
@@ -31,7 +10,7 @@ var DEFAULT_FEED_OBJ = {
 };
 
 angular.module('pourOver')
-.controller('MainCtrl', ['$scope', function ($scope) {
+.controller('MainCtrl', ['$scope', 'ApiClient', function ($scope, ApiClient) {
 
   $scope.schedule_periods = [
     {label: '1 mins', value: 1},
@@ -43,26 +22,15 @@ angular.module('pourOver')
 
   $scope.feed = DEFAULT_FEED_OBJ;
 
-  // initialize and store user data in localStorage
-
-  var client;
-  if ($scope.local.accessToken) {
-    client = authedAjax($scope.local.accessToken);
-  }
-
-  if (!client) {
-    return;
-  }
-
   var serialize_feed = function (feed) {
     _.each(['linked_list_mode', 'include_thumb', 'include_summary', 'include_video'], function (el) {
       if (!feed[el]) {
         delete feed[el];
       }
     });
-
     return feed;
   };
+
   $scope.feed_error = undefined;
   $scope.$watch('feed', _.debounce(function () {
     var preview_url = 'feed/preview';
@@ -74,70 +42,61 @@ angular.module('pourOver')
       return false;
     }
     jQuery('.loading-icon').show();
-    apiRequest({
+    ApiClient.get({
       url: preview_url,
-      data: serialize_feed($scope.feed),
-    }, client, window.location + 'api/').always(function () {
+      params: serialize_feed($scope.feed)
+    }).error(function () {
       jQuery('.loading-icon').hide();
-    }).done(function (resp) {
-      $scope.$apply(function (scope) {
-        if (resp.status === 'ok') {
-          scope.posts = resp.data;
-          scope.feed_error = undefined;
-        } else {
-          scope.posts = undefined;
-          scope.feed_error = resp.message;
-        }
-      });
+    }).success(function (resp, status, headers, config) {
+      if (resp.status === 'ok') {
+        $scope.posts = resp.data;
+        $scope.feed_error = undefined;
+      } else {
+        $scope.posts = undefined;
+        $scope.feed_error = resp.message;
+      }
+      jQuery('.loading-icon').hide();
     });
   }, 300), true);
 
-  apiRequest({
-    url: 'feeds',
-    method: 'GET',
-  }, client, window.location + 'api/').done(function (resp) {
+  ApiClient.get({
+    url: 'feeds'
+  }).success(function (resp, status, headers, config) {
+    console.log(resp);
     if (resp.data && resp.data.length) {
-      $scope.$apply(function (scope) {
-        scope.feed = resp.data[0];
-      });
+      $scope.feed = resp.data[0];
     }
   });
 
-  getUserData(client).done(function (resp) {
-    $scope.$apply(function (scope) {
-      scope.current_user = resp.data;
-    });
+  ApiClient.get({
+    url: 'me'
+  }).success(function (resp, status, headers, config) {
+    console.log(arguments);
+    $scope.current_user = resp.data;
   });
 
   var refreshEntries = function () {
-    apiRequest({
-      url: 'feeds/' + $scope.feed.feed_id + '/published',
-      method: 'GET',
-    }, client, window.location + 'api/').done(function (resp) {
+    ApiClient.get({
+      url: 'feeds/' + $scope.feed.feed_id + '/published'
+    }).success(function (resp) {
       if (resp.data && resp.data.entries) {
-        $scope.$apply(function (scope) {
-          scope.published_entries = resp.data.entries;
-        });
+        $scope.published_entries = resp.data.entries;
       }
     });
 
-    apiRequest({
-      url: 'feeds/' + $scope.feed.feed_id + '/unpublished',
-      method: 'GET',
-    }, client, window.location + 'api/').done(function (resp) {
+    ApiClient.get({
+      url: 'feeds/' + $scope.feed.feed_id + '/unpublished'
+    }).success(function (resp, status, headers, config) {
       if (resp.data && resp.data.entries) {
-        $scope.$apply(function (scope) {
-          scope.unpublished_entries = resp.data.entries;
-        });
+        $scope.unpublished_entries = resp.data.entries;
       }
     });
   };
 
   $scope.publishEntry = function (entry) {
-    apiRequest({
-      url: 'feeds/' + $scope.feed.feed_id + '/entries/' + entry.id + '/publish',
-      method: 'POST',
-    }, client, window.location + 'api/').done(function () {
+    ApiClient.post({
+      url: 'feeds/' + $scope.feed.feed_id + '/entries/' + entry.id + '/publish'
+    }).success(function () {
       refreshEntries();
     });
   };
@@ -156,21 +115,17 @@ angular.module('pourOver')
     if ($scope.feed.feed_id)  {
       url = 'feeds/' + $scope.feed.feed_id;
     }
-    apiRequest({
+    ApiClient.post({
       url: url,
-      data: serialize_feed($scope.feed),
-      method: 'POST',
-    }, client, window.location + 'api/').done(function (resp) {
+      data: serialize_feed($scope.feed)
+    }).success(function (resp, status, headers, config) {
       if (resp.data && resp.data.feed_id) {
-        $scope.$apply(function (scope) {
-          scope.feed.feed_id = resp.data.feed_id;
-        });
+        $scope.feed.feed_id = resp.data.feed_id;
       } else {
         window.alert('There was an error saving that feed.');
       }
-    }).always(function () {
       updateLoader.stop();
-    });
+    }).error(updateLoader.stop);
 
     return false;
   };
@@ -181,15 +136,12 @@ angular.module('pourOver')
       return;
     }
 
-    apiRequest({
-      url: 'feeds/' + $scope.feed.feed_id,
-      method: 'DELETE',
-    }, client, window.location + 'api/').done(function () {
-      $scope.$apply(function (scope) {
-        scope.feed = DEFAULT_FEED_OBJ;
-        scope.published_entries = [];
-        scope.unpublished_entries = [];
-      });
+    ApiClient.delete({
+      url: 'feeds/' + $scope.feed.feed_id
+    }).success(function () {
+      $scope.feed = DEFAULT_FEED_OBJ;
+      delete $scope.published_entries;
+      delete $scope.unpublished_entries;
     });
   };
 

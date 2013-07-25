@@ -57,7 +57,7 @@ index.login_required = False
 
 
 @app.route('/api/me', methods=['GET'])
-def me(s):
+def me():
     """return current user"""
     return jsonify(status='ok', data=g.adn_user)
 
@@ -73,6 +73,7 @@ def feeds():
 def feed_create():
     """List all examples"""
     form = FeedCreate(request.form)
+    logger.info('Form data %s', request.form)
     if not form.validate():
         return jsonify(status='error', message='The passed arguments failed validation')
 
