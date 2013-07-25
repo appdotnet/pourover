@@ -53,6 +53,12 @@ def index():
 index.login_required = False
 
 
+@app.route('/signup', endpoint='signup')
+def index():
+    return render_template('index.html')
+
+index.login_required = False
+
 @app.route('/api/me', methods=['GET'])
 def me(s):
     """return current user"""

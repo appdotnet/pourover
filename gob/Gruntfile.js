@@ -4,6 +4,7 @@ var proxySnippet = require('grunt-connect-proxy/lib/utils').proxyRequest;
 var mountFolder = function (connect, dir) {
   return connect.static(require('path').resolve(dir));
 };
+var modRewrite = require('connect-modrewrite');
 
 module.exports = function (grunt) {
   // load all grunt tasks
@@ -65,6 +66,9 @@ module.exports = function (grunt) {
         options: {
           middleware: function (connect) {
             return [
+              modRewrite([
+                '^/(login|logout|signup)/$ /index.html [L]'
+              ]),
               lrSnippet,
               proxySnippet,
               mountFolder(connect, '.tmp'),

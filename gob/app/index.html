@@ -11,39 +11,40 @@
     <meta name="viewport" content="width=device-width">
     <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
     <!-- build:css styles/main.css -->
-    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="/styles/main.css">
     <!-- endbuild -->
     <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
   </head>
-  <body ng-app="frontendApp">
+  <body ng-app="pourOver">
     <!--[if lt IE 7]>
       <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
     <![endif]-->
 
     <!-- build:js scripts/lt-ie9.js -->
     <!--[if lt IE 9]>
-      <script src="components/es5-shim/es5-shim.js"></script>
-      <script src="components/json3/lib/json3.min.js"></script>
+      <script src="/components/es5-shim/es5-shim.js"></script>
+      <script src="/components/json3/lib/json3.min.js"></script>
     <![endif]-->
     <!-- endbuild -->
 
     <div class="container" ng-view></div>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
-    <script src="components/angular/angular.js"></script>
-    <script src="components/angular-resource/angular-resource.js"></script>
-    <script src="components/angular-cookies/angular-cookies.js"></script>
-    <script src="components/angular-sanitize/angular-sanitize.js"></script>
+    <script src="/components/angular/angular.js"></script>
+    <script src="/components/angular-resource/angular-resource.js"></script>
+    <script src="/components/angular-cookies/angular-cookies.js"></script>
+    <script src="/components/angular-sanitize/angular-sanitize.js"></script>
 
     <!-- build:js scripts/scripts.js -->
-    <script src="components/purl/purl.js"></script>
-    <script src="components/underscore/underscore-min.js"></script>
-    <script src="components/Ladda/dist/spin.min.js"></script>
-    <script src="components/Ladda/dist/ladda.min.js"></script>
-    <script src="components/bootstrap/js/bootstrap-dropdown.js"></script>
-    <script src="components/bootstrap/js/bootstrap-modal.js"></script>
-    <script src="components/bootstrap/js/bootstrap-tab.js"></script>
-    <script src="scripts/app.js"></script>
-    <script src="scripts/controllers/main.js"></script>
+    <script src="/components/purl/purl.js"></script>
+    <script src="/components/underscore/underscore-min.js"></script>
+    <script src="/components/Ladda/dist/spin.min.js"></script>
+    <script src="/components/Ladda/dist/ladda.min.js"></script>
+    <script src="/components/bootstrap/js/bootstrap-dropdown.js"></script>
+    <script src="/components/bootstrap/js/bootstrap-modal.js"></script>
+    <script src="/components/bootstrap/js/bootstrap-tab.js"></script>
+    <script src="/scripts/app.js"></script>
+    <script src="/scripts/services/auth.js"></script>
+    <script src="/scripts/controllers/main.js"></script>
     <!-- endbuild -->
   </body>
 </html>

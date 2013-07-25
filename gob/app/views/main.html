@@ -1,43 +1,24 @@
-<div class="navbar navbar-static-top" ng-show='authenticated'>
+<div class="navbar navbar-static-top">
   <div class="navbar-inner">
     <a class="brand" href="/" >PourOver</a>
-    <ul class="nav pull-right" ng-show="authenticated">
-      <li>
-        <a href='http://app.net/{{current_user.username}}' target='_blank'>
-          <span>logged in as @</span><span ng-bind="current_user.username"></span>
-        </a>
+    <ul class="nav pull-right">
+      <li class="dropdown">
+        <a class="dropdown-toggle like-link" data-toggle="dropdown" ng-show='feed.feed_id'>Feed Actions<b class="caret"></b></a>
+        <ul class="dropdown-menu">
+          <li ng-show='feed.feed_id'><a ng-click='deleteFeed()'>Delete Feed</a></li>
+        </ul>
       </li>
       <li class="dropdown">
-        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Actions <b class="caret"></b></a>
+        <a class="dropdown-toggle like-link" data-toggle="dropdown"><span>@</span><span ng-bind="current_user.username"></span> <b class="caret"></b></a>
         <ul class="dropdown-menu">
-          <li><a href='#/logout' ng-click='logout()'>Logout</a></li>
-          <li ng-show='feed.feed_id'><a ng-click='deleteFeed()'>Delete Feed</a></li>
+          <li><a href='http://app.net/{{current_user.username}}' target='_blank'>App.net Profile Page</a></li>
+          <li><a href='/logout'>Logout of PourOver</a></li>
         </ul>
       </li>
     </ul>
   </div>
 </div>
-<div class="hero-unit" ng-show="!authenticated">
-  <h1>PourOver <small>from App.net</small></h1>
-  <p>PourOver is a tool that allows you to publish any RSS feed to App.net.</p>
-  <ul class='unstyled'>
-    <li><b>Step 1</b> Click the Authorize with App.net button below</li>
-    <li><b>Step 2</b> Sign up or Log in</li>
-    <li><b>Step 3</b> Enter your RSS feed</li>
-  </ul>
-  <p>
-    <a href='https://account.app.net/oauth/authenticate?client_id={{client_id}}&response_type=token&scope=write_post&redirect_uri={{ redirect_uri }}' class='adn-button' data-type='authorize_v2' data-width="147" data-height="22">Authorize with App.net</a>
-  </p>
-  <p>It's an easy to way to syndicate whatever you are publishing to the growing community of App.net users.  Getting started is easy, even if you don't yet have an App.net account. <a href='http://join.app.net'>Learn more about App.net.</a>
-  <p>Some examples:</P>
-  <ul class='unstyled'>
-    <li><img src='https://plus.google.com/_/favicon?domain=http://arstechnica.com/' width='16px'> <a href='https://alpha.app.net/arstechnica'>Arstechnica</a></li>
-    <li><img src='https://plus.google.com/_/favicon?domain=http://daringfireball.net' width='16px'> <a href='https://alpha.app.net/daringfireball'>Daring Fireball</a></li>
-    <li><img src='https://plus.google.com/_/favicon?domain=http://the-magazine.org/' width='16px'> <a href='https://alpha.app.net/themagazinerss'>The Magazine</a></li>
-  </ul>
-<script>(function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='//d2zh9g63fcvyrq.cloudfront.net/adn.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'adn-button-js'));</script>
-</div>
-<div class='authenticated-app' ng-show="authenticated">
+<div class='authenticated-app'>
     <div class='row'>
         <div class='span4'>
             <h3>Feed Configuration</h3>
@@ -184,7 +165,7 @@
           <p ng-show='feed_error && feed.feed_url' class='alert error' ng-bind='feed_error'></p>
         </div>
     </div>
-    <div class='row' ng-show='authenticated'>
+    <div class='row'>
       <hr>
       <div class='span6'>
         <h4>Future Entries</h4>

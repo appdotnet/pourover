@@ -30,11 +30,8 @@ var DEFAULT_FEED_OBJ = {
     include_thumb: true,
 };
 
-angular.module('frontendApp')
+angular.module('pourOver')
 .controller('MainCtrl', ['$scope', function ($scope) {
-  // Developers should change this client_id to their own app.
-  $scope.client_id = '6kmFxf2JrEqmFRQ4WncLfN8WWx7FnUS8';
-  $scope.redirect_uri = '' + window.location;
 
   $scope.schedule_periods = [
     {label: '1 mins', value: 1},
@@ -47,33 +44,10 @@ angular.module('frontendApp')
   $scope.feed = DEFAULT_FEED_OBJ;
 
   // initialize and store user data in localStorage
-  $scope.local = JSON.parse(localStorage.data || '{}');
-  $scope.$watch('local', function () {
-    localStorage.data = JSON.stringify($scope.local);
-  }, true);
 
-  $scope.authenticated = false;
-  $scope.$watch('local.accessToken', function () {
-    $scope.authenticated = ($scope.local.accessToken) ? true : false;
-  });
-
-  $scope.logout = function () {
-    localStorage.data = '{}';
-    window.location = window.location;
-    return false;
-  };
-
-  $scope.local.accessToken = $scope.local.accessToken || jQuery.url(window.location).fparam('access_token');
   var client;
   if ($scope.local.accessToken) {
     client = authedAjax($scope.local.accessToken);
-  }
-
-  // If the user was just returned from the oauth flow refresh the page with
-  // out the access_token
-  if (window.location.hash) {
-    window.history.replaceState({}, window.title, '/');
-    window.location = window.location;
   }
 
   if (!client) {
