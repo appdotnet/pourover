@@ -47,17 +47,14 @@ def jsonify_error(message='There was an error', code=404):
 
 
 @app.route('/', endpoint='index')
+@app.route('/signup/', endpoint='signup')
+@app.route('/login/', endpoint='login')
+@app.route('/logout/', endpoint='logout')
 def index():
     return render_template('index.html')
 
 index.login_required = False
 
-
-@app.route('/signup', endpoint='signup')
-def index():
-    return render_template('index.html')
-
-index.login_required = False
 
 @app.route('/api/me', methods=['GET'])
 def me(s):
