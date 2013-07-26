@@ -320,13 +320,13 @@ def update_all_feeds(interval_id):
 update_all_feeds.login_required = False
 
 
-@app.route('/api/feeds/all/post/<int:interval_id>')
-def post_all_feeds(interval_id):
+@app.route('/api/feeds/all/post')
+def post_all_feeds():
     """Post all new items for feeds for a specific interval"""
     if request.headers.get('X-Appengine-Cron') != 'true':
         return jsonify_error(message='Not a cron call')
 
-    feeds = Feed.for_interval(interval_id)
+    feeds = Feed.query()
 
     errors = 0
     success = 0
@@ -338,7 +338,7 @@ def post_all_feeds(interval_id):
             errors += 1
             logger.exception('Failed to Publish feed:%s' % (feed.feed_url, ))
 
-    logger.info('Post Feeds interval_id:%s success:%s errors: %s', interval_id, success, errors)
+    logger.info('Post Feeds success:%s errors: %s', success, errors)
 
     return jsonify(status='ok')
 

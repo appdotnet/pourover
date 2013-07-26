@@ -161,7 +161,7 @@ class BusterTestCase(MockUrlfetchTest):
 
     def pollUpdate(self, interval_id=1):
         resp = self.app.get('/api/feeds/all/update/%s' % (interval_id), headers={'X-Appengine-Cron': 'true'})
-        resp = self.app.get('/api/feeds/all/post/%s' % (interval_id), headers={'X-Appengine-Cron': 'true'})
+        resp = self.app.get('/api/feeds/all/post', headers={'X-Appengine-Cron': 'true'})
 
     def testAuth(self):
         resp = self.app.get('/api/feeds/1')
@@ -309,7 +309,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test2',), status_code=200)
         self.pollUpdate()
-        
+
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test3'), status_code=200)
@@ -434,15 +434,18 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
-            max_stories_per_period=2,
+            max_stories_per_period=1,
             schedule_period=5,
         ), headers=self.authHeaders())
 
         assert 0 == Entry.query(Entry.published == True, Entry.overflow == False).count()
         self.set_rss_response(test_feed_url, content=self.buildRSS('test2', items=6), status_code=200)
         self.pollUpdate()
-        assert 2 == Entry.query(Entry.published == True, Entry.overflow == False).count()
-        assert 10 == Entry.query(Entry.published == True, Entry.overflow == True).count()
+        assert 0 == Entry.query(Entry.published == True, Entry.overflow == False).count()
+        assert 12 == Entry.query(Entry.published == True, Entry.overflow == True).count()
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test3', items=1), status_code=200)
+        self.pollUpdate()
+        assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
     def testFeedRedirect(self):
         self.setMockUser()
