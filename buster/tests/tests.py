@@ -34,6 +34,7 @@ from agar.test import MockUrlfetchTest
 # from rss_to_adn import Feed
 from application import app
 from application.models import Entry, User, Feed, OVERFLOW_REASON
+from application.utils import append_query_string
 from application import settings
 
 RSS_ITEM = """
@@ -588,6 +589,12 @@ class BusterTestCase(MockUrlfetchTest):
         entry = Entry.query().fetch(2)[1]
 
         assert entry.short_url == 'http://bit.ly/123'
+
+    def testAppendQueryParams(self):
+        assert append_query_string('http://example.com', {'t': 1}) == 'http://example.com?t=1'
+        assert append_query_string('http://example.com?t=1', {'b': 1}) == 'http://example.com?t=1&b=1'
+        print append_query_string('http://www.ntvspor.net#', {'t': 1})
+        assert append_query_string('http://www.ntvspor.net#', {'t': 1}) == 'http://www.ntvspor.net?t=1#'
 
 if __name__ == '__main__':
     unittest.main()

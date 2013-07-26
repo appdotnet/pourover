@@ -18,12 +18,17 @@ def append_query_string(url, params=None, force_percent=False):
     if not params:
         return url
 
-    parts = [url]
-    if '?' in url:
-        parts.append('&')
+    if '#' in url:
+        parts = url.split('#', 1)
+        parts[1] = '#' + parts[1]
     else:
-        parts.append('?')
+        parts = [url]
 
-    parts.append(smart_urlencode(params, force_percent=force_percent))
+    if '?' in url:
+        parts.insert(1, '&')
+    else:
+        parts.insert(1, '?')
+
+    parts.insert(2, smart_urlencode(params, force_percent=force_percent))
 
     return ''.join(parts)
