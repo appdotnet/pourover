@@ -198,7 +198,7 @@ class BusterTestCase(MockUrlfetchTest):
             response = self.app.post(task['url'], headers=task['headers'])
             self.assertEqual(200, response.status_code)
 
-        #self.clear_task_queue()
+        self.clear_task_queue()
 
     def setMockUser(self, access_token=FAKE_ACCESS_TOKEN, username='voidfiles', id=3):
         user_data = self.buildMockUserResponse(username=username, id=id)
@@ -206,9 +206,11 @@ class BusterTestCase(MockUrlfetchTest):
         user = User(access_token=access_token)
         user.put()
 
-    def pollUpdate(self, interval_id=1):
+    def pollUpdate(self, interval_id=1, n=1, queue_name='poll'):
         resp = self.app.get('/api/feeds/all/update/%s' % (interval_id), headers={'X-Appengine-Cron': 'true'})
+        self.execute_tasks(n=n, queue_name=queue_name)
         resp = self.app.get('/api/feeds/all/post', headers={'X-Appengine-Cron': 'true'})
+
 
     def testAuth(self):
         resp = self.app.get('/api/feeds/1')
@@ -300,10 +302,10 @@ class BusterTestCase(MockUrlfetchTest):
         test_feed_url = 'http://example.com/rss2'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test2'), status_code=200)
 
-        self.pollUpdate(2)
+        self.pollUpdate(2, n=0)
         assert 2 == Entry.query().count()
 
-        self.pollUpdate()
+        self.pollUpdate(n=2)
 
         assert 3 == Entry.query().count()
 
@@ -486,12 +488,16 @@ class BusterTestCase(MockUrlfetchTest):
         ), headers=self.authHeaders())
 
         assert 0 == Entry.query(Entry.published == True, Entry.overflow == False).count()
+
         self.set_rss_response(test_feed_url, content=self.buildRSS('test2', items=6), status_code=200)
         self.pollUpdate()
+
         assert 0 == Entry.query(Entry.published == True, Entry.overflow == False).count()
         assert 12 == Entry.query(Entry.published == True, Entry.overflow == True).count()
+
         self.set_rss_response(test_feed_url, content=self.buildRSS('test3', items=1), status_code=200)
         self.pollUpdate()
+
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
     def testFeedRedirect(self):
@@ -512,14 +518,12 @@ class BusterTestCase(MockUrlfetchTest):
         self.set_rss_response(test_feed_url, content='', status_code=302, headers={'Location': test_feed_url2})
         self.set_rss_response(test_feed_url2, content=self.buildRSS('test', items=6), status_code=200)
         self.pollUpdate()
-        self.execute_tasks(n=1, queue_name='poll')
 
         feed = Feed.query().get()
         assert feed.feed_url == test_feed_url
 
         self.set_rss_response(test_feed_url, content='', status_code=301, headers={'Location': test_feed_url2})
         self.pollUpdate()
-        self.execute_tasks(n=1, queue_name='poll')
 
         feed = Feed.query().get()
         assert feed.feed_url == test_feed_url2
@@ -540,7 +544,6 @@ class BusterTestCase(MockUrlfetchTest):
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=6, use_lang='en-US'), status_code=200)
         self.pollUpdate()
-
         feed = Feed.query().get()
         assert feed.language == 'en'
 
@@ -560,7 +563,6 @@ class BusterTestCase(MockUrlfetchTest):
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1, author='Alex Kessinger'), status_code=200)
         self.pollUpdate()
-        self.execute_tasks(n=1, queue_name='poll')
         entry = Entry.query().order(-Entry.added).get()
 
         assert 'Alex Kessinger' == entry.author
