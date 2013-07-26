@@ -304,7 +304,7 @@ def update_all_feeds(interval_id):
     success = 0
     for feed in feeds:
         try:
-            Entry.update_for_feed(feed, publish=True)
+            Entry.update_for_feed(feed)
             success += 1
         except FetchException, e:
             errors += 1
