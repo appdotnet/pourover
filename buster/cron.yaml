@@ -17,3 +17,6 @@ cron:
 - description: very fast poll
   url: /api/feeds/all/post
   schedule: every 1 minutes
+- description: Resubscribe to PuSH Hubs
+  url: /api/feeds/all/try/subscribe
+  schedule: every 1 hours

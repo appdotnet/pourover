@@ -119,13 +119,13 @@
                               <input type='checkbox' name='include_thumb' ng-model='feed.include_thumb'> Include Image
                             </label>
                             <p class='help-block'>
-                              <small>If an image is included in the feed item it will be attached to the App.net post as an oEmbed annotation. To be included the image must specify its width and height. Dimension constraints: Min (200 x 200 px) Max (1000 x 1000 px).</small>
+                              <small>If an image is included in the feed item it will be attached to the App.net post as an oEmbed annotation. To be included the image must specify its width and height. Dimension constraints: Min (200 x 200 px) Max (1000 x 1000 px). If both include video, and include image are checked include image will win.</small>
                             </p>
                             <label class='checkbox'>
                               <input type='checkbox' name='include_video' ng-model='feed.include_video'> Include Video
                             </label>
                             <p class='help-block'>
-                              <small>If a video(Youtube/Vimeo) is embedded in the feed item it will be attached to the App.net post as an oEmbed annotation. If both include video, and include image are checked include video will win.</small>
+                              <small>If a video(Youtube/Vimeo) is embedded in the feed item it will be attached to the App.net post as an oEmbed annotation. If both include video, and include image are checked include image will win.</small>
                             </p>
                             <label class='checkbox'>
                               <input type='checkbox' name='linked_list' ng-model='feed.linked_list_mode'> Linked List Mode

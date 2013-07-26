@@ -334,7 +334,7 @@ def find_video_src_url(item):
     for embed in possible_embeds:
         src_url = embed.get('src')
         urlparts = urlparse(src_url)
-        logger.info('Potnetial vidoe: %s', src_url)
+        logger.info('Potential video: %s', src_url)
         if urlparts.netloc.endswith('youtube.com'):
             return src_url, 'youtube'
 
@@ -626,7 +626,7 @@ class Entry(ndb.Model):
         media_annotation = None
         # logger.info('Info %s, %s', include_thumb, self.thumbnail_image_url)
         if feed.include_thumb and self.thumbnail_image_url:
-            media_annotation = {
+            post['annotations'].append({
                 "type": "net.app.core.oembed",
                 "value": {
                     "version": "1.0",
@@ -640,18 +640,15 @@ class Entry(ndb.Model):
                     "thumbnail_url": self.thumbnail_image_url,
                     "embeddable_url": self.link,
                 }
-            }
+            })
 
         if feed.include_video and self.video_oembed:
             oembed = self.video_oembed
             oembed['embeddable_url'] = self.link
-            media_annotation = {
+            post['annotations'].append({
                 "type": "net.app.core.oembed",
                 "value": oembed
-            }
-
-        if media_annotation:
-            post['annotations'].append(media_annotation)
+            })
 
         lang = get_language(self.language)
         if lang:

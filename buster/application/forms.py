@@ -18,7 +18,7 @@ class FeedUpdate(Form):
     include_summary = fields.BooleanField(default=False, filters=[boolean_filter])
     linked_list_mode = fields.BooleanField(default=False, filters=[boolean_filter])
     include_thumb = fields.BooleanField(default=True, filters=[boolean_filter])
-    include_video = fields.BooleanField(default=False, filters=[boolean_filter])
+    include_video = fields.BooleanField(default=True, filters=[boolean_filter])
     max_stories_per_period = fields.IntegerField(default=1, validators=[validators.NumberRange(1, 5)])
     schedule_period = fields.IntegerField(default=PERIOD_SCHEDULE.MINUTE_5, validators=[validators.AnyOf(PERIOD_SCHEDULE)])
     format_mode = fields.IntegerField(default=FORMAT_MODE.LINKED_TITLE, validators=[validators.AnyOf(FORMAT_MODE)])

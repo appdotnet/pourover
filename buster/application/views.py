@@ -344,6 +344,32 @@ def post_all_feeds():
 
 post_all_feeds.login_required = False
 
+
+@app.route('/api/feeds/all/try/subscribe')
+def try_push_resub():
+    """Post all new items for feeds for a specific interval"""
+    if request.headers.get('X-Appengine-Cron') != 'true':
+        return jsonify_error(message='Not a cron call')
+
+    unsubscribed_feeds = Feed.query(Feed.hub != None, Feed.subscribed_at_hub == False)
+    num_unsubscribed_feeds = unsubscribed_feeds.count()
+    errors = 0
+    success = 0
+    for feed in unsubscribed_feeds:
+        try:
+            Entry.subscribe_to_hub(feed)
+            success += 1
+        except Exception, e:
+            errors += 1
+            logger.exception('Failed to PuSH subscribe feed:%s' % (feed.feed_url, ))
+
+    logger.info('Tried to call hub for num_unsubscribed_feeds:%s success:%s, errors:%s', num_unsubscribed_feeds, success, errors)
+
+    return jsonify(status='ok')
+
+try_push_resub.login_required = False
+
+
 @app.route('/_ah/warmup')
 def warmup():
     """App Engine warmup handler

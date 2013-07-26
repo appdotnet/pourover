@@ -1,12 +1,11 @@
 'use strict';
 
-
-
 var DEFAULT_FEED_OBJ = {
   max_stories_per_period: 1,
   schedule_period: 1,
   format_mode: 1,
-  include_thumb: true
+  include_thumb: true,
+  include_video: true
 };
 
 angular.module('pourOver')
@@ -162,8 +161,6 @@ angular.module('pourOver')
       delete $scope.unpublished_entries;
       $location.path('/feed/new/');
     });
-
-
   };
 
   $scope.entryStatus = function (entry) {

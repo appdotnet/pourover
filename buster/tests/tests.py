@@ -596,5 +596,8 @@ class BusterTestCase(MockUrlfetchTest):
         print append_query_string('http://www.ntvspor.net#', {'t': 1})
         assert append_query_string('http://www.ntvspor.net#', {'t': 1}) == 'http://www.ntvspor.net?t=1#'
 
+    def testPushResubCron(self):
+        resp = self.app.get('/api/feeds/all/try/subscribe', headers={'X-Appengine-Cron': 'true'})
+
 if __name__ == '__main__':
     unittest.main()
