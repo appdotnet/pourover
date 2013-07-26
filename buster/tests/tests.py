@@ -207,24 +207,25 @@ class BusterTestCase(MockUrlfetchTest):
         assert len(json_resp['data']['entries']) == 10
         assert json_resp['data']['entries'][0]['guid'] == "http://example.com/buster/test_0"
 
+        self.set_rss_response("http://example.com/awesome/", content=self.buildRSS('test', items=1), status_code=200)
         # Shouldn't be able to create two feeds for the same user
         resp = self.app.post('/api/feeds', data=dict(
-            feed_url=test_feed_url,
+            feed_url='http://example.com/awesome/',
             include_summary='true',
             max_stories_per_period=1,
             schedule_period=5,
         ), headers=self.authHeaders())
         json_resp = json.loads(resp.data)
-        assert 1 == Feed.query().count()
+        assert 2 == Feed.query().count()
 
         resp = self.app.get('/api/feeds', headers=self.authHeaders())
         json_resp = json.loads(resp.data)
-        assert len(json_resp['data']) == 1
+        assert len(json_resp['data']) == 2
 
         self.set_rss_response("http://example.com/rss", content=self.buildRSS('test2'), status_code=200)
         feed = Feed.query().get()
         Entry.update_for_feed(feed)
-        assert 11 == Entry.query().count()
+        assert 12 == Entry.query().count()
 
     def testPoller(self):
         self.setMockUser()
@@ -440,7 +441,6 @@ class BusterTestCase(MockUrlfetchTest):
         assert 2 == Entry.query(Entry.published == True, Entry.overflow == False).count()
         assert 10 == Entry.query(Entry.published == True, Entry.overflow == True).count()
 
-
     def testFeedRedirect(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
@@ -508,26 +508,6 @@ class BusterTestCase(MockUrlfetchTest):
         entry = Entry.query().fetch(2)[1]
 
         assert 'Alex Kessinger' == entry.author
-
-    def testTags(self):
-        self.setMockUser()
-        test_feed_url = 'http://example.com/rss'
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
-            feed_url=test_feed_url,
-            include_summary=True,
-            max_stories_per_period=2,
-            schedule_period=5,
-        ), headers=self.authHeaders())
-
-        entry = Entry.query().get()
-        assert [] == entry.tags
-
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1, tags=['example', 'feed']), status_code=200)
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
-        entry = Entry.query().fetch(2)[1]
-
-        assert ['example', 'feed'] == entry.tags
 
     def testTags(self):
         self.setMockUser()

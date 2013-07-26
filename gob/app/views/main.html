@@ -3,9 +3,10 @@
     <a class="brand" href="/" >PourOver</a>
     <ul class="nav pull-right">
       <li class="dropdown">
-        <a class="dropdown-toggle like-link" data-toggle="dropdown" ng-show='feed.feed_id'>Feed Actions<b class="caret"></b></a>
+        <a class="dropdown-toggle like-link" data-toggle="dropdown" ng-show='feeds && feeds.length >= 1'>Feeds <b class="caret"></b></a>
         <ul class="dropdown-menu">
-          <li ng-show='feed.feed_id'><a ng-click='deleteFeed()'>Delete Feed</a></li>
+          <li ng-repeat='f in feeds' ng-class="{'active': feed.feed_id == f.feed_id"><a ng-href='/feed/{{f.feed_id}}/' >{{ f.feed_url }}</a></li>
+          <li><a ng-href='/feed/new/' >Create a new Feed</a></li>
         </ul>
       </li>
       <li class="dropdown">
@@ -58,6 +59,7 @@
                     <li class="active"><a data-target="#schedule" data-toggle="tab" class='like-link'>Schedule</a></li>
                     <li><a data-target="#format" data-toggle="tab" class='like-link'>Format</a></li>
                     <li><a data-target="#options" data-toggle="tab" class='like-link'>Options</a></li>
+                    <li><a data-target="#actions" data-toggle="tab" class='like-link' ng-show='feed.feed_id'>Actions</a></li>
                   </ul>
                   <div class="tab-content">
                     <div class="tab-pane active" id="schedule">
@@ -130,6 +132,14 @@
                               <small>Use Linked List Mode if you run a link blog and you want the title to be linked to your website instead of the post permalink.</small>
                             </p>
                           </div>
+                      </div>
+                    </div>
+                    <div class="tab-pane" id="actions">
+                      <div class="control-group">
+                        <div class="controls">
+                          <p>Delete your feed?<p>
+                          <p><a class='btn btn-danger' data-dismiss="modal" ng-click='deleteFeed()'>Delete Feed</a>
+                        </div>
                       </div>
                     </div>
                   </div>

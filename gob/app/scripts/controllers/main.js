@@ -10,7 +10,7 @@ var DEFAULT_FEED_OBJ = {
 };
 
 angular.module('pourOver')
-.controller('MainCtrl', ['$scope', 'ApiClient', function ($scope, ApiClient) {
+.controller('MainCtrl', ['$rootScope', '$scope', 'ApiClient', '$routeParams', '$location', function ($rootScope, $scope, ApiClient, $routeParams, $location) {
 
   $scope.schedule_periods = [
     {label: '1 mins', value: 1},
@@ -20,9 +20,8 @@ angular.module('pourOver')
     {label: '60 mins', value: 60},
   ];
 
-  $scope.feed = DEFAULT_FEED_OBJ;
-  $scope.feeds = [];
-
+  $rootScope.feed = _.extend({}, DEFAULT_FEED_OBJ);
+  $rootScope.feeds = [];
   var serialize_feed = function (feed) {
     _.each(['linked_list_mode', 'include_thumb', 'include_summary', 'include_video'], function (el) {
       if (!feed[el]) {
@@ -35,17 +34,17 @@ angular.module('pourOver')
   $scope.feed_error = undefined;
   $scope.$watch('feed', _.debounce(function () {
     var preview_url = 'feed/preview';
-    if($scope.feed.feed_id) {
-      preview_url = 'feeds/' + $scope.feed.feed_id + '/preview';
+    if($rootScope.feed.feed_id) {
+      preview_url = 'feeds/' + $rootScope.feed.feed_id + '/preview';
     }
 
-    if (!$scope.feed.feed_url) {
+    if (!$rootScope.feed.feed_url) {
       return false;
     }
     jQuery('.loading-icon').show();
     ApiClient.get({
       url: preview_url,
-      params: serialize_feed($scope.feed)
+      params: serialize_feed($rootScope.feed)
     }).error(function () {
       jQuery('.loading-icon').hide();
     }).success(function (resp, status, headers, config) {
@@ -64,8 +63,20 @@ angular.module('pourOver')
     url: 'feeds'
   }).success(function (resp, status, headers, config) {
     if (resp.data && resp.data.length) {
-      $scope.feed = resp.data[0];
-      $scope.feeds = resp.data;
+      $rootScope.feeds = resp.data;
+      if ($routeParams.feed_id === 'new') {
+        return;
+      }
+
+      if ($routeParams.feed_id) {
+        _.each(resp.data, function (item) {
+          if (item.feed_id === +$routeParams.feed_id) {
+            $rootScope.feed = item;
+          }
+        });
+      } else {
+        $rootScope.feed = resp.data[0];
+      }
     }
   });
 
@@ -77,7 +88,7 @@ angular.module('pourOver')
 
   var refreshEntries = function () {
     ApiClient.get({
-      url: 'feeds/' + $scope.feed.feed_id + '/published'
+      url: 'feeds/' + $rootScope.feed.feed_id + '/published'
     }).success(function (resp) {
       if (resp.data && resp.data.entries) {
         $scope.published_entries = resp.data.entries;
@@ -85,7 +96,7 @@ angular.module('pourOver')
     });
 
     ApiClient.get({
-      url: 'feeds/' + $scope.feed.feed_id + '/unpublished'
+      url: 'feeds/' + $rootScope.feed.feed_id + '/unpublished'
     }).success(function (resp, status, headers, config) {
       if (resp.data && resp.data.entries) {
         $scope.unpublished_entries = resp.data.entries;
@@ -95,14 +106,14 @@ angular.module('pourOver')
 
   $scope.publishEntry = function (entry) {
     ApiClient.post({
-      url: 'feeds/' + $scope.feed.feed_id + '/entries/' + entry.id + '/publish'
+      url: 'feeds/' + $rootScope.feed.feed_id + '/entries/' + entry.id + '/publish'
     }).success(function () {
       refreshEntries();
     });
   };
 
   $scope.$watch('feed.feed_id', function () {
-    if (!$scope.feed.feed_id) {
+    if (!$rootScope.feed.feed_id) {
       return;
     }
     refreshEntries();
@@ -112,15 +123,18 @@ angular.module('pourOver')
   $scope.createOrUpdateFeed = function () {
     updateLoader.start();
     var url = 'feeds';
-    if ($scope.feed.feed_id)  {
-      url = 'feeds/' + $scope.feed.feed_id;
+    if ($rootScope.feed.feed_id)  {
+      url = 'feeds/' + $rootScope.feed.feed_id;
     }
     ApiClient.post({
       url: url,
-      data: serialize_feed($scope.feed)
+      data: serialize_feed($rootScope.feed)
     }).success(function (resp, status, headers, config) {
       if (resp.data && resp.data.feed_id) {
-        $scope.feed.feed_id = resp.data.feed_id;
+        if (!$rootScope.feed.feed_id) {
+          $rootScope.feed.feed_id = resp.data.feed_id;
+          $location.path('/feed/' + resp.data.feed_id + '/');
+        }
       } else {
         window.alert('There was an error saving that feed.');
       }
@@ -133,16 +147,23 @@ angular.module('pourOver')
   $scope.deleteFeed = function () {
     var sure = window.confirm('Are you sure you want to delete this feed?');
     if (!sure) {
-      return;
+      return false;
     }
-
+    var feed_id = $rootScope.feed.feed_id;
     ApiClient.delete({
-      url: 'feeds/' + $scope.feed.feed_id
+      url: 'feeds/' + $rootScope.feed.feed_id
     }).success(function () {
-      $scope.feed = DEFAULT_FEED_OBJ;
+      $rootScope.feed = _.extend({}, DEFAULT_FEED_OBJ);
+      $rootScope.feeds = _.filter($rootScope.feeds, function (item) {
+        return item.feed_id !== feed_id;
+      });
+
       delete $scope.published_entries;
       delete $scope.unpublished_entries;
+      $location.path('/feed/new/');
     });
+
+
   };
 
   $scope.entryStatus = function (entry) {

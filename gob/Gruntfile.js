@@ -67,7 +67,8 @@ module.exports = function (grunt) {
           middleware: function (connect) {
             return [
               modRewrite([
-                '^/(login|logout|signup)/$ /index.html [L]'
+                '^/(login|logout|signup|feed)/$ /index.html [L]',
+                '^/feed/.*/$ /index.html [L]'
               ]),
               lrSnippet,
               proxySnippet,

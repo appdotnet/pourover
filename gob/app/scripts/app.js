@@ -18,6 +18,13 @@ pourOver.config(['$routeProvider', '$locationProvider', function ($routeProvider
     auth: true
   });
 
+  $routeProvider.when('/feed/:feed_id/', {
+    templateUrl: '/views/main.html',
+    controller: 'MainCtrl',
+    auth: true
+  });
+
+
   $routeProvider.when('/signup/', {
     templateUrl: '/views/signup.html',
   });
