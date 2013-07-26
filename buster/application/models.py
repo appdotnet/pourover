@@ -466,6 +466,19 @@ def get_link_for_item(feed, item):
     return main_item_link
 
 
+@ndb.transactional
+def my_get_or_insert(cls, id, **kwds):
+    parent = kwds.get('parent', None)
+    key = ndb.Key(cls, id, parent=parent)
+    ent = key.get()
+    if ent is not None:
+        return (ent, False)  # False meaning "not created"
+    ent = cls(**kwds)
+    ent.key = key
+    ent.put()
+    return (ent, True)  # True meaning "created"
+
+
 class User(ndb.Model):
     access_token = ndb.StringProperty()
 
@@ -692,7 +705,7 @@ class Entry(ndb.Model):
 
         entries = []
         for item in parsed_feed.entries:
-            entry = cls.prepare_entry_from_item(parsed_feed, item, feed=feed)
+            entry = cls(**cls.prepare_entry_from_item(parsed_feed, item, feed=feed))
             if entry:
                 entries.append(entry)
 
@@ -761,24 +774,14 @@ class Entry(ndb.Model):
 
         kwargs['feed_item'] = item
 
-        entry = cls(**kwargs)
-
-        return entry
+        return kwargs
 
     @classmethod
     def create_from_feed_and_item(cls, feed, item, overflow=False, overflow_reason=None, rss_feed=None):
-        entry = cls.query(cls.guid == guid_for_item(item), ancestor=feed.key).get()
-        published = False
-        created = False
-        if overflow:
-            published = True
-        if not entry:
-            entry = cls.prepare_entry_from_item(rss_feed, item, feed, overflow, overflow_reason, published)
-            if entry:
-                entry.put()
-                created = True
+        published = overflow
 
-        return entry, created
+        entry_kwargs = cls.prepare_entry_from_item(rss_feed, item, feed, overflow, overflow_reason, published)
+        return my_get_or_insert(cls, guid_for_item(item), **entry_kwargs)
 
     def publish_entry(self, feed):
         feed = self.key.parent().get()
@@ -828,7 +831,6 @@ class Entry(ndb.Model):
         period_ago = now - timedelta(minutes=feed.schedule_period)
         lastest_published_entries = cls.latest_published(feed, since=period_ago)
         max_stories_to_publish = feed.max_stories_per_period - lastest_published_entries.count()
-
         # If we still have time left in this period publish some more.
         if max_stories_to_publish > 0 or skip_queue:
             # If we are skipping the queue
@@ -836,7 +838,6 @@ class Entry(ndb.Model):
                 max_stories_to_publish = max_stories_to_publish or 1
 
             latest_entries = cls.latest_unpublished(feed).fetch(max_stories_to_publish)
-
             for entry in latest_entries:
                 entry.publish_entry(feed)
 

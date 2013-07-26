@@ -507,12 +507,12 @@ class BusterTestCase(MockUrlfetchTest):
             schedule_period=5,
         ), headers=self.authHeaders())
 
-        entry = Entry.query().get()
+        entry = Entry.query().order(-Entry.added).get()
         assert None == entry.author
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1, author='Alex Kessinger'), status_code=200)
         self.pollUpdate()
-        entry = Entry.query().fetch(2)[1]
+        entry = Entry.query().order(-Entry.added).get()
 
         assert 'Alex Kessinger' == entry.author
 
@@ -527,13 +527,12 @@ class BusterTestCase(MockUrlfetchTest):
             schedule_period=5,
         ), headers=self.authHeaders())
 
-        entry = Entry.query().get()
+        entry = Entry.query().order(-Entry.added).get()
         assert [] == entry.tags
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1, tags=['example', 'feed']), status_code=200)
         self.pollUpdate()
-        entry = Entry.query().fetch(2)[1]
-
+        entry = Entry.query().order(-Entry.added).fetch(2)[0]
         assert ['example', 'feed'] == entry.tags
 
     def testIncludeSummary(self):
@@ -582,18 +581,14 @@ class BusterTestCase(MockUrlfetchTest):
             bitly_api_key='R_123',
         ), headers=self.authHeaders())
 
-        entry = Entry.query().get()
-        assert [] == entry.tags
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1), status_code=200)
         self.pollUpdate()
-        entry = Entry.query().fetch(2)[1]
-
+        entry = Entry.query().order(-Entry.added).get()
         assert entry.short_url == 'http://bit.ly/123'
 
     def testAppendQueryParams(self):
         assert append_query_string('http://example.com', {'t': 1}) == 'http://example.com?t=1'
         assert append_query_string('http://example.com?t=1', {'b': 1}) == 'http://example.com?t=1&b=1'
-        print append_query_string('http://www.ntvspor.net#', {'t': 1})
         assert append_query_string('http://www.ntvspor.net#', {'t': 1}) == 'http://www.ntvspor.net?t=1#'
 
     def testPushResubCron(self):
