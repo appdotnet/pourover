@@ -10,9 +10,9 @@ import hmac
 
 from google.appengine.ext import ndb
 
-from flask import request, render_template, g, Response
+from flask import request, render_template, g, Response, url_for
 from google.appengine.api import urlfetch
-
+from google.appengine.api import taskqueue
 from flask_cache import Cache
 
 from application import app
@@ -236,6 +236,28 @@ def feed_entry_publish(feed_id, entry_id):
     return jsonify(status='ok')
 
 
+@app.route('/api/feeds/<feed_key>/poll', methods=['POST'])
+def tq_feed_poll(feed_key):
+    """Poll a feed"""
+    if not request.headers.get('X-AppEngine-QueueName'):
+        return jsonify_error(message='Not a Task call')
+
+    logger.info('Task Queue polling Feed:%s', feed_key)
+
+    feed = ndb.Key(urlsafe=feed_key).get()
+    if not feed:
+        return jsonify_error(message="Can't find that feed")
+
+    try:
+        Entry.update_for_feed(feed)
+    except Exception, e:
+        logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
+        return jsonify_error(code=500)
+
+    return jsonify(status='ok')
+
+tq_feed_poll.login_required = False
+
 @app.route('/api/feeds/<feed_key>/subscribe', methods=['GET'])
 def feed_subscribe(feed_key):
     mode = request.args['hub.mode']
@@ -244,7 +266,7 @@ def feed_subscribe(feed_key):
 
     if mode == 'subscribe':
         feed = ndb.Key(urlsafe=feed_key).get()
-        # Only check this they send back a verify token
+        # Only check this if they send back a verify token
         if verify_token and verify_token != feed.verify_token:
             logger.info('Failed verification feed.verify_token:%s GET verify_token:%s', feed.verify_token, verify_token)
             return "Failed Verification", 400
@@ -297,20 +319,15 @@ def update_all_feeds(interval_id):
 
     feeds = Feed.for_interval(interval_id)
 
-    for feed in feeds:
-        feed.prepare_request()
-
     errors = 0
     success = 0
     for feed in feeds:
         try:
-            Entry.update_for_feed(feed)
+            taskqueue.add(url=url_for('tq_feed_poll', feed_key=feed.key.urlsafe()), method='POST', queue_name='poll')
             success += 1
-        except FetchException, e:
-            errors += 1
-            pass
         except Exception, e:
             errors += 1
+            raise
             logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
 
     logger.info('Updated Feeds interval_id:%s success:%s errors: %s', interval_id, success, errors)

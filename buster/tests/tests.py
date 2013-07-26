@@ -4,12 +4,14 @@ import os
 import sys
 import unittest
 import json
+import base64
 from datetime import timedelta
 
 import inspect, os
 
 from google.appengine.ext import testbed
 from google.appengine.api import memcache
+from google.appengine.api import apiproxy_stub_map
 
 import feedparser
 
@@ -106,6 +108,12 @@ class BusterTestCase(MockUrlfetchTest):
         self.set_response("https://alpha-api.app.net/stream/0/posts", content=FAKE_POST_OBJ_RESP, status_code=200, method="POST")
         self.clear_datastore()
 
+        taskqueue_stub = apiproxy_stub_map.apiproxy.GetStub('taskqueue')
+        dircontainingqueuedotyaml = os.path.dirname(os.path.dirname(__file__))
+        taskqueue_stub._root_path = dircontainingqueuedotyaml
+
+        self.taskqueue_stub = taskqueue_stub
+
     def tearDown(self):
         self.testbed.deactivate()
 
@@ -153,6 +161,44 @@ class BusterTestCase(MockUrlfetchTest):
         return {
             'Authorization': 'Bearer %s' % access_token
         }
+
+    def get_task_queues(self):
+        """
+        """
+        return self.get_task_queue_stub().GetQueues()
+
+    def get_task_queue_names(self):
+        """
+        """
+        return [q['name'] for q in self.get_task_queues()]
+
+    def get_task_queue_stub(self):
+        """
+        """
+        return self.taskqueue_stub
+
+    def clear_task_queue(self):
+        stub = self.get_task_queue_stub()
+        for name in self.get_task_queue_names():
+            stub.FlushQueue(name)
+
+
+    def execute_tasks(self, n=0, queue_name='default'):
+        """
+        Executes all currently queued tasks.
+        """
+
+        # Execute the task in the taskqueue
+        tasks = self.taskqueue_stub.GetTasks(queue_name)
+        self.assertEqual(len(tasks), n)
+        # Run each of the tasks, checking that they succeeded.
+        for task in tasks:
+            #params = base64.b64decode(task["body"])
+            #response = self.app.post(task["url"], params)
+            response = self.app.post(task['url'], headers=task['headers'])
+            self.assertEqual(200, response.status_code)
+
+        #self.clear_task_queue()
 
     def setMockUser(self, access_token=FAKE_ACCESS_TOKEN, username='voidfiles', id=3):
         user_data = self.buildMockUserResponse(username=username, id=id)
@@ -466,12 +512,14 @@ class BusterTestCase(MockUrlfetchTest):
         self.set_rss_response(test_feed_url, content='', status_code=302, headers={'Location': test_feed_url2})
         self.set_rss_response(test_feed_url2, content=self.buildRSS('test', items=6), status_code=200)
         self.pollUpdate()
+        self.execute_tasks(n=1, queue_name='poll')
 
         feed = Feed.query().get()
         assert feed.feed_url == test_feed_url
 
         self.set_rss_response(test_feed_url, content='', status_code=301, headers={'Location': test_feed_url2})
         self.pollUpdate()
+        self.execute_tasks(n=1, queue_name='poll')
 
         feed = Feed.query().get()
         assert feed.feed_url == test_feed_url2
@@ -512,6 +560,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1, author='Alex Kessinger'), status_code=200)
         self.pollUpdate()
+        self.execute_tasks(n=1, queue_name='poll')
         entry = Entry.query().order(-Entry.added).get()
 
         assert 'Alex Kessinger' == entry.author
