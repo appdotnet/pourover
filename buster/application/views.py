@@ -50,11 +50,17 @@ def jsonify_error(message='There was an error', code=404):
 @app.route('/signup/', endpoint='signup')
 @app.route('/login/', endpoint='login')
 @app.route('/logout/', endpoint='logout')
-@app.route('/feed/<feed_id>/', endpoint='feeds')
 def index(feed_id=None):
     return render_template('index.html')
 
 index.login_required = False
+
+
+@app.route('/feed/<feed_id>/', endpoint='feed_point')
+def feed_point(feed_id=None):
+    return render_template('index.html')
+
+feed_point.login_required = False
 
 
 @app.route('/api/me', methods=['GET'])
