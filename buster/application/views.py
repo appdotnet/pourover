@@ -320,6 +320,30 @@ def update_all_feeds(interval_id):
 update_all_feeds.login_required = False
 
 
+@app.route('/api/feeds/all/post/<int:interval_id>')
+def post_all_feeds(interval_id):
+    """Post all new items for feeds for a specific interval"""
+    if request.headers.get('X-Appengine-Cron') != 'true':
+        return jsonify_error(message='Not a cron call')
+
+    feeds = Feed.for_interval(interval_id)
+
+    errors = 0
+    success = 0
+    for feed in feeds:
+        try:
+            Entry.publish_for_feed(feed)
+            success += 1
+        except Exception, e:
+            errors += 1
+            logger.exception('Failed to Publish feed:%s' % (feed.feed_url, ))
+
+    logger.info('Post Feeds interval_id:%s success:%s errors: %s', interval_id, success, errors)
+
+    return jsonify(status='ok')
+
+post_all_feeds.login_required = False
+
 @app.route('/_ah/warmup')
 def warmup():
     """App Engine warmup handler

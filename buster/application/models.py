@@ -823,6 +823,26 @@ class Entry(ndb.Model):
                 entry.overflow_reason = OVERFLOW_REASON.FEED_OVERFLOW
                 entry.put()
 
+
+    @classmethod
+    def publish_for_feed(cls, feed, skip_queue=False):
+        # How many stories have been published in the last period_length
+        now = datetime.now()
+        period_ago = now - timedelta(minutes=feed.schedule_period)
+        lastest_published_entries = cls.latest_published(feed, since=period_ago)
+        max_stories_to_publish = feed.max_stories_per_period - lastest_published_entries.count()
+
+        # If we still have time left in this period publish some more.
+        if max_stories_to_publish > 0 or skip_queue:
+            # If we are skipping the queue
+            if skip_queue:
+                max_stories_to_publish = max_stories_to_publish or 1
+
+            latest_entries = cls.latest_unpublished(feed).fetch(max_stories_to_publish)
+
+            for entry in latest_entries:
+                entry.publish_entry(feed)
+
     @classmethod
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
         parsed_feed, resp = fetch_feed_url(feed.feed_url, feed.etag, rpc=getattr(feed, 'rpc', None))
@@ -868,22 +888,7 @@ class Entry(ndb.Model):
                 drain_queue = True
 
         if publish:
-            # How many stories have been published in the last period_length
-            now = datetime.now()
-            period_ago = now - timedelta(minutes=feed.schedule_period)
-            lastest_published_entries = cls.latest_published(feed, since=period_ago)
-            max_stories_to_publish = feed.max_stories_per_period - lastest_published_entries.count()
-
-            # If we still have time left in this period publish some more.
-            if max_stories_to_publish > 0 or skip_queue:
-                # If we are skipping the queue
-                if skip_queue:
-                    max_stories_to_publish = max_stories_to_publish or 1
-
-                latest_entries = cls.latest_unpublished(feed).fetch(max_stories_to_publish)
-
-                for entry in latest_entries:
-                    entry.publish_entry(feed)
+            cls.publish_for_feed(feed, skip_queue)
 
         if drain_queue:
             cls.drain_queue(feed)

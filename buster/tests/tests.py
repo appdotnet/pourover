@@ -159,6 +159,10 @@ class BusterTestCase(MockUrlfetchTest):
         user = User(access_token=access_token)
         user.put()
 
+    def pollUpdate(self, interval_id=1):
+        resp = self.app.get('/api/feeds/all/update/%s' % (interval_id), headers={'X-Appengine-Cron': 'true'})
+        resp = self.app.get('/api/feeds/all/post/%s' % (interval_id), headers={'X-Appengine-Cron': 'true'})
+
     def testAuth(self):
         resp = self.app.get('/api/feeds/1')
         assert resp.status_code == 401
@@ -249,11 +253,10 @@ class BusterTestCase(MockUrlfetchTest):
         test_feed_url = 'http://example.com/rss2'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test2'), status_code=200)
 
-        resp = self.app.get('/api/feeds/all/update/2', headers={'X-Appengine-Cron': 'true'})
-
+        self.pollUpdate(2)
         assert 2 == Entry.query().count()
 
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
 
         assert 3 == Entry.query().count()
 
@@ -305,12 +308,12 @@ class BusterTestCase(MockUrlfetchTest):
         assert 0 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test2',), status_code=200)
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
+        
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test3'), status_code=200)
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
-
+        self.pollUpdate()
         # Should have been rate limited
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
@@ -320,7 +323,7 @@ class BusterTestCase(MockUrlfetchTest):
         first_entry.put()
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test4'), status_code=200)
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
 
         # Should not have been rate limited
         assert 2 == Entry.query(Entry.published == True, Entry.overflow == False).count()
@@ -338,20 +341,20 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == True).count()
 
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
         self.set_rss_response(test_feed_url, content=self.buildRSS('test2'), status_code=200)
 
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
         # Should not have been rate limited
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test3'), status_code=200)
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
         # Should not have been rate limited
         assert 2 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test4'), status_code=200)
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
         # Should have been rate limited
         assert 2 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
@@ -437,7 +440,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert 0 == Entry.query(Entry.published == True, Entry.overflow == False).count()
         self.set_rss_response(test_feed_url, content=self.buildRSS('test2', items=6), status_code=200)
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
         assert 2 == Entry.query(Entry.published == True, Entry.overflow == False).count()
         assert 10 == Entry.query(Entry.published == True, Entry.overflow == True).count()
 
@@ -458,13 +461,13 @@ class BusterTestCase(MockUrlfetchTest):
         test_feed_url2 = 'http://example.com/rss2'
         self.set_rss_response(test_feed_url, content='', status_code=302, headers={'Location': test_feed_url2})
         self.set_rss_response(test_feed_url2, content=self.buildRSS('test', items=6), status_code=200)
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
 
         feed = Feed.query().get()
         assert feed.feed_url == test_feed_url
 
         self.set_rss_response(test_feed_url, content='', status_code=301, headers={'Location': test_feed_url2})
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
 
         feed = Feed.query().get()
         assert feed.feed_url == test_feed_url2
@@ -484,7 +487,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert feed.language == None
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=6, use_lang='en-US'), status_code=200)
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
 
         feed = Feed.query().get()
         assert feed.language == 'en'
@@ -504,7 +507,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert None == entry.author
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1, author='Alex Kessinger'), status_code=200)
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
         entry = Entry.query().fetch(2)[1]
 
         assert 'Alex Kessinger' == entry.author
@@ -524,7 +527,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert [] == entry.tags
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1, tags=['example', 'feed']), status_code=200)
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
         entry = Entry.query().fetch(2)[1]
 
         assert ['example', 'feed'] == entry.tags
@@ -578,7 +581,7 @@ class BusterTestCase(MockUrlfetchTest):
         entry = Entry.query().get()
         assert [] == entry.tags
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1), status_code=200)
-        resp = self.app.get('/api/feeds/all/update/1', headers={'X-Appengine-Cron': 'true'})
+        self.pollUpdate()
         entry = Entry.query().fetch(2)[1]
 
         assert entry.short_url == 'http://bit.ly/123'
