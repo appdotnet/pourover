@@ -236,23 +236,33 @@ def feed_entry_publish(feed_id, entry_id):
     return jsonify(status='ok')
 
 
-@app.route('/api/feeds/<feed_key>/poll', methods=['POST'])
-def tq_feed_poll(feed_key):
-    """Poll a feed"""
+@app.route('/api/feeds/poll', methods=['POST'])
+def tq_feed_poll():
+    """Poll some feeds feed"""
     if not request.headers.get('X-AppEngine-QueueName'):
         return jsonify_error(message='Not a Task call')
 
-    logger.info('Task Queue polling Feed:%s', feed_key)
-
-    feed = ndb.Key(urlsafe=feed_key).get()
-    if not feed:
-        return jsonify_error(message="Can't find that feed")
-
-    try:
-        Entry.update_for_feed(feed)
-    except Exception, e:
-        logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
+    keys = request.form.get('keys')
+    if not keys:
+        logger.info('Task Queue poll no keys')
         return jsonify_error(code=500)
+
+    success = 0
+    errors = 0
+    for key in keys.split(','):
+        feed = ndb.Key(urlsafe=key).get()
+        if not feed:
+            errors += 1
+            logger.info("Couldn't find feed for key: %s", key)
+            continue
+
+        try:
+            Entry.update_for_feed(feed)
+        except Exception, e:
+            logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
+            continue
+
+    logger.info('Polled feeds success: %s errors: %s', success, errors)
 
     return jsonify(status='ok')
 
@@ -321,13 +331,18 @@ def update_all_feeds(interval_id):
 
     errors = 0
     success = 0
-    for feed in feeds:
+    more = True
+    while more:
+        feeds_to_fetch, cursor, more = feeds.fetch_page(20)
+        keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
+        if not keys:
+            continue
+
         try:
-            taskqueue.add(url=url_for('tq_feed_poll', feed_key=feed.key.urlsafe()), method='POST', queue_name='poll')
+            taskqueue.add(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys}, queue_name='poll')
             success += 1
         except Exception, e:
             errors += 1
-            raise
             logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
 
     logger.info('Updated Feeds interval_id:%s success:%s errors: %s', interval_id, success, errors)

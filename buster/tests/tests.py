@@ -193,9 +193,11 @@ class BusterTestCase(MockUrlfetchTest):
         self.assertEqual(len(tasks), n)
         # Run each of the tasks, checking that they succeeded.
         for task in tasks:
-            #params = base64.b64decode(task["body"])
+            params = base64.b64decode(task["body"])
             #response = self.app.post(task["url"], params)
-            response = self.app.post(task['url'], headers=task['headers'])
+            #params = task.get('params', {})
+            content_type = dict(task['headers']).pop('content-type', '')
+            response = self.app.post(task['url'], data=params, headers=task['headers'], content_type=content_type)
             self.assertEqual(200, response.status_code)
 
         self.clear_task_queue()
@@ -305,7 +307,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.pollUpdate(2, n=0)
         assert 2 == Entry.query().count()
 
-        self.pollUpdate(n=2)
+        self.pollUpdate()
 
         assert 3 == Entry.query().count()
 
