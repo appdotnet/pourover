@@ -256,7 +256,7 @@ def tq_feed_poll():
     logger.info('Getting feeds')
     ndb_keys = [ndb.Key(urlsafe=key) for key in keys.split(',')]
     feeds = yield ndb.get_multi_async(ndb_keys)
-    logger.info('Got feeds')
+    logger.info('Got %d feed(s)', len(feeds))
     futures = []
 
     for i, feed in enumerate(feeds):
@@ -265,17 +265,11 @@ def tq_feed_poll():
             logger.info("Couldn't find feed for key: %s", ndb_keys[i])
             continue
 
-        logger.info('Entry for feed %s', feed.key.urlsafe())
-
         futures.append((i, Entry.update_for_feed(feed)))
-
-        logger.info('Entried')
 
     for i, future in futures:
         try:
-            logger.info('Yielding i=%s', i)
             yield future
-            logger.info('Yielded i=%s', i)
             success += 1
         except:
             errors += 1

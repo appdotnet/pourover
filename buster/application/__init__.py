@@ -12,6 +12,7 @@ from .middleware import ADNTokenAuthMiddleware
 from flask_cors import CrossOriginResourceSharing
 
 from google.appengine.ext import ndb
+from google.appengine.ext.appstats import recording
 
 app = Flask('application')
 app.config.from_object('application.settings')
