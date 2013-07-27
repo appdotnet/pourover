@@ -10,6 +10,9 @@ from werkzeug.debug import DebuggedApplication
 
 from .middleware import ADNTokenAuthMiddleware
 from flask_cors import CrossOriginResourceSharing
+
+from google.appengine.ext import ndb
+
 app = Flask('application')
 app.config.from_object('application.settings')
 
@@ -41,3 +44,5 @@ else:
     #requests_log = logging.getLogger("requests")
     #requests_log.setLevel(logging.WARNING)
     #email_logger.register_logger(app.config['ADMIN_EMAIL'])
+
+app.__call__ = ndb.toplevel(app.__call__)

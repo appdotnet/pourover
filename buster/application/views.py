@@ -11,8 +11,7 @@ import hmac
 from google.appengine.ext import ndb
 
 from flask import request, render_template, g, Response, url_for
-from google.appengine.api import urlfetch
-from google.appengine.api import taskqueue
+from google.appengine.api.taskqueue import Task, Queue
 from flask_cache import Cache
 
 from application import app
@@ -84,11 +83,11 @@ def feed_create():
     if not form.validate():
         return jsonify(status='error', message='The passed arguments failed validation')
 
-    exsisting_feeds = Feed.for_user_and_url(user=g.user, feed_url=form.data['feed_url'])
-    if exsisting_feeds.count():
-        feed = exsisting_feeds.get()
+    existing_feeds = Feed.for_user_and_url(user=g.user, feed_url=form.data['feed_url'])
+    if existing_feeds.count():
+        feed = existing_feeds.get()
     else:
-        feed = Feed.create_feed_from_form(g.user, form)
+        feed = Feed.create_feed_from_form(g.user, form).get_result()
 
     return jsonify(status='ok', data=feed.to_json())
 
@@ -110,7 +109,7 @@ def feed_preview():
         entries = Entry.entry_preview_for_feed(feed)
     except FetchException, e:
         error = unicode(e)
-    except Exception, e:
+    except:
         raise
         error = 'Something went wrong while fetching your URL.'
         logger.exception('Feed Preview: Failed to update feed:%s' % (feed.feed_url, ))
@@ -192,7 +191,8 @@ def published_entries_for_feed(feed_id):
         return jsonify_error(message="Can't find that feed")
 
     feed_data = feed.to_json()
-    entries = [entry.to_json(include=['title', 'link', 'published', 'published_at']) for entry in Entry.latest_published(feed).fetch(20)]
+    entries = [entry.to_json(include=['title', 'link', 'published', 'published_at'])
+               for entry in Entry.latest_published(feed).fetch(20)]
     feed_data['entries'] = entries
 
     return jsonify(status='ok', data=feed_data)
@@ -229,7 +229,7 @@ def feed_entry_publish(feed_id, entry_id):
     if not entry:
         return jsonify_error(message="Can't find that entry")
 
-    entry.publish_entry(feed)
+    entry.publish_entry(feed).get_result()
     entry.overflow = False
     entry.put()
 
@@ -237,38 +237,46 @@ def feed_entry_publish(feed_id, entry_id):
 
 
 @app.route('/api/feeds/poll', methods=['POST'])
+@ndb.synctasklet
 def tq_feed_poll():
     """Poll some feeds feed"""
     if not request.headers.get('X-AppEngine-QueueName'):
-        return jsonify_error(message='Not a Task call')
+        raise ndb.Return(jsonify_error(message='Not a Task call'))
 
     keys = request.form.get('keys')
     if not keys:
         logger.info('Task Queue poll no keys')
-        return jsonify_error(code=500)
+        raise ndb.Return(jsonify_error(code=500))
 
     success = 0
     errors = 0
-    for key in keys.split(','):
-        feed = ndb.Key(urlsafe=key).get()
+    ndb_keys = [ndb.Key(urlsafe=key) for key in keys.split(',')]
+    feeds = yield ndb.get_multi_async(ndb_keys)
+    futures = []
+
+    for i, feed in enumerate(feeds):
         if not feed:
             errors += 1
-            logger.info("Couldn't find feed for key: %s", key)
+            logger.info("Couldn't find feed for key: %s", ndb_keys[i])
             continue
 
+        futures.append((i, Entry.update_for_feed(feed)))
+
+    for i, future in futures:
         try:
-            Entry.update_for_feed(feed)
+            yield future
             success += 1
-        except Exception, e:
+        except:
             errors += 1
             logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
             continue
 
     logger.info('Polled feeds success: %s errors: %s', success, errors)
 
-    return jsonify(status='ok')
+    raise ndb.Return(jsonify(status='ok'))
 
 tq_feed_poll.login_required = False
+
 
 @app.route('/api/feeds/<feed_key>/subscribe', methods=['GET'])
 def feed_subscribe(feed_key):
@@ -297,10 +305,11 @@ feed_subscribe.login_required = False
 
 
 @app.route('/api/feeds/<feed_key>/subscribe', methods=['POST'])
+@ndb.synctasklet
 def feed_push_update(feed_key):
     feed = ndb.Key(urlsafe=feed_key).get()
     if not feed:
-        return "No feed", 404
+        raise ndb.Return(("No feed", 404))
 
     data = request.stream.read()
 
@@ -311,96 +320,117 @@ def feed_push_update(feed_key):
         if server_signature != signature:
             logger.warn('Got PuSH subscribe POST for feed key=%s w/o valid signature: sent=%s != expected=%s', feed_key,
                         server_signature, signature)
-            return ''
+
+            raise ndb.Return('')
 
     logger.info('Got PuSH body: %s', data)
     logger.info('Got PuSH headers: %s', request.headers)
 
-    Entry.update_for_feed(feed, publish=True, skip_queue=True)
+    yield Entry.update_for_feed(feed, publish=True, skip_queue=True)
 
-    return ''
+    raise ndb.Return('')
 
 feed_push_update.login_required = False
 
 
 @app.route('/api/feeds/all/update/<int:interval_id>')
+@ndb.synctasklet
 def update_all_feeds(interval_id):
     """Update all feeds for a specific interval"""
     if request.headers.get('X-Appengine-Cron') != 'true':
-        return jsonify_error(message='Not a cron call')
+        raise ndb.Return(jsonify_error(message='Not a cron call'))
 
     feeds = Feed.for_interval(interval_id)
 
-    errors = 0
     success = 0
     more = True
     cursor = None
+    futures = []
     while more:
-        feeds_to_fetch, cursor, more = feeds.fetch_page(20, start_cursor=cursor)
+        feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(20, start_cursor=cursor)
         keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
         if not keys:
             continue
 
-        try:
-            taskqueue.add(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys}, queue_name='poll', target='worker')
-            success += 1
-        except Exception, e:
-            errors += 1
-            logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
+        futures.append(Queue('poll').add_async(Task(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys},
+                                                    target='worker')))
+        success += 1
 
-    logger.info('Updated Feeds interval_id:%s success:%s errors: %s', interval_id, success, errors)
+    for future in futures:
+        yield future
 
-    return jsonify(status='ok')
+    logger.info('queued poll for %d feeds at interval_id=%s', success, interval_id)
+
+    raise ndb.Return(jsonify(status='ok'))
 
 update_all_feeds.login_required = False
 
 
 @app.route('/api/feeds/all/post')
+@ndb.synctasklet
 def post_all_feeds():
     """Post all new items for feeds for a specific interval"""
     if request.headers.get('X-Appengine-Cron') != 'true':
-        return jsonify_error(message='Not a cron call')
+        raise ndb.Return(jsonify_error(message='Not a cron call'))
 
-    feeds = Feed.query()
+    feeds = Feed.query().iter()
 
     errors = 0
     success = 0
-    for feed in feeds:
+
+    futures = []
+
+    while (yield feeds.has_next_async()):
+        feed = feeds.next()
+        futures.append((feed, Entry.publish_for_feed(feed)))
+
+    for feed, future in futures:
         try:
-            Entry.publish_for_feed(feed)
+            yield future
             success += 1
-        except Exception, e:
+        except:
             errors += 1
             logger.exception('Failed to Publish feed:%s' % (feed.feed_url, ))
 
     logger.info('Post Feeds success:%s errors: %s', success, errors)
 
-    return jsonify(status='ok')
+    raise ndb.Return(jsonify(status='ok'))
 
 post_all_feeds.login_required = False
 
 
 @app.route('/api/feeds/all/try/subscribe')
+@ndb.synctasklet
 def try_push_resub():
     """Post all new items for feeds for a specific interval"""
     if request.headers.get('X-Appengine-Cron') != 'true':
-        return jsonify_error(message='Not a cron call')
+        raise ndb.Return(jsonify_error(message='Not a cron call'))
 
-    unsubscribed_feeds = Feed.query(Feed.hub != None, Feed.subscribed_at_hub == False)
-    num_unsubscribed_feeds = unsubscribed_feeds.count()
+    unsubscribed_feeds = Feed.query(Feed.hub != None, Feed.subscribed_at_hub == False)  # noqa
+    qit = unsubscribed_feeds.iter()
+
     errors = 0
     success = 0
-    for feed in unsubscribed_feeds:
+    count = 0
+
+    futures = []
+
+    while (yield qit.has_next_async()):
+        feed = qit.next()
+        futures.append((feed, Entry.subscribe_to_hub(feed)))
+
+    for feed, future in futures:
+        count += 1
         try:
-            Entry.subscribe_to_hub(feed)
+            yield future
             success += 1
-        except Exception, e:
+        except:
             errors += 1
             logger.exception('Failed to PuSH subscribe feed:%s' % (feed.feed_url, ))
 
-    logger.info('Tried to call hub for num_unsubscribed_feeds:%s success:%s, errors:%s', num_unsubscribed_feeds, success, errors)
+    logger.info('Tried to call hub for num_unsubscribed_feeds:%s success:%s, errors:%s', count, success, errors)
 
-    return jsonify(status='ok')
+    raise ndb.Return(jsonify(status='ok'))
 
 try_push_resub.login_required = False
 

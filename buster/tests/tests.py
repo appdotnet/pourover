@@ -7,11 +7,13 @@ import json
 import base64
 from datetime import timedelta
 
-import inspect, os
+import inspect
 
-from google.appengine.ext import testbed
 from google.appengine.api import memcache
 from google.appengine.api import apiproxy_stub_map
+
+sys.path.insert(1, os.path.join(os.path.abspath('./buster/'), 'lib'))
+sys.path.insert(1, os.path.join(os.path.abspath('./buster')))
 
 import feedparser
 
@@ -30,8 +32,6 @@ def fake_parse(url, *args, **kwargs):
 
 feedparser.parse = fake_parse
 
-sys.path.insert(1, os.path.join(os.path.abspath('./buster/'), 'lib'))
-sys.path.insert(1, os.path.join(os.path.abspath('./buster')))
 from agar.test import MockUrlfetchTest
 # from rss_to_adn import Feed
 from application import app
@@ -279,7 +279,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         self.set_rss_response("http://example.com/rss", content=self.buildRSS('test2'), status_code=200)
         feed = Feed.query().get()
-        Entry.update_for_feed(feed)
+        Entry.update_for_feed(feed).get_result()
         assert 12 == Entry.query().count()
 
     def testPoller(self):
@@ -335,7 +335,10 @@ class BusterTestCase(MockUrlfetchTest):
         assert resp.data == 'testing'
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test2', use_hub=True), status_code=200)
-        resp = self.app.post('/api/feeds/%s/subscribe' % (feed.key.urlsafe(), ))
+
+        resp = self.app.post('/api/feeds/%s/subscribe' % (feed.key.urlsafe(), ), data=self.buildRSS('test2'), headers={
+            'Content-Type': 'application/xml',
+        })
 
         assert 2 == Entry.query().count()
 

@@ -12,7 +12,7 @@ from google.appengine.ext import ndb
 from google.appengine.api import urlfetch
 from django.utils.text import Truncator
 import urllib
-from urlparse import urlparse
+from urlparse import urlparse, parse_qs
 import feedparser
 import json
 
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 # Monkeypatch feedparser
 feedparser._HTMLSanitizer.acceptable_elements = set(list(feedparser._HTMLSanitizer.acceptable_elements) + ["object", "embed", "iframe", "param"])
+
 
 class DjangoEnum(object):
     def __init__(self, *string_list):
@@ -160,28 +161,6 @@ def build_html_from_post(post):
     return '<span>%s</span>' % (html)
 
 
-def _prepare_request(feed_url, etag, async=False, follow_redirects=True):
-    # logger.info('Fetching feed feed_url:%s etag:%s', feed_url, etag)
-    kwargs = {
-        'url': feed_url,
-        'headers': {
-            'User-Agent': 'PourOver/1.0 +https://adn-pourover.appspot.com/'
-        },
-        'follow_redirects': follow_redirects
-    }
-
-    if etag:
-        kwargs['headers']['If-None-Match'] = etag
-
-    if async:
-        rpc = urlfetch.create_rpc(deadline=20)
-        urlfetch.make_fetch_call(rpc, **kwargs)
-
-        return rpc
-    else:
-        return urlfetch.fetch(**kwargs)
-
-
 def find_feed_url(feed, resp):
     if feed.bozo == 1 and len(feed.entries) == 0:
         content_type = resp.headers.get('Content-Type')
@@ -205,6 +184,7 @@ def find_feed_url(feed, resp):
     return None
 
 
+@ndb.tasklet
 def fetch_feed_url(feed_url, etag=None, update_url=False, rpc=None):
     # Handle network issues here, handle other exceptions where this is called from
 
@@ -214,18 +194,28 @@ def fetch_feed_url(feed_url, etag=None, update_url=False, rpc=None):
 
     max_redirects = 5
     redirects = 0
+    ctx = ndb.get_context()
     try:
         while redirects < max_redirects:
             redirects += 1
-            if rpc is None:
-                resp = _prepare_request(feed_url, etag, async=False)
-            else:
-                resp = rpc.get_result()
+
+            # logger.info('Fetching feed feed_url:%s etag:%s', feed_url, etag)
+            kwargs = {
+                'url': feed_url,
+                'headers': {
+                    'User-Agent': 'PourOver/1.0 +https://adn-pourover.appspot.com/'
+                },
+                'follow_redirects': True
+            }
+
+            if etag:
+                kwargs['headers']['If-None-Match'] = etag
+
+            resp = yield ctx.urlfetch(**kwargs)
 
             if resp.status_code not in (301, 302, 307):
                 break
 
-            rpc = None
             location = resp.headers.get('Location')
             if not location:
                 logger.info('Failed to follow redirects for %s', feed_url)
@@ -252,13 +242,13 @@ def fetch_feed_url(feed_url, etag=None, update_url=False, rpc=None):
 
     # Feed hasn't been updated so there isn't a feed
     if resp.status_code == 304:
-        return None, resp
+        raise ndb.Return((None, resp))
 
     feed = feedparser.parse(resp.content)
 
     feed.update_url = update_url
 
-    return feed, resp
+    raise ndb.Return((feed, resp))
 
 
 def guid_for_item(item):
@@ -342,6 +332,7 @@ def find_video_src_url(item):
 
     return None, None
 
+
 # http://stackoverflow.com/questions/4356538/how-can-i-extract-video-id-from-youtubes-link-in-python
 def normalize_youtube_link(url):
     """
@@ -373,10 +364,11 @@ OEMBED_ENDPOINTS = {
 }
 
 
+@ndb.tasklet
 def find_video_oembed(item):
     url, oembed_provider = find_video_src_url(item)
     if not url or not oembed_provider:
-        return None
+        return
 
     if url.startswith('//'):
         url = 'http:' + url
@@ -385,19 +377,20 @@ def find_video_oembed(item):
         url = normalize_youtube_link(url)
 
     if not url:
-        return None
+        return
 
     params = {
         'url': url
     }
 
     query_string = urllib.urlencode(params)
-    resp = urlfetch.fetch(url='%s?%s' % (OEMBED_ENDPOINTS[oembed_provider], query_string), method='GET')
+    ctx = ndb.get_context()
+    resp = yield ctx.urlfetch(url='%s?%s' % (OEMBED_ENDPOINTS[oembed_provider], query_string), method='GET')
     # logger.info('Trying to fetch oembed data url:%s status_code:%s', url, resp.status_code)
     if resp.status_code != 200:
-        return None
+        raise ndb.Return(None)
     # logger.info('Found video provider:%s url:%s embed:%s', oembed_provider, url, json.loads(resp.content))
-    return json.loads(resp.content)
+    raise ndb.Return(json.loads(resp.content))
 
 
 def get_link_for_item(feed, item):
@@ -465,17 +458,21 @@ def get_link_for_item(feed, item):
     return main_item_link
 
 
-@ndb.transactional
+@ndb.tasklet
 def my_get_or_insert(cls, id, **kwds):
-    parent = kwds.get('parent', None)
-    key = ndb.Key(cls, id, parent=parent)
-    ent = key.get()
-    if ent is not None:
-        return (ent, False)  # False meaning "not created"
-    ent = cls(**kwds)
-    ent.key = key
-    ent.put()
-    return (ent, True)  # True meaning "created"
+    @ndb.tasklet
+    def txn():
+        parent = kwds.get('parent', None)
+        key = ndb.Key(cls, id, parent=parent)
+        ent = yield key.get_async()
+        if ent is not None:
+            raise ndb.Return((ent, False))  # False meaning "not created"
+        ent = cls(**kwds)
+        ent.key = key
+        yield ent.put_async()
+        raise ndb.Return((ent, True))
+
+    raise ndb.Return((yield ndb.transaction_async(txn)))
 
 
 class User(ndb.Model):
@@ -529,7 +526,7 @@ class Entry(ndb.Model):
 
         feed = feed or self.key.parent().get()
         if format:
-            data['html'] = build_html_from_post(self.format_for_adn(feed))
+            data['html'] = build_html_from_post(self.format_for_adn(feed).get_result())
             if feed.include_thumb and self.thumbnail_image_url:
                 data['thumbnail_image_url'] = self.thumbnail_image_url
 
@@ -538,9 +535,10 @@ class Entry(ndb.Model):
 
         return data
 
+    @ndb.tasklet
     def get_short_url(self, link, feed):
         if self.short_url:
-            return self.short_url
+            raise ndb.Return(self.short_url)
 
         params = {
             'login': feed.bitly_login,
@@ -548,19 +546,19 @@ class Entry(ndb.Model):
             'longUrl': link,
         }
 
+        ctx = ndb.get_context()
         query_string = urllib.urlencode(params)
-        resp = urlfetch.fetch(url='https://api-ssl.bitly.com/v3/shorten?%s' % (query_string), method='GET')
+        resp = yield ctx.urlfetch(url='https://api-ssl.bitly.com/v3/shorten?%s' % (query_string), method='GET')
         if resp.status_code == 200:
             logger.info('url: %s Resp content: %s', 'https://api-ssl.bitly.com/v3/shorten?%s' % (query_string), resp.content)
             resp_json = json.loads(resp.content)
             if resp_json['status_code'] == 200:
                 link = resp_json['data']['url']
                 self.short_url = link
-                self.put()
-                return link
+                yield self.put_async()
+                raise ndb.Return(link)
 
-        return None
-
+    @ndb.tasklet
     def format_for_adn(self, feed):
         post_text = self.title
         links = []
@@ -579,7 +577,7 @@ class Entry(ndb.Model):
         # If viewing feed from preview don't shorten urls
         preview = getattr(feed, 'preview', False)
         if feed.bitly_login and feed.bitly_api_key and not preview:
-            short_url = self.get_short_url(link, feed)
+            short_url = yield self.get_short_url(link, feed)
             if short_url:
                 link = short_url
 
@@ -635,7 +633,6 @@ class Entry(ndb.Model):
                 'links': link_entities,
             }
 
-        media_annotation = None
         # logger.info('Info %s, %s', include_thumb, self.thumbnail_image_url)
         if feed.include_thumb and self.thumbnail_image_url:
             post['annotations'].append({
@@ -687,30 +684,36 @@ class Entry(ndb.Model):
                 }
             })
 
-        return post
+        raise ndb.Return(post)
 
     @classmethod
     def entry_preview(cls, entries, feed, format=False):
         return [entry.to_json(feed=feed, format=format) for entry in entries]
 
     @classmethod
+    @ndb.synctasklet
     def entry_preview_for_feed(cls, feed):
-        parsed_feed, resp = fetch_feed_url(feed.feed_url)
+        parsed_feed, resp = yield fetch_feed_url(feed.feed_url)
 
         # Try and fix bad feed_urls on the fly
         new_feed_url = find_feed_url(parsed_feed, resp)
         if new_feed_url:
-            parsed_feed, resp = fetch_feed_url(new_feed_url, update_url=new_feed_url)
+            parsed_feed, resp = yield fetch_feed_url(new_feed_url, update_url=new_feed_url)
 
         entries = []
+        futures = []
         for item in parsed_feed.entries:
-            entry = cls(**cls.prepare_entry_from_item(parsed_feed, item, feed=feed))
+            futures.append((item, cls.prepare_entry_from_item(parsed_feed, item, feed=feed)))
+
+        for item, future in futures:
+            entry = cls(**(yield future))
             if entry:
                 entries.append(entry)
 
-        return cls.entry_preview(entries, feed, format=True)
+        raise ndb.Return(cls.entry_preview(entries, feed, format=True))
 
     @classmethod
+    @ndb.tasklet
     def prepare_entry_from_item(cls, rss_feed, item, feed, overflow=False, overflow_reason=None, published=False):
         title_detail = item.get('title_detail')
         title = item.get('title', 'No Title')
@@ -721,7 +724,6 @@ class Entry(ndb.Model):
             if title_detail['type'] == u'text/html':
                 title = BeautifulSoup(title).text
 
-        feed_link = rss_feed.get('feed') and rss_feed.feed.get('link')
         link = get_link_for_item(feed, item)
 
         # We can only store a title up to 500 chars
@@ -729,19 +731,19 @@ class Entry(ndb.Model):
         guid = guid_for_item(item)
         if len(guid) > 500:
             logger.warn('Found a guid > 500 chars link: %s item: %s', guid, item)
-            return None
+            return
 
         if not link:
             logger.warn("Item found without link skipping item: %s", item)
-            return None
+            return
 
         if len(link) > 500:
             logger.warn('Found a link > 500 chars link: %s item: %s', link, item)
-            return None
+            return
 
         if not guid:
             logger.warn("Item found without guid skipping item: %s", item)
-            return None
+            return
 
         summary = item.get('summary', '')
         kwargs = dict(guid=guid, title=title, summary=summary, link=link,
@@ -767,38 +769,42 @@ class Entry(ndb.Model):
             kwargs['author'] = item.author
 
         if feed.include_video:
-            embed = find_video_oembed(item)
+            embed = yield find_video_oembed(item)
             if embed:
                 kwargs['video_oembed'] = embed
 
         kwargs['feed_item'] = item
 
-        return kwargs
+        raise ndb.Return(kwargs)
 
     @classmethod
+    @ndb.tasklet
     def create_from_feed_and_item(cls, feed, item, overflow=False, overflow_reason=None, rss_feed=None):
         published = overflow
 
-        entry_kwargs = cls.prepare_entry_from_item(rss_feed, item, feed, overflow, overflow_reason, published)
-        return my_get_or_insert(cls, guid_for_item(item), **entry_kwargs)
+        entry_kwargs = yield cls.prepare_entry_from_item(rss_feed, item, feed, overflow, overflow_reason, published)
+        raise ndb.Return((yield my_get_or_insert(cls, guid_for_item(item), **entry_kwargs)))
 
+    @ndb.tasklet
     def publish_entry(self, feed):
-        feed = self.key.parent().get()
-        user = feed.key.parent().get()
+        feed = yield self.key.parent().get_async()
+        user = yield feed.key.parent().get_async()
         # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
-        post = self.format_for_adn(feed)
+        post = yield self.format_for_adn(feed)
+        ctx = ndb.get_context()
         try:
-            resp = urlfetch.fetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), deadline=30, method='POST', headers={
-                'Authorization': 'Bearer %s' % (user.access_token, ),
-                'Content-Type': 'application/json',
-            })
-        except Exception, e:
+            resp = yield ctx.urlfetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), deadline=30,
+                                      method='POST', headers={
+                                          'Authorization': 'Bearer %s' % (user.access_token, ),
+                                          'Content-Type': 'application/json',
+                                      })
+        except:
             logger.exception('Failed to post Post: %s' % (post))
             return
 
         if resp.status_code == 401:
             feed.status = FEED_STATE.NEEDS_REAUTH
-            feed.put()
+            yield feed.put_async()
         elif resp.status_code == 200:
             post_obj = json.loads(resp.content)
             logger.info('Published entry key=%s -> post_id=%s: %s', self.key.urlsafe(), post_obj['data']['id'], post)
@@ -808,46 +814,48 @@ class Entry(ndb.Model):
 
         self.published = True
         self.published_at = datetime.now()
-        self.put()
+        yield self.put_async()
 
     @classmethod
+    @ndb.tasklet
     def drain_queue(cls, feed):
         more = True
         cursor = None
         while more:
-            entries, cursor, more = cls.latest_unpublished(feed).fetch_page(25, start_cursor=cursor)
+            entries, cursor, more = yield cls.latest_unpublished(feed).fetch_page_async(25, start_cursor=cursor)
             for entry in entries:
                 entry.overflow = True
                 entry.published = True
                 entry.overflow_reason = OVERFLOW_REASON.FEED_OVERFLOW
-                entry.put()
-
+                yield entry.put_async()
 
     @classmethod
+    @ndb.tasklet
     def publish_for_feed(cls, feed, skip_queue=False):
         # How many stories have been published in the last period_length
         now = datetime.now()
         period_ago = now - timedelta(minutes=feed.schedule_period)
-        lastest_published_entries = cls.latest_published(feed, since=period_ago)
-        max_stories_to_publish = feed.max_stories_per_period - lastest_published_entries.count()
+        lastest_published_entries = yield cls.latest_published(feed, since=period_ago).count_async()
+        max_stories_to_publish = feed.max_stories_per_period - lastest_published_entries
         # If we still have time left in this period publish some more.
         if max_stories_to_publish > 0 or skip_queue:
             # If we are skipping the queue
             if skip_queue:
                 max_stories_to_publish = max_stories_to_publish or 1
 
-            latest_entries = cls.latest_unpublished(feed).fetch(max_stories_to_publish)
+            latest_entries = yield cls.latest_unpublished(feed).fetch_async(max_stories_to_publish)
             for entry in latest_entries:
-                entry.publish_entry(feed)
+                yield entry.publish_entry(feed)
 
     @classmethod
+    @ndb.tasklet
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
-        parsed_feed, resp = fetch_feed_url(feed.feed_url, feed.etag, rpc=getattr(feed, 'rpc', None))
+        parsed_feed, resp = yield fetch_feed_url(feed.feed_url, feed.etag)
         if getattr(feed, 'first_time', None):
             # Try and fix bad feed_urls on the fly
             new_feed_url = find_feed_url(parsed_feed, resp)
             if new_feed_url:
-                parsed_feed, resp = fetch_feed_url(new_feed_url, update_url=new_feed_url)
+                parsed_feed, resp = yield fetch_feed_url(new_feed_url, update_url=new_feed_url)
 
         drain_queue = False
         # There should be no data in here anyway
@@ -871,12 +879,12 @@ class Entry(ndb.Model):
                     modified_feed = True
 
             if modified_feed:
-                feed.put()
+                yield feed.put_async()
 
             num_created_entries = 0
             for item in parsed_feed.entries:
-                entry, created = cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason,
-                                                               rss_feed=parsed_feed)
+                entry, created = yield cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason,
+                                                                     rss_feed=parsed_feed)
                 if created:
                     num_created_entries += 1
 
@@ -885,21 +893,22 @@ class Entry(ndb.Model):
                 drain_queue = True
 
         if publish:
-            cls.publish_for_feed(feed, skip_queue)
+            yield cls.publish_for_feed(feed, skip_queue)
 
         if drain_queue:
-            cls.drain_queue(feed)
+            yield cls.drain_queue(feed)
 
-        return parsed_feed
+        raise ndb.Return(parsed_feed)
 
     @classmethod
+    @ndb.tasklet
     def delete_for_feed(cls, feed):
         more = True
         cursor = None
         while more:
-            entries, cursor, more = cls.latest_for_feed(feed).fetch_page(25, start_cursor=cursor)
+            entries, cursor, more = yield cls.latest_for_feed(feed).fetch_page_async(25, start_cursor=cursor)
             entries_keys = [x.key for x in entries]
-            ndb.delete_multi(entries_keys)
+            ndb.delete_multi_async(entries_keys)
 
     @classmethod
     def latest_for_feed(cls, feed):
@@ -957,11 +966,15 @@ class Feed(ndb.Model):
         return cls.query(cls.update_interval == interval_id, cls.status == FEED_STATE.ACTIVE)
 
     @classmethod
+    @ndb.tasklet
     def reauthorize(cls, user):
-        for feed in cls.query(cls.status == FEED_STATE.NEEDS_REAUTH, ancestor=user.key):
+        qit = cls.query(cls.status == FEED_STATE.NEEDS_REAUTH, ancestor=user.key).iter()
+        while (yield qit.has_next_async()):
+            feed = qit.next()
             feed.status = FEED_STATE.ACTIVE
-            feed.put()
+            yield feed.put_async()
 
+    @ndb.tasklet
     def subscribe_to_hub(self):
         subscribe_data = {
             "hub.callback": url_for('feed_subscribe', feed_key=self.key.urlsafe(), _external=True),
@@ -975,14 +988,16 @@ class Feed(ndb.Model):
 
         logger.info('Hub: %s Subscribe Data: %s', self.hub, subscribe_data)
         form_data = urllib.urlencode(subscribe_data)
-        resp = urlfetch.fetch(self.hub, method='POST', payload=form_data)
+        ctx = ndb.get_context()
+        resp = yield ctx.urlfetch(self.hub, method='POST', payload=form_data)
         logger.info('PuSH Subscribe request hub:%s status_code:%s response:%s', self.hub, resp.status_code, resp.content)
 
     @classmethod
+    @ndb.tasklet
     def process_new_feed(cls, feed, overflow, overflow_reason):
         # Sync pull down the latest feeds
 
-        parsed_feed = Entry.update_for_feed(feed, overflow=overflow, overflow_reason=overflow_reason)
+        parsed_feed = yield Entry.update_for_feed(feed, overflow=overflow, overflow_reason=overflow_reason)
         hub_url = None
         feed_links = parsed_feed.feed.links if 'links' in parsed_feed.feed else []
         for link in feed_links:
@@ -996,30 +1011,31 @@ class Feed(ndb.Model):
                     feed.hub_secret = None
 
                 feed.verify_token = uuid.uuid4().hex
-                feed.put()
+                yield feed.put_async()
                 feed.subscribe_to_hub()
 
-        return feed
+        raise ndb.Return(feed)
 
     @classmethod
+    @ndb.tasklet
     def create_feed_from_form(cls, user, form):
         feed = cls(parent=user.key)
         form.populate_obj(feed)
-        feed.put()
+        yield feed.put_async()
 
         # This triggers special first time behavior when fetching the feed
         feed.first_time = True
 
-        return cls.process_new_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
+        feed = yield cls.process_new_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
+        raise ndb.Return(feed)
 
     @classmethod
+    @ndb.tasklet
     def create_feed(cls, user, feed_url, include_summary, schedule_period=PERIOD_SCHEDULE.MINUTE_5, max_stories_per_period=1):
         feed = cls(parent=user.key, feed_url=feed_url, include_summary=include_summary)
-        feed.put()
-        return cls.process_new_feed(feed)
-
-    def prepare_request(self):
-        self.rpc = _prepare_request(self.feed_url, self.etag, async=True)
+        yield feed.put_async()
+        feed = yield cls.process_new_feed(feed)
+        raise ndb.Return(feed)
 
     def to_json(self):
         return {
