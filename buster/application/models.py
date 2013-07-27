@@ -522,7 +522,7 @@ class Entry(ndb.Model):
             data['overflow_reason'] = OVERFLOW_REASON.for_display(self.overflow_reason)
 
         if self.key:
-            data['id'] = self.key.id()
+            data['id'] = self.key.urlsafe()
 
         feed = feed or self.key.parent().get()
         if format:

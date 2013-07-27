@@ -216,16 +216,17 @@ def save_feed_preview(feed_id):
     return jsonify(status='ok', data=preview_entries)
 
 
-@app.route('/api/feeds/<int:feed_id>/entries/<int:entry_id>/publish', methods=['POST'])
+@app.route('/api/feeds/<int:feed_id>/entries/<entry_id>/publish', methods=['POST'])
 def feed_entry_publish(feed_id, entry_id):
     """Get a feed"""
     logger.info('Manually publishing Feed:%s Entry: %s', feed_id, entry_id)
 
+    key = ndb.Key(urlsafe=entry_id)
     feed = Feed.get_by_id(feed_id, parent=g.user.key)
-    if not feed:
+    if not (feed and key.parent() == feed.key):
         return jsonify_error(message="Can't find that feed")
 
-    entry = Entry.get_by_id(entry_id, parent=feed.key)
+    entry = key.get()
     if not entry:
         return jsonify_error(message="Can't find that entry")
 
