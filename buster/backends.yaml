@@ -1,0 +1,4 @@
+backends:
+- name: worker
+  options: dynamic
+  instances: 2

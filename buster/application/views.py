@@ -258,7 +258,9 @@ def tq_feed_poll():
 
         try:
             Entry.update_for_feed(feed)
+            success += 1
         except Exception, e:
+            errors += 1
             logger.exception('Failed to update feed:%s' % (feed.feed_url, ))
             continue
 
@@ -332,14 +334,15 @@ def update_all_feeds(interval_id):
     errors = 0
     success = 0
     more = True
+    cursor = None
     while more:
-        feeds_to_fetch, cursor, more = feeds.fetch_page(20)
+        feeds_to_fetch, cursor, more = feeds.fetch_page(20, start_cursor=cursor)
         keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
         if not keys:
             continue
 
         try:
-            taskqueue.add(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys}, queue_name='poll')
+            taskqueue.add(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys}, queue_name='poll', target='worker')
             success += 1
         except Exception, e:
             errors += 1

@@ -334,7 +334,6 @@ def find_video_src_url(item):
     for embed in possible_embeds:
         src_url = embed.get('src')
         urlparts = urlparse(src_url)
-        logger.info('Potential video: %s', src_url)
         if urlparts.netloc.endswith('youtube.com'):
             return src_url, 'youtube'
 
