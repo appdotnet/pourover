@@ -254,7 +254,7 @@ def tq_feed_poll():
     logger.info('Getting feeds')
     ndb_keys = [ndb.Key(urlsafe=key) for key in keys.split(',')]
     feeds = yield ndb.get_multi_async(ndb_keys)
-    logger.info('Got feeds')
+    logger.info('Got %d feed(s)', len(feeds))
     futures = []
 
     for i, feed in enumerate(feeds):
@@ -263,17 +263,11 @@ def tq_feed_poll():
             logger.info("Couldn't find feed for key: %s", ndb_keys[i])
             continue
 
-        logger.info('Entry for feed %s', feed.key.urlsafe())
-
         futures.append((i, Entry.update_for_feed(feed)))
-
-        logger.info('Entried')
 
     for i, future in futures:
         try:
-            logger.info('Yielding i=%s', i)
             yield future
-            logger.info('Yielded i=%s', i)
             success += 1
         except:
             errors += 1
@@ -356,13 +350,12 @@ def update_all_feeds(interval_id):
     cursor = None
     futures = []
     while more:
-        feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(20, start_cursor=cursor)
+        feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(100, start_cursor=cursor)
         keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
         if not keys:
             continue
 
-        futures.append(Queue('poll').add_async(Task(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys},
-                                                    target='worker')))
+        futures.append(Queue('poll').add_async(Task(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys})))
         success += 1
 
     for future in futures:
