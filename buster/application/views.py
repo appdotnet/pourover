@@ -342,7 +342,7 @@ def update_all_feeds(interval_id):
             continue
 
         try:
-            taskqueue.add(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys}, queue_name='poll', target='1.worker')
+            taskqueue.add(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys}, queue_name='poll', target='worker')
             success += 1
         except Exception, e:
             errors += 1
