@@ -477,7 +477,7 @@ def my_get_or_insert(cls, id, **kwds):
         yield ent.put_async()
         raise ndb.Return((ent, True))
 
-    raise ndb.Return((yield ndb.transaction_async(txn)))
+    raise ndb.Return((yield ndb.transaction_async(txn, retries=3)))
 
 
 class User(ndb.Model):
