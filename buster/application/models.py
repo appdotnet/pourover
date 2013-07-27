@@ -112,6 +112,11 @@ class FetchException(Exception):
     pass
 
 
+# Don't complain about this
+ndb.add_flow_exception(FetchException)
+ndb.add_flow_exception(urlfetch.DeadlineExceededError)
+
+
 def strip_html_tags(html):
     if html is None:
         return None
