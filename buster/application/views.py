@@ -406,6 +406,7 @@ try_push_resub.login_required = False
 
 
 @app.route('/_ah/warmup')
+@app.route('/_ah/start')
 def warmup():
     """App Engine warmup handler
     See http://code.google.com/appengine/docs/python/config/appconfig.html#Warming_Requests
