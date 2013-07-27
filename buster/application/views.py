@@ -342,7 +342,7 @@ def update_all_feeds(interval_id):
             continue
 
         try:
-            taskqueue.add(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys}, queue_name='poll', target='worker')
+            taskqueue.add(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys}, queue_name='poll', target='1.worker')
             success += 1
         except Exception, e:
             errors += 1
@@ -407,6 +407,7 @@ try_push_resub.login_required = False
 
 @app.route('/_ah/warmup')
 @app.route('/_ah/start')
+@app.route('/_ah/stop')
 def warmup():
     """App Engine warmup handler
     See http://code.google.com/appengine/docs/python/config/appconfig.html#Warming_Requests
