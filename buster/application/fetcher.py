@@ -4,6 +4,7 @@ import logging
 
 import feedparser
 from google.appengine.ext import ndb
+from google.appengine.api import urlfetch
 from constants import VALID_STATUS
 from utils import find_feed_url
 
