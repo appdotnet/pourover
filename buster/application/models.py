@@ -855,6 +855,7 @@ class Entry(ndb.Model):
     @classmethod
     @ndb.tasklet
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
+        logger.info('update_for_feed 1 %s', feed.key.urlsafe())
         parsed_feed, resp = yield fetch_feed_url(feed.feed_url, feed.etag)
         if getattr(feed, 'first_time', None):
             # Try and fix bad feed_urls on the fly
@@ -862,10 +863,14 @@ class Entry(ndb.Model):
             if new_feed_url:
                 parsed_feed, resp = yield fetch_feed_url(new_feed_url, update_url=new_feed_url)
 
+        logger.info('update_for_feed 2 %s', feed.key.urlsafe())
+
         drain_queue = False
         # There should be no data in here anyway
         if resp.status_code != 304:
             etag = resp.headers.get('ETag')
+
+            logger.info('update_for_feed 2a %s', feed.key.urlsafe())
 
             modified_feed = False
             # Update feed location
@@ -883,8 +888,12 @@ class Entry(ndb.Model):
                     feed.language = lang
                     modified_feed = True
 
+            logger.info('update_for_feed 2b %s', feed.key.urlsafe())
+
             if modified_feed:
                 yield feed.put_async()
+
+            logger.info('update_for_feed 2c %s', feed.key.urlsafe())
 
             num_created_entries = 0
             for item in parsed_feed.entries:
@@ -893,15 +902,23 @@ class Entry(ndb.Model):
                 if created:
                     num_created_entries += 1
 
+            logger.info('update_for_feed 2d %s', feed.key.urlsafe())
+
             if len(parsed_feed.entries) >= 5 and len(parsed_feed.entries) == num_created_entries:
                 # could be a pretty epic fail
                 drain_queue = True
 
+        logger.info('update_for_feed 3 %s', feed.key.urlsafe())
+
         if publish:
             yield cls.publish_for_feed(feed, skip_queue)
 
+        logger.info('update_for_feed 4 %s', feed.key.urlsafe())
+
         if drain_queue:
             yield cls.drain_queue(feed)
+
+        logger.info('update_for_feed 5 %s', feed.key.urlsafe())
 
         raise ndb.Return(parsed_feed)
 
