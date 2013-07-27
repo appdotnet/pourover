@@ -8,162 +8,26 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 
-from google.appengine.ext import ndb
-from google.appengine.api import urlfetch
-from django.utils.text import Truncator
-import urllib
-from urlparse import urlparse, parse_qs
-import feedparser
-import json
 
 from bs4 import BeautifulSoup
+from google.appengine.ext import ndb
+from google.appengine.api import urlfetch
+import urllib
+from urlparse import urlparse, parse_qs
+import json
+
+
 from flask import url_for
-from .utils import append_query_string
+from fetcher import fetch_feed_url
+from constants import ENTRY_STATE, FEED_STATE, FORMAT_MODE, UPDATE_INTERVAL, PERIOD_SCHEDULE, OVERFLOW_REASON
+from poster import build_html_from_post, format_for_adn, prepare_entry_from_item
+from utils import get_language, guid_for_item
+
 
 logger = logging.getLogger(__name__)
 
-# Monkeypatch feedparser
-feedparser._HTMLSanitizer.acceptable_elements = set(list(feedparser._HTMLSanitizer.acceptable_elements) + ["object", "embed", "iframe", "param"])
-
-
-class DjangoEnum(object):
-    def __init__(self, *string_list):
-        self.__dict__.update([(string, number) for (number, string, friendly)
-                              in string_list])
-        self.int_to_display = {number: friendly for (number, string, friendly) in string_list}
-
-    def get_choices(self):
-        return tuple(enumerate(self.__dict__.keys()))
-
-    def __iter__(self):
-        return self.__dict__.values().__iter__()
-
-    def next(self):
-        return self.__dict__.values().next()
-
-    def for_display(self, index):
-        return self.int_to_display[index]
-
-
-ENTRY_STATE = DjangoEnum(
-    (1, 'ACTIVE', 'Active'),
-    (10, 'INACTIVE', 'Inactive'),
-)
-
-
-FEED_STATE = DjangoEnum(
-    (1, 'ACTIVE', 'Active'),
-    (2, 'NEEDS_REAUTH', 'Needs reauth'),
-    (10, 'INACTIVE', 'Inactive'),
-)
-
-FORMAT_MODE = DjangoEnum(
-    (1, 'LINKED_TITLE', 'Linked Title'),
-    (2, 'TITLE_THEN_LINK', 'Title then Link'),
-)
-
-UPDATE_INTERVAL = DjangoEnum(
-    (5, 'MINUTE_1', '1 min'),
-    (1, 'MINUTE_5', '5 mins'),
-    (2, 'MINUTE_15', '15 mins'),
-    (3, 'MINUTE_30', '30 mins'),
-    (4, 'MINUTE_60', '60 mins'),
-)
-
-
-PERIOD_SCHEDULE = DjangoEnum(
-    (1, 'MINUTE_1', '1 min'),
-    (5, 'MINUTE_5', '5 mins'),
-    (15, 'MINUTE_15', '15 mins'),
-    (30, 'MINUTE_30', '30 mins'),
-    (60, 'MINUTE_60', '60 mins'),
-)
-
-
-OVERFLOW_REASON = DjangoEnum(
-    (1, 'BACKLOG', 'Added from feed backlog'),
-    (2, 'FEED_OVERFLOW', 'Feed backed up'),
-)
-
-MAX_CHARS = 256
-VALID_STATUS = (200, 304)
-
-# From here https://github.com/appdotnet/api-spec/wiki/Language-codes
-VALID_LANGUAGES = 'ar az bg bn bs ca cs cy da de el en en_GB es es_AR es_MX es_NI et eu fa fi fr fy_NL ga gl he hi hr hu id is it ja ka kk km kn ko lt lv mk ml mn nb ne nl nn no pa pl pt pt_BR ro ru sk sl sq sr sr_Latn sv sw ta te th tr tt uk ur vi zh_CN zh_TW'.split(' ')
-
-
-def get_language(lang=None):
-    if not lang:
-        return lang
-
-    if '-' in lang:
-        lang = lang.replace('-', '_')
-
-    if lang == 'en_US':
-        lang = 'en'
-
-    if lang in VALID_LANGUAGES:
-        return lang
-
-    return None
-
-
-class FetchException(Exception):
-    pass
-
-
 # Don't complain about this
-ndb.add_flow_exception(FetchException)
 ndb.add_flow_exception(urlfetch.DeadlineExceededError)
-
-
-def strip_html_tags(html):
-    if html is None:
-        return None
-    else:
-        return ''.join(BeautifulSoup(html).findAll(text=True))
-
-
-def ellipse_text(text, max_chars):
-    truncate = Truncator(text)
-
-    return truncate.chars(max_chars, u"\u2026")
-
-
-def build_html_from_post(post):
-
-    def entity_text(e):
-        return post['text'][e['pos']:e['pos'] + e['len']]
-
-    link_builder = lambda l: "<a href='%s'>%s</a>" % (l['url'], entity_text(l))
-
-    # map starting position, length of entity placeholder to the replacement html
-    entity_map = {}
-    for entity_key, builder in [('links', link_builder)]:
-        for entity in post.get('entities', {}).get(entity_key, []):
-            entity_map[(entity['pos'], entity['len'])] = builder(entity)
-
-    # replace strings with html
-    html_pieces = []
-    text_idx = 0  # our current place in the original text string
-    for entity_start, entity_len in sorted(entity_map.keys()):
-        if text_idx != entity_start:
-            # if our current place isn't the start of an entity, bring in text until the next entity
-            html_pieces.append(post.get('text', "")[text_idx:entity_start])
-
-        # pull out the entity html
-        entity_html = entity_map[(entity_start, entity_len)]
-        html_pieces.append(entity_html)
-
-        # move past the entity we just added
-        text_idx = entity_start + entity_len
-
-    # clean up any remaining text
-    html_pieces.append(post.get('text', "")[text_idx:])
-    html = ''.join(html_pieces)
-    html = html.replace('\n', '<br>')
-    # TODO: link to schema
-    return '<span>%s</span>' % (html)
 
 
 def find_feed_url(feed, resp):
@@ -187,280 +51,6 @@ def find_feed_url(feed, resp):
             return shortest_link
 
     return None
-
-
-@ndb.tasklet
-def fetch_feed_url(feed_url, etag=None, update_url=False, rpc=None):
-    # Handle network issues here, handle other exceptions where this is called from
-
-    # GAE's built in urlfetch doesn't expose what HTTP Status caused a request to follow
-    # a redirect. Which is important in this case because on 301 we are suppose to update the
-    # feed URL in our database. So, we have to write our own follow redirect path here.
-
-    max_redirects = 5
-    redirects = 0
-    ctx = ndb.get_context()
-    try:
-        while redirects < max_redirects:
-            redirects += 1
-
-            # logger.info('Fetching feed feed_url:%s etag:%s', feed_url, etag)
-            kwargs = {
-                'url': feed_url,
-                'headers': {
-                    'User-Agent': 'PourOver/1.0 +https://adn-pourover.appspot.com/'
-                },
-                'follow_redirects': True
-            }
-
-            if etag:
-                kwargs['headers']['If-None-Match'] = etag
-
-            resp = yield ctx.urlfetch(**kwargs)
-
-            if resp.status_code not in (301, 302, 307):
-                break
-
-            location = resp.headers.get('Location')
-            if not location:
-                logger.info('Failed to follow redirects for %s', feed_url)
-                raise FetchException('Feed URL has a bad redirect')
-
-            feed_url = location
-
-            # On permanent redirect update the feed_url
-            if resp.status_code == 301:
-                update_url = feed_url
-
-    except urlfetch.DownloadError:
-        logger.info('Failed to download feed: %s', feed_url)
-        raise FetchException('Failed to fetch that URL.')
-    except urlfetch.DeadlineExceededError:
-        logger.info('Feed took too long: %s', feed_url)
-        raise FetchException('URL took to long to fetch.')
-    except urlfetch.InvalidURLError:
-        logger.info('Invalud URL: %s', feed_url)
-        raise FetchException('The URL for this feeds seems to be invalid.')
-
-    if resp.status_code not in VALID_STATUS:
-        raise FetchException('Could not fetch feed. feed_url:%s status_code:%s final_url:%s' % (feed_url, resp.status_code, resp.final_url))
-
-    # Feed hasn't been updated so there isn't a feed
-    if resp.status_code == 304:
-        raise ndb.Return((None, resp))
-
-    feed = feedparser.parse(resp.content)
-
-    feed.update_url = update_url
-
-    raise ndb.Return((feed, resp))
-
-
-def guid_for_item(item):
-    return item.get('guid', item.get('link'))
-
-
-def parse_style_tag(text):
-    if not text:
-        return text
-    text = text.strip()
-    attrs = text.split(';')
-    attrs = filter(None, map(lambda x: x.strip(), attrs))
-    attrs = map(lambda x: x.split(':'), attrs)
-    # logger.info('attrs: %s', attrs)
-    return {x[0].strip(): x[1].strip() for x in attrs}
-
-
-def find_thumbnail(item):
-    min_d = 200
-    max_d = 1000
-    media_thumbnails = item.get('media_thumbnail') or []
-    for thumb in media_thumbnails:
-        w = int(thumb.get('width', 0))
-        h = int(thumb.get('height', 0))
-        if all([w, h, w >= min_d, w <= max_d, h >= min_d, w <= max_d]):
-            return {
-                'thumbnail_image_url': thumb['url'],
-                'thumbnail_image_width': int(thumb['width']),
-                'thumbnail_image_height': int(thumb['height'])
-            }
-
-    soup = BeautifulSoup(item.get('summary', ''))
-    for image in soup.findAll('img'):
-        w = image.get('width', 0)
-        h = image.get('height', 0)
-        if not (w and h):
-            style = parse_style_tag(image.get('style'))
-            if style:
-                w = style.get('width', w)
-                h = style.get('height', h)
-
-        if not(w and h):
-            continue
-
-        w, h = map(lambda x: x.replace('px', ''), (w, h))
-
-        try:
-            w = int(w)
-            h = int(h)
-        except:
-            continue
-
-        if all([w, h, w >= min_d, w <= max_d, h >= min_d, w <= max_d]):
-            return {
-                'thumbnail_image_url': image['src'],
-                'thumbnail_image_width': w,
-                'thumbnail_image_height': h,
-            }
-
-    return None
-
-
-def find_video_src_url(item):
-    summary = item.get('summary', item.get('content'))
-    if not summary:
-        return None, None
-
-    soup = BeautifulSoup(summary)
-
-    possible_embeds = soup.findAll('iframe')
-    possible_embeds += soup.findAll('embed')
-
-    for embed in possible_embeds:
-        src_url = embed.get('src')
-        urlparts = urlparse(src_url)
-        if urlparts.netloc.endswith('youtube.com'):
-            return src_url, 'youtube'
-
-        if urlparts.netloc.endswith('vimeo.com'):
-            return src_url, 'vimeo'
-
-    return None, None
-
-
-# http://stackoverflow.com/questions/4356538/how-can-i-extract-video-id-from-youtubes-link-in-python
-def normalize_youtube_link(url):
-    """
-    Examples:
-    - http://youtu.be/SA2iWivDJiE
-    - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
-    - http://www.youtube.com/embed/SA2iWivDJiE
-    - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;hl=en_US
-    """
-    video_id = None
-    query = urlparse(url)
-    if query.hostname == 'youtu.be':
-        video_id = query.path[1:]
-    if query.hostname in ('www.youtube.com', 'youtube.com'):
-        if query.path == '/watch':
-            p = parse_qs(query.query)
-            video_id = p['v'][0]
-        if query.path[:7] == '/embed/':
-            video_id = query.path.split('/')[2]
-        if query.path[:3] == '/v/':
-            video_id = query.path.split('/')[2]
-    # fail?
-    return 'http://www.youtube.com/watch?v=%s' % (video_id)
-
-
-OEMBED_ENDPOINTS = {
-    'vimeo': 'http://vimeo.com/api/oembed.json',
-    'youtube': 'http://www.youtube.com/oembed',
-}
-
-
-@ndb.tasklet
-def find_video_oembed(item):
-    url, oembed_provider = find_video_src_url(item)
-    if not url or not oembed_provider:
-        return
-
-    if url.startswith('//'):
-        url = 'http:' + url
-
-    if oembed_provider == 'youtube':
-        url = normalize_youtube_link(url)
-
-    if not url:
-        return
-
-    params = {
-        'url': url
-    }
-
-    query_string = urllib.urlencode(params)
-    ctx = ndb.get_context()
-    resp = yield ctx.urlfetch(url='%s?%s' % (OEMBED_ENDPOINTS[oembed_provider], query_string), method='GET')
-    # logger.info('Trying to fetch oembed data url:%s status_code:%s', url, resp.status_code)
-    if resp.status_code != 200:
-        raise ndb.Return(None)
-    # logger.info('Found video provider:%s url:%s embed:%s', oembed_provider, url, json.loads(resp.content))
-    raise ndb.Return(json.loads(resp.content))
-
-
-def get_link_for_item(feed, item):
-    feed_link = feed.feed_url
-    main_item_link = item.get('link')
-
-    # If the user hasn't turned on linked list mode
-    # return the main_item_link
-    if not feed.linked_list_mode:
-        return main_item_link
-
-    # if the feed is so malformed it doesn't link to it's self then
-    # just return the main item link
-    if not feed_link:
-        return main_item_link
-
-    parsed_feed_link = urlparse(feed_link)
-    parsed_item_link = urlparse(main_item_link)
-
-    # If the main link has the same root domain as the feed
-    # This is linking back to the blog already so return
-    # The main link.
-    if parsed_feed_link.netloc == parsed_item_link.netloc:
-        return main_item_link
-
-    # If we are still here, we should now look through the alternate links
-    links = item.get('links', [])
-    for link in links:
-        href = link.get('href')
-        if not href:
-            continue
-
-        parsed_link = urlparse(href)
-        # If we find an alternate link that matches domains
-        # we make the assumption that this is the permalink back to the blog
-        if parsed_link.netloc == parsed_feed_link.netloc:
-            return href
-
-    # If we are still here we now need to look through the links that are in the content
-    soup = BeautifulSoup(item.get('summary', ''))
-    links = soup.findAll('a')
-
-    # No links, then we are out of look return the main_item_link
-    if not links:
-        return main_item_link
-
-    # Right now lets just try this on the last link
-    last_link = links[-1]
-    # logger.info('Last link: %s', last_link)
-    href = last_link.get('href')
-    parsed_link = urlparse(href)
-    # logger.info('Last link parsed: %s %s %s', parsed_link.netloc, parsed_feed_link.netloc, parsed_link)
-    # If the domains match lets use this as the URL
-    if parsed_link.netloc == parsed_feed_link.netloc:
-        return href
-
-    # Finally lets try a last ditch custom method
-    # we can just ask the user to change up their content so we can find something in it
-    permalink = soup.find('a', {'rel': 'permalink'})
-    if permalink:
-        href = permalink.get('href')
-        if href:
-            return href
-
-    return main_item_link
 
 
 @ndb.tasklet
@@ -531,7 +121,7 @@ class Entry(ndb.Model):
 
         feed = feed or self.key.parent().get()
         if format:
-            data['html'] = build_html_from_post(self.format_for_adn(feed).get_result())
+            data['html'] = build_html_from_post(format_for_adn(self, feed).get_result())
             if feed.include_thumb and self.thumbnail_image_url:
                 data['thumbnail_image_url'] = self.thumbnail_image_url
 
@@ -539,157 +129,6 @@ class Entry(ndb.Model):
                 data['thumbnail_image_url'] = self.video_oembed['thumbnail_url']
 
         return data
-
-    @ndb.tasklet
-    def get_short_url(self, link, feed):
-        if self.short_url:
-            raise ndb.Return(self.short_url)
-
-        params = {
-            'login': feed.bitly_login,
-            'apiKey': feed.bitly_api_key,
-            'longUrl': link,
-        }
-
-        ctx = ndb.get_context()
-        query_string = urllib.urlencode(params)
-        resp = yield ctx.urlfetch(url='https://api-ssl.bitly.com/v3/shorten?%s' % (query_string), method='GET')
-        if resp.status_code == 200:
-            logger.info('url: %s Resp content: %s', 'https://api-ssl.bitly.com/v3/shorten?%s' % (query_string), resp.content)
-            resp_json = json.loads(resp.content)
-            if resp_json['status_code'] == 200:
-                link = resp_json['data']['url']
-                self.short_url = link
-                yield self.put_async()
-                raise ndb.Return(link)
-
-    @ndb.tasklet
-    def format_for_adn(self, feed):
-        post_text = self.title
-        links = []
-        summary_text = ''
-        if feed.include_summary:
-            summary_text = strip_html_tags(self.summary)
-            summary_text = ellipse_text(summary_text, 140)
-
-        if self.feed_item:
-            link = get_link_for_item(feed, self.feed_item)
-        else:
-            link = self.link
-
-        link = append_query_string(link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
-
-        # If viewing feed from preview don't shorten urls
-        preview = getattr(feed, 'preview', False)
-        if feed.bitly_login and feed.bitly_api_key and not preview:
-            short_url = yield self.get_short_url(link, feed)
-            if short_url:
-                link = short_url
-
-        # Starting out it should be as long as it can be
-        max_chars = MAX_CHARS
-        max_link_chars = 40
-        ellipse_link_text = ellipse_text(link, max_link_chars)
-        # If the link is to be included in the text we need to make sure we reserve enough space at the end
-        if feed.format_mode == FORMAT_MODE.TITLE_THEN_LINK:
-            max_chars -= len(' ' + ellipse_link_text)
-
-        # Should be some room for a description
-        if len(post_text) < (max_chars - 40) and summary_text:
-            post_text = u'%s\n%s' % (post_text, summary_text)
-
-        post_text = ellipse_text(post_text, max_chars)
-        if feed.format_mode == FORMAT_MODE.TITLE_THEN_LINK:
-            post_text += ' ' + ellipse_link_text
-
-        if feed.format_mode == FORMAT_MODE.TITLE_THEN_LINK:
-            links.insert(0, (link, ellipse_link_text))
-        else:
-            links.insert(0, (link, self.title))
-
-        link_entities = []
-        index = 0
-        for href, link_text in links:
-            # logger.info('Link info: %s %s %s', post_text, link_text, index)
-            text_index = post_text.find(link_text, index)
-            if text_index > -1:
-                link_entities.append({
-                    'url': href,
-                    'text': link_text,
-                    'pos': text_index,
-                    'len': len(link_text),
-                })
-                index = text_index
-
-        post = {
-            'text': post_text,
-            'annotations': [
-                {
-                    "type": "net.app.core.crosspost",
-                    "value": {
-                        "canonical_url": link
-                    }
-                }
-            ]
-        }
-
-        if link_entities:
-            post['entities'] = {
-                'links': link_entities,
-            }
-
-        # logger.info('Info %s, %s', include_thumb, self.thumbnail_image_url)
-        if feed.include_thumb and self.thumbnail_image_url:
-            post['annotations'].append({
-                "type": "net.app.core.oembed",
-                "value": {
-                    "version": "1.0",
-                    "type": "photo",
-                    "title": self.title,
-                    "width": self.thumbnail_image_width,
-                    "height": self.thumbnail_image_height,
-                    "url": self.thumbnail_image_url,
-                    "thumbnail_width": self.thumbnail_image_width,
-                    "thumbnail_height": self.thumbnail_image_height,
-                    "thumbnail_url": self.thumbnail_image_url,
-                    "embeddable_url": self.link,
-                }
-            })
-
-        if feed.include_video and self.video_oembed:
-            oembed = self.video_oembed
-            oembed['embeddable_url'] = self.link
-            post['annotations'].append({
-                "type": "net.app.core.oembed",
-                "value": oembed
-            })
-
-        lang = get_language(self.language)
-        if lang:
-            post['annotations'].append({
-                "type": "net.app.core.language",
-                "value": {
-                    "language": lang,
-                }
-            })
-
-        if self.author:
-            post['annotations'].append({
-                "type": "com.appspot.pourover-adn.item.author",
-                "value": {
-                    "author": self.author,
-                }
-            })
-
-        if self.tags:
-            post['annotations'].append({
-                "type": "com.appspot.pourover-adn.item.tags",
-                "value": {
-                    "tags": self.tags,
-                }
-            })
-
-        raise ndb.Return(post)
 
     @classmethod
     def entry_preview(cls, entries, feed, format=False):
@@ -708,7 +147,7 @@ class Entry(ndb.Model):
         entries = []
         futures = []
         for item in parsed_feed.entries:
-            futures.append((item, cls.prepare_entry_from_item(parsed_feed, item, feed=feed)))
+            futures.append((item, prepare_entry_from_item(parsed_feed, item, feed=feed)))
 
         for item, future in futures:
             entry = cls(**(yield future))
@@ -719,75 +158,10 @@ class Entry(ndb.Model):
 
     @classmethod
     @ndb.tasklet
-    def prepare_entry_from_item(cls, rss_feed, item, feed, overflow=False, overflow_reason=None, published=False):
-        title_detail = item.get('title_detail')
-        title = item.get('title', 'No Title')
-
-        # If the title is HTML then we need to decode it to some kind of usable text
-        # Definitely need to decode any entities
-        if title_detail:
-            if title_detail['type'] == u'text/html':
-                title = BeautifulSoup(title).text
-
-        link = get_link_for_item(feed, item)
-
-        # We can only store a title up to 500 chars
-        title = title[0:499]
-        guid = guid_for_item(item)
-        if len(guid) > 500:
-            logger.warn('Found a guid > 500 chars link: %s item: %s', guid, item)
-            return
-
-        if not link:
-            logger.warn("Item found without link skipping item: %s", item)
-            return
-
-        if len(link) > 500:
-            logger.warn('Found a link > 500 chars link: %s item: %s', link, item)
-            return
-
-        if not guid:
-            logger.warn("Item found without guid skipping item: %s", item)
-            return
-
-        summary = item.get('summary', '')
-        kwargs = dict(guid=guid, title=title, summary=summary, link=link,
-                      published=published, overflow=overflow, overflow_reason=overflow_reason)
-
-        if feed:
-            kwargs['parent'] = feed.key
-
-        try:
-            thumbnail = find_thumbnail(item)
-            if thumbnail:
-                kwargs.update(thumbnail)
-        except Exception, e:
-            logger.info("Exception while trying to find thumbnail %s", e)
-
-        if feed.language:
-            kwargs['language'] = feed.language
-
-        if 'tags' in item:
-            kwargs['tags'] = filter(None, [x['term'] for x in item.tags])
-
-        if 'author' in item and item.author:
-            kwargs['author'] = item.author
-
-        if feed.include_video:
-            embed = yield find_video_oembed(item)
-            if embed:
-                kwargs['video_oembed'] = embed
-
-        kwargs['feed_item'] = item
-
-        raise ndb.Return(kwargs)
-
-    @classmethod
-    @ndb.tasklet
     def create_from_feed_and_item(cls, feed, item, overflow=False, overflow_reason=None, rss_feed=None):
         published = overflow
 
-        entry_kwargs = yield cls.prepare_entry_from_item(rss_feed, item, feed, overflow, overflow_reason, published)
+        entry_kwargs = yield prepare_entry_from_item(rss_feed, item, feed, overflow, overflow_reason, published)
         raise ndb.Return((yield my_get_or_insert(cls, guid_for_item(item), **entry_kwargs)))
 
     @ndb.tasklet
@@ -795,7 +169,7 @@ class Entry(ndb.Model):
         feed = yield self.key.parent().get_async()
         user = yield feed.key.parent().get_async()
         # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
-        post = yield self.format_for_adn(feed)
+        post = yield format_for_adn(self, feed)
         ctx = ndb.get_context()
         try:
             resp = yield ctx.urlfetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), deadline=30,

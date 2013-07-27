@@ -15,7 +15,9 @@ from google.appengine.api.taskqueue import Task, Queue
 from flask_cache import Cache
 
 from application import app
-from models import Entry, Feed, UPDATE_INTERVAL, FetchException
+from constants import UPDATE_INTERVAL
+from models import Entry, Feed
+from fetcher import FetchException
 from forms import FeedCreate, FeedUpdate, FeedPreview
 
 logger = logging.getLogger(__name__)
@@ -356,13 +358,12 @@ def update_all_feeds(interval_id):
     cursor = None
     futures = []
     while more:
-        feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(20, start_cursor=cursor)
+        feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(100, start_cursor=cursor)
         keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
         if not keys:
             continue
 
-        futures.append(Queue('poll').add_async(Task(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys},
-                                                    target='worker')))
+        futures.append(Queue('poll').add_async(Task(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys})))
         success += 1
 
     for future in futures:

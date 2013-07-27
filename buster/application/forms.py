@@ -5,7 +5,7 @@ from wtforms import fields
 from wtforms import validators
 from wtforms.validators import ValidationError
 
-from .models import PERIOD_SCHEDULE, fetch_feed_url, FORMAT_MODE
+from constants import PERIOD_SCHEDULE, FORMAT_MODE
 
 logger = logging.getLogger(__name__)
 

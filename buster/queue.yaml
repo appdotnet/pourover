@@ -1,4 +1,4 @@
 total_storage_limit: 500M
 queue:
 - name: poll
-  rate: 50/s
+  rate: 25/s
