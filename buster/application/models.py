@@ -18,40 +18,16 @@ import json
 
 
 from flask import url_for
-from fetcher import fetch_feed_url
+from fetcher import fetch_parsed_feed_for_url, fetch_parsed_feed_for_feed
 from constants import ENTRY_STATE, FEED_STATE, FORMAT_MODE, UPDATE_INTERVAL, PERIOD_SCHEDULE, OVERFLOW_REASON
 from poster import build_html_from_post, format_for_adn, prepare_entry_from_item
-from utils import get_language, guid_for_item
+from utils import get_language, guid_for_item, find_feed_url
 
 
 logger = logging.getLogger(__name__)
 
 # Don't complain about this
 ndb.add_flow_exception(urlfetch.DeadlineExceededError)
-
-
-def find_feed_url(feed, resp):
-    if feed.bozo == 1 and len(feed.entries) == 0:
-        content_type = resp.headers.get('Content-Type')
-        logger.info('Feed failed bozo detection feed_url:%s content_type:%s', resp.final_url, content_type)
-        if content_type and content_type.startswith('text/html'):
-            # If we have this lets try and find a feed
-            logger.info('Feed might be a web page trying to find feed_url:%s', resp.final_url)
-            soup = BeautifulSoup(resp.content)
-            # The thinking here is that the main RSS feed will be shorter in length then any others
-            links = [x.get('href') for x in soup.findAll('link', type='application/rss+xml')]
-            links += [x.get('href') for x in soup.findAll('link', type='application/atom+xml')]
-            shortest_link = None
-            for link in links:
-                if shortest_link is None:
-                    shortest_link = link
-                elif len(link) < len(shortest_link):
-                    shortest_link = link
-
-            return shortest_link
-
-    return None
-
 
 @ndb.tasklet
 def my_get_or_insert(cls, id, **kwds):
@@ -141,12 +117,12 @@ class Entry(ndb.Model):
     @classmethod
     @ndb.synctasklet
     def entry_preview_for_feed(cls, feed):
-        parsed_feed, resp = yield fetch_feed_url(feed.feed_url)
+        parsed_feed, resp = yield fetch_parsed_feed_for_url(feed.feed_url)
 
         # Try and fix bad feed_urls on the fly
         new_feed_url = find_feed_url(parsed_feed, resp)
         if new_feed_url:
-            parsed_feed, resp = yield fetch_feed_url(new_feed_url, update_url=new_feed_url)
+            parsed_feed, resp = yield fetch_parsed_feed_for_url(new_feed_url)
 
         entries = []
         futures = []
@@ -235,12 +211,7 @@ class Entry(ndb.Model):
     @classmethod
     @ndb.tasklet
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
-        parsed_feed, resp = yield fetch_feed_url(feed.feed_url, feed.etag)
-        if getattr(feed, 'first_time', None):
-            # Try and fix bad feed_urls on the fly
-            new_feed_url = find_feed_url(parsed_feed, resp)
-            if new_feed_url:
-                parsed_feed, resp = yield fetch_feed_url(new_feed_url, update_url=new_feed_url)
+        parsed_feed, resp = yield fetch_parsed_feed_for_feed(feed)
 
         drain_queue = False
         # There should be no data in here anyway
@@ -249,8 +220,8 @@ class Entry(ndb.Model):
 
             modified_feed = False
             # Update feed location
-            if parsed_feed.update_url:
-                feed.feed_url = parsed_feed.update_url
+            if resp.was_permanente_redirect:
+                feed.feed_url = resp.final_url
                 modified_feed = True
                 publish = False
             elif etag and feed.etag != etag:
@@ -338,6 +309,7 @@ class Feed(ndb.Model):
     hub_secret = ndb.StringProperty()
     bitly_login = ndb.StringProperty()
     bitly_api_key = ndb.StringProperty()
+    last_fetched_content_hash = ndb.StringProperty()
 
     @classmethod
     def for_user(cls, user):

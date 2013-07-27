@@ -5,6 +5,7 @@ import sys
 import unittest
 import json
 import base64
+import hashlib
 from datetime import timedelta
 
 import inspect
@@ -37,6 +38,7 @@ from agar.test import MockUrlfetchTest
 from application import app
 from application.models import Entry, User, Feed, OVERFLOW_REASON
 from application.utils import append_query_string
+from application.fetcher import hash_content
 from application import settings
 
 RSS_ITEM = """
@@ -276,9 +278,21 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.get('/api/feeds', headers=self.authHeaders())
         json_resp = json.loads(resp.data)
         assert len(json_resp['data']) == 2
-
-        self.set_rss_response("http://example.com/rss", content=self.buildRSS('test2'), status_code=200)
+        content = self.buildRSS('test2')
+        content_hash = hash_content(content)
+        self.set_rss_response("http://example.com/rss", content=content, status_code=200)
         feed = Feed.query().get()
+        Entry.update_for_feed(feed).get_result()
+        assert 12 == Entry.query().count()
+
+        assert content_hash == feed.last_fetched_content_hash
+
+        new_content = self.buildRSS('test3')
+        new_content_hash = hash_content(new_content)
+        feed.last_fetched_content_hash = new_content_hash
+        feed.put()
+
+        self.set_rss_response("http://example.com/rss", content=new_content, status_code=200)
         Entry.update_for_feed(feed).get_result()
         assert 12 == Entry.query().count()
 
@@ -527,7 +541,9 @@ class BusterTestCase(MockUrlfetchTest):
         feed = Feed.query().get()
         assert feed.feed_url == test_feed_url
 
+        self.set_rss_response(test_feed_url2, content=self.buildRSS('test1', items=6), status_code=200)
         self.set_rss_response(test_feed_url, content='', status_code=301, headers={'Location': test_feed_url2})
+
         self.pollUpdate()
 
         feed = Feed.query().get()

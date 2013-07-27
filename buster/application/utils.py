@@ -1,8 +1,11 @@
+import logging
 import urllib
 
 from bs4 import BeautifulSoup
 from django.utils.encoding import smart_str
 from django.utils.text import Truncator
+
+logger = logging.getLogger(__name__)
 
 
 def smart_urlencode(params, force_percent=False):
@@ -69,5 +72,28 @@ def get_language(lang=None):
 
     if lang in VALID_LANGUAGES:
         return lang
+
+    return None
+
+
+def find_feed_url(feed, resp):
+    if feed.bozo == 1 and len(feed.entries) == 0:
+        content_type = resp.headers.get('Content-Type')
+        logger.info('Feed failed bozo detection feed_url:%s content_type:%s', resp.final_url, content_type)
+        if content_type and content_type.startswith('text/html'):
+            # If we have this lets try and find a feed
+            logger.info('Feed might be a web page trying to find feed_url:%s', resp.final_url)
+            soup = BeautifulSoup(resp.content)
+            # The thinking here is that the main RSS feed will be shorter in length then any others
+            links = [x.get('href') for x in soup.findAll('link', type='application/rss+xml')]
+            links += [x.get('href') for x in soup.findAll('link', type='application/atom+xml')]
+            shortest_link = None
+            for link in links:
+                if shortest_link is None:
+                    shortest_link = link
+                elif len(link) < len(shortest_link):
+                    shortest_link = link
+
+            return shortest_link
 
     return None
