@@ -897,8 +897,10 @@ class Entry(ndb.Model):
 
             num_created_entries = 0
             for item in parsed_feed.entries:
+                logger.info('update_for_feed 2c1 %s %s', feed.key.urlsafe(), item.guid)
                 entry, created = yield cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason,
                                                                      rss_feed=parsed_feed)
+                logger.info('update_for_feed 2c2 %s %s', feed.key.urlsafe(), item.guid)
                 if created:
                     num_created_entries += 1
 
