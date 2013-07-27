@@ -425,14 +425,14 @@ def format_for_adn(entry, feed):
             "value": {
                 "version": "1.0",
                 "type": "photo",
-                "title": self.title,
-                "width": self.thumbnail_image_width,
-                "height": self.thumbnail_image_height,
-                "url": self.thumbnail_image_url,
-                "thumbnail_width": self.thumbnail_image_width,
-                "thumbnail_height": self.thumbnail_image_height,
-                "thumbnail_url": self.thumbnail_image_url,
-                "embeddable_url": self.link,
+                "title": entry.title,
+                "width": entry.thumbnail_image_width,
+                "height": entry.thumbnail_image_height,
+                "url": entry.thumbnail_image_url,
+                "thumbnail_width": entry.thumbnail_image_width,
+                "thumbnail_height": entry.thumbnail_image_height,
+                "thumbnail_url": entry.thumbnail_image_url,
+                "embeddable_url": entry.link,
             }
         })
 

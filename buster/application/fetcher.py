@@ -43,7 +43,8 @@ def fetch_url(url, etag=None):
                 'headers': {
                     'User-Agent': 'PourOver/1.0 +https://adn-pourover.appspot.com/'
                 },
-                'follow_redirects': True
+                'follow_redirects': True,
+                'deadline': 60
             }
 
             if etag:
@@ -64,8 +65,9 @@ def fetch_url(url, etag=None):
 
             url = location
 
-    except urlfetch.DownloadError:
+    except urlfetch.DownloadError, e:
         logger.info('Failed to download feed: %s', url)
+        logger.exception(e)
         raise FetchException('Failed to fetch that URL.')
     except urlfetch.DeadlineExceededError:
         logger.info('Feed took too long: %s', url)
