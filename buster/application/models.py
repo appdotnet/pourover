@@ -29,26 +29,6 @@ logger = logging.getLogger(__name__)
 # Don't complain about this
 ndb.add_flow_exception(urlfetch.DeadlineExceededError)
 
-@ndb.tasklet
-def my_get_or_insert(cls, id, **kwds):
-    # Gotta parallelize this & remove txns
-    parent = kwds.get('parent', None)
-    key = ndb.Key(cls, id, parent=parent)
-
-    @ndb.tasklet
-    def txn(parent, key):
-        ent = yield key.get_async()
-        if ent is not None:
-            raise ndb.Return((ent, False))  # False meaning "not created"
-        ent = cls(**kwds)
-        ent.key = key
-        yield ent.put_async()
-        raise ndb.Return((ent, True))
-
-    e = yield ndb.transaction_async(lambda: txn(parent, key), retries=3)
-
-    raise ndb.Return(e)
-
 
 class User(ndb.Model):
     access_token = ndb.StringProperty()
@@ -60,6 +40,7 @@ class User(ndb.Model):
 
 class Entry(ndb.Model):
     guid = ndb.StringProperty(required=True)
+    creating = ndb.BooleanProperty(default=True)
     title = ndb.StringProperty()
     summary = ndb.TextProperty()
     link = ndb.StringProperty()
@@ -135,16 +116,6 @@ class Entry(ndb.Model):
                 entries.append(entry)
 
         raise ndb.Return(cls.entry_preview(entries, feed, format=True))
-
-    @classmethod
-    @ndb.tasklet
-    def create_from_feed_and_item(cls, feed, item, overflow=False, overflow_reason=None, rss_feed=None):
-        published = overflow
-
-        entry_kwargs = yield prepare_entry_from_item(rss_feed, item, feed, overflow, overflow_reason, published)
-        e = yield my_get_or_insert(cls, guid_for_item(item), **entry_kwargs)
-
-        raise ndb.Return(e)
 
     @ndb.tasklet
     def publish_entry(self, feed):
@@ -237,16 +208,27 @@ class Entry(ndb.Model):
             if modified_feed:
                 yield feed.put_async()
 
-            num_created_entries = 0
-            for item in parsed_feed.entries:
-                # TODO: parallelize this
-                entry, created = yield cls.create_from_feed_and_item(feed, item, overflow=overflow, overflow_reason=overflow_reason,
-                                                                     rss_feed=parsed_feed)
-                if created:
-                    num_created_entries += 1
+            keys_by_guid = {guid_for_item(item): ndb.Key(cls, guid_for_item(item), parent=feed.key) for item in parsed_feed.entries}
+            entries = yield ndb.get_multi_async(keys_by_guid.values())
+            old_guids = [x.key.id() for x in entries if x]
+            new_guids = filter(lambda x: x not in old_guids, keys_by_guid.keys())
+            new_entries_by_guid = {x: cls(key=keys_by_guid.get(x), guid=x) for x in new_guids}
+            new_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
 
-            if len(parsed_feed.entries) >= 5 and len(parsed_feed.entries) == num_created_entries:
-                # could be a pretty epic fail
+            published = overflow
+            for item in parsed_feed.entries:
+                entry = new_entries_by_guid.get(guid_for_item(item))
+                if not entry:
+                    continue
+
+                entry_kwargs = yield prepare_entry_from_item(parsed_feed, item, feed, overflow, overflow_reason, published)
+                entry_kwargs.pop('parent')
+                entry_kwargs['creating'] = False
+                entry.populate(**entry_kwargs)
+
+            saved_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
+
+            if len(keys_by_guid.values()) >= 5 and len(keys_by_guid.values()) == len(entries):
                 drain_queue = True
 
         if publish:
@@ -269,17 +251,17 @@ class Entry(ndb.Model):
 
     @classmethod
     def latest_for_feed(cls, feed):
-        return cls.query(ancestor=feed.key)
+        return cls.query(cls.creating == False, ancestor=feed.key)
 
     @classmethod
     def latest_unpublished(cls, feed):
         published = False
-        return cls.query(cls.published == published, ancestor=feed.key).order(-cls.added)
+        return cls.query(cls.published == published, cls.creating == False, ancestor=feed.key).order(-cls.added)
 
     @classmethod
     def latest_published(cls, feed, since=None):
         published = True
-        q = cls.query(cls.published == published, ancestor=feed.key).order(-cls.published_at).order(-cls.added)
+        q = cls.query(cls.published == published, cls.creating == False, ancestor=feed.key).order(-cls.published_at).order(-cls.added)
         if since:
             q = q.filter(cls.published_at >= since)
 
