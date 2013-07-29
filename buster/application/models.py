@@ -236,8 +236,8 @@ class Entry(ndb.Model):
 
             saved_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
 
-            if len(keys_by_guid.values()) >= 5 and len(keys_by_guid.values()) == len(entries):
-                drain_queue = True
+            #if len(keys_by_guid.values()) >= 5 and len(keys_by_guid.values()) == len(entries):
+            #   drain_queue = True
 
         if publish:
             yield cls.publish_for_feed(feed, skip_queue)
