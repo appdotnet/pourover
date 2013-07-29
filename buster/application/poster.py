@@ -4,6 +4,7 @@ from urlparse import urlparse
 import urllib
 
 from bs4 import BeautifulSoup
+from fnl.nlp import sentencesplitter as splitter
 from google.appengine.ext import ndb
 from constants import FORMAT_MODE
 from utils import (append_query_string, strip_html_tags, ellipse_text, get_language,
@@ -350,7 +351,7 @@ def format_for_adn(entry, feed):
     summary_text = ''
     if feed.include_summary:
         summary_text = strip_html_tags(entry.summary)
-        summary_text = ellipse_text(summary_text, 140)
+        summary_text = ellipse_text(splitter.split(summary_text[0:201])[0], 200)
 
     if entry.feed_item:
         link = get_link_for_item(feed, entry.feed_item)
