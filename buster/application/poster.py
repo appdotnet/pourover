@@ -363,7 +363,7 @@ def format_for_adn(entry, feed):
     # If viewing feed from preview don't shorten urls
     preview = getattr(feed, 'preview', False)
     has_own_bitly_creds = feed.bitly_login and feed.bitly_api_key
-    if has_own_bitly_creds or (not has_own_bitly_creds and feed.format_mode == FORMAT_MODE.TITLE_THEN_LINK) and not preview:
+    if not preview and (has_own_bitly_creds or feed.format_mode == FORMAT_MODE.TITLE_THEN_LINK):
         if not has_own_bitly_creds:
             feed.bitly_login = 'mixedmedialabs'
             feed.bitly_api_key = 'R_a1311cd1785b7da2aedac9703656b0f1'

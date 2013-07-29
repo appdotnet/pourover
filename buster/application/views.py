@@ -427,7 +427,7 @@ def try_push_resub():
 
     while (yield qit.has_next_async()):
         feed = qit.next()
-        futures.append((feed, Entry.subscribe_to_hub(feed)))
+        futures.append((feed, Feed.subscribe_to_hub(feed)))
 
     for feed, future in futures:
         count += 1
