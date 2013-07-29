@@ -455,7 +455,7 @@ def format_for_adn(entry, feed):
 
     if entry.author:
         post['annotations'].append({
-            "type": "com.appspot.pourover-adn.item.author",
+            "type": "net.app.pourover.item.author",
             "value": {
                 "author": entry.author,
             }
@@ -463,7 +463,7 @@ def format_for_adn(entry, feed):
 
     if entry.tags:
         post['annotations'].append({
-            "type": "com.appspot.pourover-adn.item.tags",
+            "type": "net.app.pourover.item.tags",
             "value": {
                 "tags": entry.tags,
             }
