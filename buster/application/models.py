@@ -185,9 +185,38 @@ class Entry(ndb.Model):
 
     @classmethod
     @ndb.tasklet
+    def process_parsed_feed(cls, parsed_feed, feed, overflow, overflow_reason=OVERFLOW_REASON.BACKLOG):
+        keys_by_guid = {guid_for_item(item): ndb.Key(cls, guid_for_item(item), parent=feed.key) for item in parsed_feed.entries}
+        entries = yield ndb.get_multi_async(keys_by_guid.values())
+        old_guids = [x.key.id() for x in entries if x]
+        new_guids = filter(lambda x: x not in old_guids, keys_by_guid.keys())
+        new_entries_by_guid = {x: cls(key=keys_by_guid.get(x), guid=x, creating=True) for x in new_guids}
+        new_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
+
+        published = overflow
+        futures = []
+        for item in parsed_feed.entries:
+            entry = new_entries_by_guid.get(guid_for_item(item))
+            if not entry:
+                continue
+
+            futures.append((entry, prepare_entry_from_item(parsed_feed, item, feed, overflow, overflow_reason, published)))
+
+        for entry, future in futures:
+            entry_kwargs = yield future
+            entry_kwargs.pop('parent')
+            entry_kwargs['creating'] = False
+            entry.populate(**entry_kwargs)
+
+        saved_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
+
+        raise ndb.Return((new_guids, old_guids))
+
+    @classmethod
+    @ndb.tasklet
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
         parsed_feed, resp = yield fetch_parsed_feed_for_feed(feed)
-
+        num_new_items = 0
         drain_queue = False
         # There should be no data in here anyway
         if resp.status_code != 304:
@@ -212,30 +241,9 @@ class Entry(ndb.Model):
             if modified_feed:
                 yield feed.put_async()
 
-            keys_by_guid = {guid_for_item(item): ndb.Key(cls, guid_for_item(item), parent=feed.key) for item in parsed_feed.entries}
-            entries = yield ndb.get_multi_async(keys_by_guid.values())
-            old_guids = [x.key.id() for x in entries if x]
-            new_guids = filter(lambda x: x not in old_guids, keys_by_guid.keys())
-            new_entries_by_guid = {x: cls(key=keys_by_guid.get(x), guid=x, creating=True) for x in new_guids}
-            new_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
-
-            published = overflow
-            futures = []
-            for item in parsed_feed.entries:
-                entry = new_entries_by_guid.get(guid_for_item(item))
-                if not entry:
-                    continue
-
-                futures.append((entry, prepare_entry_from_item(parsed_feed, item, feed, overflow, overflow_reason, published)))
-
-            for entry, future in futures:
-                entry_kwargs = yield future
-                entry_kwargs.pop('parent')
-                entry_kwargs['creating'] = False
-                entry.populate(**entry_kwargs)
-
-            saved_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
-            if len(keys_by_guid.values()) >= 5 and len(new_guids) == len(entries):
+            new_guids, old_guids = yield cls.process_parsed_feed(parsed_feed, feed, overflow, overflow_reason)
+            num_new_items = len(new_guids)
+            if len(new_guids + old_guids) >= 5 and len(new_guids) == len(new_guids + old_guids):
                 drain_queue = True
 
         if publish:
@@ -244,7 +252,7 @@ class Entry(ndb.Model):
         if drain_queue:
             yield cls.drain_queue(feed)
 
-        raise ndb.Return(parsed_feed)
+        raise ndb.Return((parsed_feed, num_new_items))
 
     @classmethod
     @ndb.tasklet
@@ -346,7 +354,7 @@ class Feed(ndb.Model):
     def process_new_feed(cls, feed, overflow, overflow_reason):
         # Sync pull down the latest feeds
 
-        parsed_feed = yield Entry.update_for_feed(feed, overflow=overflow, overflow_reason=overflow_reason)
+        parsed_feed, num_new_entries = yield Entry.update_for_feed(feed, overflow=overflow, overflow_reason=overflow_reason)
         hub_url = None
         feed_links = parsed_feed.feed.links if 'links' in parsed_feed.feed else []
         for link in feed_links:

@@ -347,7 +347,7 @@ class BusterTestCase(MockUrlfetchTest):
             "hub.mode": 'subscribe',
             "hub.topic": feed.feed_url,
             "hub.challenge": 'testing',
-            "hub.verify_token": feed.verify_token,
+            # "hub.verify_token": feed.verify_token,
         })
 
         assert resp.data == 'testing'

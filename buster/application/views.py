@@ -10,6 +10,7 @@ import hmac
 
 from google.appengine.ext import ndb
 
+import feedparser
 from flask import request, render_template, g, Response, url_for
 from google.appengine.api.taskqueue import Task, Queue
 from flask_cache import Cache
@@ -252,6 +253,7 @@ def tq_feed_poll():
 
     success = 0
     errors = 0
+    entries_created = 0
     logger.info('Getting feeds')
     ndb_keys = [ndb.Key(urlsafe=key) for key in keys.split(',')]
     feeds = yield ndb.get_multi_async(ndb_keys)
@@ -268,14 +270,15 @@ def tq_feed_poll():
 
     for i, future in futures:
         try:
-            yield future
+            parsed_feed, num_new_entries = yield future
+            entries_created += num_new_entries
             success += 1
         except:
             errors += 1
             feed = feeds[i]
             logger.exception('Failed to update feed:%s, i=%s' % (feed.feed_url, i))
 
-    logger.info('Polled feeds success: %s errors: %s', success, errors)
+    logger.info('Polled feeds entries_created: %s success: %s errors: %s', entries_created, success, errors)
 
     raise ndb.Return(jsonify(status='ok'))
 
@@ -330,7 +333,9 @@ def feed_push_update(feed_key):
     logger.info('Got PuSH body: %s', data)
     logger.info('Got PuSH headers: %s', request.headers)
 
-    yield Entry.update_for_feed(feed, publish=True, skip_queue=True)
+    parsed_feed = feedparser.parse(data)
+    new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)
+    yield Entry.publish_for_feed(feed, skip_queue=True)
 
     raise ndb.Return('')
 
