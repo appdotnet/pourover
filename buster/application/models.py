@@ -220,12 +220,16 @@ class Entry(ndb.Model):
             new_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
 
             published = overflow
+            futures = []
             for item in parsed_feed.entries:
                 entry = new_entries_by_guid.get(guid_for_item(item))
                 if not entry:
                     continue
 
-                entry_kwargs = yield prepare_entry_from_item(parsed_feed, item, feed, overflow, overflow_reason, published)
+                futures.append((entry, prepare_entry_from_item(parsed_feed, item, feed, overflow, overflow_reason, published)))
+
+            for entry, future in futures:
+                entry_kwargs = yield future
                 entry_kwargs.pop('parent')
                 entry_kwargs['creating'] = False
                 entry.populate(**entry_kwargs)
