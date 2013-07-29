@@ -1,26 +1,4 @@
-<div class="navbar navbar-static-top">
-  <div class="navbar-inner">
-    <a class="brand" href="/" >PourOver</a>
-    <ul class="nav pull-right">
-      <li class="dropdown">
-        <a class="dropdown-toggle like-link" data-toggle="dropdown" ng-show='feeds && feeds.length >= 1'>Feeds <b class="caret"></b></a>
-        <ul class="dropdown-menu">
-          <li ng-repeat='f in feeds' ng-class='{"active": f.feed_id == feed.feed_id}'>
-            <a ng-href='/feed/{{f.feed_id}}/'>{{ f.feed_url }}</a>
-          </li>
-          <li><a ng-href='/feed/new/' >Create a new Feed</a></li>
-        </ul>
-      </li>
-      <li class="dropdown">
-        <a class="dropdown-toggle like-link" data-toggle="dropdown"><span>@</span><span ng-bind="current_user.username"></span> <b class="caret"></b></a>
-        <ul class="dropdown-menu">
-          <li><a href='http://app.net/{{current_user.username}}' target='_blank'>App.net Profile Page</a></li>
-          <li><a href='/logout'>Logout of PourOver</a></li>
-        </ul>
-      </li>
-    </ul>
-  </div>
-</div>
+<div ng-include src="'/views/nav.html'"></div>
 <div class='authenticated-app'>
     <div class='row'>
         <div class='span4'>
