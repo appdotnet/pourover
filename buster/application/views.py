@@ -380,7 +380,7 @@ def post_all_feeds():
 
     errors = 0
     success = 0
-
+    num_posted = 0
     futures = []
 
     while (yield feeds.has_next_async()):
@@ -389,13 +389,15 @@ def post_all_feeds():
 
     for feed, future in futures:
         try:
-            yield future
+            num_posts = yield future
+            if num_posts is not None:
+                num_posted += num_posts
             success += 1
         except:
             errors += 1
             logger.exception('Failed to Publish feed:%s' % (feed.feed_url, ))
 
-    logger.info('Post Feeds success:%s errors: %s', success, errors)
+    logger.info('Post Feeds success:%s errors: %s num_posted: %s', success, errors, num_posted)
 
     raise ndb.Return(jsonify(status='ok'))
 

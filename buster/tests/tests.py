@@ -667,10 +667,8 @@ class BusterTestCase(MockUrlfetchTest):
     def testPushResubCron(self):
         resp = self.app.get('/api/feeds/all/try/subscribe', headers={'X-Appengine-Cron': 'true'})
 
-
     def testDbRaceCondition(self):
         self.setMockUser()
-        self.set_rss_response("https://api-ssl.bitly.com/v3/shorten?login=example&apiKey=R_123&longUrl=http%3A%2F%2Fexample.com%2Fbuster%2Ftest1_0%3Futm_medium%3DApp.net%26utm_source%3DPourOver", content=BIT_LY_RESPONSE)
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
         resp = self.app.post('/api/feeds', data=dict(
@@ -678,8 +676,6 @@ class BusterTestCase(MockUrlfetchTest):
             include_summary=True,
             max_stories_per_period=2,
             schedule_period=5,
-            bitly_login='example',
-            bitly_api_key='R_123',
         ), headers=self.authHeaders())
 
         feed = Feed.query().get()
@@ -691,7 +687,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         entry_2 = Entry(key=key, guid='2')
         entry_2.put()
-        print Entry.query().fetch(2)
+
         assert Entry.query().count() == 2
 
 if __name__ == '__main__':

@@ -169,6 +169,7 @@ class Entry(ndb.Model):
         period_ago = now - timedelta(minutes=feed.schedule_period)
         lastest_published_entries = yield cls.latest_published(feed, since=period_ago).count_async()
         max_stories_to_publish = feed.max_stories_per_period - lastest_published_entries
+        entries_posted = 0
         # If we still have time left in this period publish some more.
         if max_stories_to_publish > 0 or skip_queue:
             # If we are skipping the queue
@@ -178,6 +179,9 @@ class Entry(ndb.Model):
             latest_entries = yield cls.latest_unpublished(feed).fetch_async(max_stories_to_publish)
             for entry in latest_entries:
                 yield entry.publish_entry(feed)
+                entries_posted += 1
+
+        raise ndb.Return(entries_posted)
 
     @classmethod
     @ndb.tasklet
