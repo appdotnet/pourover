@@ -66,7 +66,7 @@ XML_TEMPLATE = """
         <title>Busters RSS feed</title>
         <link>http://example.com/buster</link>
         <description>
-            Hi, my name is Buster.
+            Hi, my name is Buster. This is the second sentence.
         </description>
         %(language)s
         <atom:link href="http://example.com/buster/rss" type="application/rss+xml" rel="self"/>
@@ -620,7 +620,6 @@ class BusterTestCase(MockUrlfetchTest):
         data = json.loads(resp.data)
         assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>test</span>"
 
-
     def testIncludeVideo(self):
         self.setMockUser()
         self.set_response('http://vimeo.com/api/oembed.json?url=http%3A%2F%2Fvimeo.com%2F7100569', content=VIMEO_OEMBED_RESPONSE)
@@ -639,6 +638,25 @@ class BusterTestCase(MockUrlfetchTest):
                 data = json.loads(resp.data)
                 assert data['data'][0]['thumbnail_image_url'] == thumbnail_url
                 assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
+
+    def testIncludeSummary(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        sentance_1 = 'x' * 199 + '.'
+        sentance_2 = ' xxx.'
+        description  = sentance_1 + sentance_2
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
+        resp = self.app.get('/api/feed/preview?include_summary=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1)
+
+        sentance_1 = 'x' * 201 + '.'
+        sentance_2 = ' xxx.'
+        description  = sentance_1 + sentance_2
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
+        resp = self.app.get('/api/feed/preview?include_summary=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1[0:199] + u"\u2026")
 
     def testShortUrl(self):
         self.setMockUser()
