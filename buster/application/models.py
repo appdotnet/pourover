@@ -235,7 +235,6 @@ class Entry(ndb.Model):
                 entry.populate(**entry_kwargs)
 
             saved_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
-
             if len(keys_by_guid.values()) >= 5 and len(new_guids) == len(entries):
                 drain_queue = True
 

@@ -515,7 +515,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert 0 == Entry.query(Entry.published == True, Entry.overflow == False).count()
         assert 12 == Entry.query(Entry.published == True, Entry.overflow == True).count()
 
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test3', items=1), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test2', items=7), status_code=200)
         self.pollUpdate()
 
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
