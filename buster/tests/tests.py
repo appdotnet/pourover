@@ -524,7 +524,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=6), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
             max_stories_per_period=2,
@@ -554,7 +554,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=6), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
             max_stories_per_period=2,
@@ -562,7 +562,7 @@ class BusterTestCase(MockUrlfetchTest):
         ), headers=self.authHeaders())
 
         feed = Feed.query().get()
-        assert feed.language == None
+        assert feed.language is None
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=6, use_lang='en-US'), status_code=200)
         self.pollUpdate()
@@ -573,7 +573,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
             max_stories_per_period=2,
@@ -593,7 +593,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
             max_stories_per_period=2,
@@ -683,13 +683,13 @@ class BusterTestCase(MockUrlfetchTest):
         assert append_query_string('http://www.ntvspor.net#', {'t': 1}) == 'http://www.ntvspor.net?t=1#'
 
     def testPushResubCron(self):
-        resp = self.app.get('/api/feeds/all/try/subscribe', headers={'X-Appengine-Cron': 'true'})
+        self.app.get('/api/feeds/all/try/subscribe', headers={'X-Appengine-Cron': 'true'})
 
     def testDbRaceCondition(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
             max_stories_per_period=2,
