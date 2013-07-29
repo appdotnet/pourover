@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import logging
 
@@ -103,6 +104,7 @@ def fetch_parsed_feed_for_url(feed_url, etag=None):
 def hash_content(text):
     return hashlib.sha256(text).hexdigest()
 
+
 # Rubber duck debugging for fetch_parsed_feed_for_feed
 # We want to fetch a feed with an etag if we have one.
 # If we get back a 304 we don't need to do anything we can just return None, resp
@@ -111,7 +113,22 @@ def hash_content(text):
 # Finally, if the content hashes don't match. Lets save the new content hash and carry on as normal
 @ndb.tasklet
 def fetch_parsed_feed_for_feed(feed):
-    resp = yield fetch_url(feed.feed_url, feed.etag)
+    now = datetime.datetime.now()
+
+    try:
+        resp = yield fetch_url(feed.feed_url, feed.etag)
+    except FetchException, e:
+        # If we haven't been able to fetch this feed in the last 24 hours lets disable it
+        # This doesn't do anything right now, just want to make sure we are doing this correctly
+        if feed.last_successful_fetch and feed.last_successful_fetch < now - datetime.timedelta(days=1):
+            feed.feed_disabled = True
+            logging.warning('Would have deleted feed:%s', feed.key.urlsafe())
+            yield feed.put_async()
+
+        raise e
+
+    feed.last_successful_fetch = now
+    yield feed.put_async()
 
     if resp.status_code == 304:
         raise ndb.Return((None, resp))

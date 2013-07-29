@@ -299,6 +299,8 @@ class Feed(ndb.Model):
     bitly_login = ndb.StringProperty()
     bitly_api_key = ndb.StringProperty()
     last_fetched_content_hash = ndb.StringProperty()
+    last_successful_fetch = ndb.DateTimeProperty()
+    feed_disabled = ndb.BooleanProperty(default=False)
 
     @classmethod
     def for_user(cls, user):

@@ -41,7 +41,9 @@ if app.debug:
     app = DebuggedApplication(app, evalex=True)
 else:
     import logging
-    import email_logger
+    # import email_logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
     #requests_log = logging.getLogger("requests")
     #requests_log.setLevel(logging.WARNING)
     #email_logger.register_logger(app.config['ADMIN_EMAIL'])

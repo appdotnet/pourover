@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # encoding: utf-8
+import logging
 import os
 import sys
 import unittest
 import json
 import base64
 import hashlib
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import inspect
 
@@ -99,6 +100,8 @@ FAKE_POST_OBJ_RESP = get_file_from_data('/data/post_resp.json')
 
 FAKE_ACCESS_TOKEN = 'theres_always_posts_in_the_banana_stand'
 
+logger = logging.getLogger()
+logger.setLevel(logging.WARNING)
 
 class BusterTestCase(MockUrlfetchTest):
     def setUp(self):
@@ -707,6 +710,28 @@ class BusterTestCase(MockUrlfetchTest):
         entry_2.put()
 
         assert Entry.query().count() == 2
+
+    def testBadFeedRemoval(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            include_summary=True,
+            max_stories_per_period=2,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+
+        feed.last_successful_fetch = datetime.now() - timedelta(days=2)
+        feed.put()
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1), status_code=500)
+        self.pollUpdate()
+
+        assert feed.feed_disabled is True
+
 
 if __name__ == '__main__':
     unittest.main()
