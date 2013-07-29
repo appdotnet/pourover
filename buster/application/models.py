@@ -40,7 +40,7 @@ class User(ndb.Model):
 
 class Entry(ndb.Model):
     guid = ndb.StringProperty(required=True)
-    creating = ndb.BooleanProperty(default=True)
+    creating = ndb.BooleanProperty(default=False)
     title = ndb.StringProperty()
     summary = ndb.TextProperty()
     link = ndb.StringProperty()
@@ -216,7 +216,7 @@ class Entry(ndb.Model):
             entries = yield ndb.get_multi_async(keys_by_guid.values())
             old_guids = [x.key.id() for x in entries if x]
             new_guids = filter(lambda x: x not in old_guids, keys_by_guid.keys())
-            new_entries_by_guid = {x: cls(key=keys_by_guid.get(x), guid=x) for x in new_guids}
+            new_entries_by_guid = {x: cls(key=keys_by_guid.get(x), guid=x, creating=True) for x in new_guids}
             new_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
 
             published = overflow
