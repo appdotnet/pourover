@@ -1,15 +1,7 @@
 'use strict';
 
-var DEFAULT_FEED_OBJ = {
-  max_stories_per_period: 1,
-  schedule_period: 1,
-  format_mode: 1,
-  include_thumb: true,
-  include_video: true
-};
-
 angular.module('pourOver')
-.controller('MainCtrl', ['$rootScope', '$scope', 'ApiClient', '$routeParams', '$location', function ($rootScope, $scope, ApiClient, $routeParams, $location) {
+.controller('MainCtrl', ['$rootScope', '$scope', 'ApiClient', '$routeParams', '$location', 'Feeds', 'User',function ($rootScope, $scope, ApiClient, $routeParams, $location, Feeds, User) {
 
   $scope.schedule_periods = [
     {label: '1 mins', value: 1},
@@ -19,8 +11,15 @@ angular.module('pourOver')
     {label: '60 mins', value: 60},
   ];
 
-  $rootScope.feed = _.extend({}, DEFAULT_FEED_OBJ);
-  $rootScope.feeds = [];
+  if ($routeParams.feed_id) {
+    if ($routeParams.feed_id !== 'new') {
+      Feeds.setFeed($routeParams.feed_id);
+    } else {
+      Feeds.setNewFeed();
+    }
+  }
+
+
   var serialize_feed = function (feed) {
     _.each(['linked_list_mode', 'include_thumb', 'include_summary', 'include_video'], function (el) {
       if (!feed[el]) {
@@ -57,33 +56,6 @@ angular.module('pourOver')
       jQuery('.loading-icon').hide();
     });
   }, 300), true);
-
-  ApiClient.get({
-    url: 'feeds'
-  }).success(function (resp, status, headers, config) {
-    if (resp.data && resp.data.length) {
-      $rootScope.feeds = resp.data;
-      if ($routeParams.feed_id === 'new') {
-        return;
-      }
-
-      if ($routeParams.feed_id) {
-        _.each(resp.data, function (item) {
-          if (item.feed_id === +$routeParams.feed_id) {
-            $rootScope.feed = item;
-          }
-        });
-      } else {
-        $rootScope.feed = resp.data[0];
-      }
-    }
-  });
-
-  ApiClient.get({
-    url: 'me'
-  }).success(function (resp, status, headers, config) {
-    $scope.current_user = resp.data;
-  });
 
   var refreshEntries = function () {
     ApiClient.get({
@@ -152,11 +124,7 @@ angular.module('pourOver')
     ApiClient.delete({
       url: 'feeds/' + $rootScope.feed.feed_id
     }).success(function () {
-      $rootScope.feed = _.extend({}, DEFAULT_FEED_OBJ);
-      $rootScope.feeds = _.filter($rootScope.feeds, function (item) {
-        return item.feed_id !== feed_id;
-      });
-
+      Feeds.deleteCurrentFeed();
       delete $scope.published_entries;
       delete $scope.unpublished_entries;
       $location.path('/feed/new/');
