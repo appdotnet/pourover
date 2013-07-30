@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from fnl.nlp import sentencesplitter as splitter
 from google.appengine.ext import ndb
 from constants import FORMAT_MODE
+from django.utils.encoding import iri_to_uri
 from utils import (append_query_string, strip_html_tags, ellipse_text, get_language,
                    guid_for_item)
 
@@ -343,7 +344,7 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
         if title_detail['type'] == u'text/html':
             title = BeautifulSoup(title).text
 
-    link = get_link_for_item(feed, item)
+    link = iri_to_uri(get_link_for_item(feed, item))
 
     # We can only store a title up to 500 chars
     title = title[0:499]
@@ -413,6 +414,7 @@ def format_for_adn(entry, feed):
     else:
         link = entry.link
 
+    link = iri_to_uri(link)
     link = append_query_string(link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
 
     # If viewing feed from preview don't shorten urls
