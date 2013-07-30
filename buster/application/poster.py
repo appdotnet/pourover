@@ -393,7 +393,9 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
         if embed:
             kwargs['video_oembed'] = embed
 
-    kwargs['meta_tags'] = yield get_meta_data_for_url(link)
+    preview = getattr(feed, 'preview', False)
+    if not preview:
+        kwargs['meta_tags'] = yield get_meta_data_for_url(link)
 
     kwargs['feed_item'] = item
 
@@ -432,7 +434,7 @@ def format_for_adn(entry, feed):
     # If viewing feed from preview don't shorten urls
     preview = getattr(feed, 'preview', False)
     has_own_bitly_creds = feed.bitly_login and feed.bitly_api_key
-    if not preview and (has_own_bitly_creds or feed.format_mode == FORMAT_MODE.TITLE_THEN_LINK):
+    if has_own_bitly_creds or feed.format_mode == FORMAT_MODE.TITLE_THEN_LINK:
         if not has_own_bitly_creds:
             feed.bitly_login = 'mixedmedialabs'
             feed.bitly_api_key = 'R_a1311cd1785b7da2aedac9703656b0f1'
