@@ -337,7 +337,7 @@ class Feed(ndb.Model):
             "hub.callback": url_for('feed_subscribe', feed_key=self.key.urlsafe(), _external=True),
             "hub.mode": 'subscribe',
             "hub.topic": self.feed_url,
-            # 'hub.verify_token': self.verify_token, apparently this is no longer apart of PuSH v0.4
+            'hub.verify_token': self.verify_token,  # apparently this is no longer apart of PuSH v0.4, but it is apart of v3 so lets try and do both
         }
 
         if self.hub_secret:
