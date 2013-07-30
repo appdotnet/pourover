@@ -67,6 +67,7 @@ class Entry(ndb.Model):
     author = ndb.StringProperty()
 
     feed_item = ndb.PickleProperty()
+    meta_tags = ndb.JsonProperty()
 
     def to_json(self, include=None, feed=None, format=False):
         include = include or []
@@ -107,7 +108,7 @@ class Entry(ndb.Model):
 
         entries = []
         futures = []
-        for item in parsed_feed.entries:
+        for item in parsed_feed.entries[0:3]:
             futures.append((item, prepare_entry_from_item(parsed_feed, item, feed=feed)))
 
         for item, future in futures:

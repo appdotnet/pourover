@@ -6,7 +6,6 @@ import sys
 import unittest
 import json
 import base64
-import hashlib
 from datetime import datetime, timedelta
 
 import inspect
@@ -88,6 +87,49 @@ HTML_PAGE_TEMPLATE = """
 </html>
 """
 
+HTML_PAGE_TEMPLATE_WITH_META = """
+<!DOCTYPE html>
+<html>
+<head>
+        <meta property="og:site_name" content="YouTube">
+    <meta property="og:url" content="http://www.youtube.com/watch?v=ABm7DuBwJd8">
+    <meta property="og:title" content="Reggie Watts: A send-off in style">
+    <meta property="og:type" content="video">
+    <meta property="og:image" content="http://i1.ytimg.com/vi/ABm7DuBwJd8/hqdefault.jpg?feature=og">
+
+      <meta property="og:description" content="Reggie Watts, the final performer on the PopTech 2011 stage, sends the audience off in style with his characteristic blend of wry improvisational humor and u...">
+
+        <meta property="og:video" content="http://www.youtube.com/v/ABm7DuBwJd8?version=3&amp;autohide=1">
+      <meta property="og:video:type" content="application/x-shockwave-flash">
+      <meta property="og:video:width" content="1280">
+      <meta property="og:video:height" content="720">
+
+    <meta property="fb:app_id" content="87741124305">
+
+        <meta name="twitter:card" content="player">
+    <meta name="twitter:site" content="@youtube">
+    <meta name="twitter:url" content="http://www.youtube.com/watch?v=ABm7DuBwJd8">
+    <meta name="twitter:title" content="Reggie Watts: A send-off in style">
+    <meta name="twitter:description" content="Reggie Watts, the final performer on the PopTech 2011 stage, sends the audience off in style with his characteristic blend of wry improvisational humor and u...">
+    <meta name="twitter:image" content="http://i1.ytimg.com/vi/ABm7DuBwJd8/hqdefault.jpg">
+    <meta name="twitter:app:name:iphone" content="YouTube">
+    <meta name="twitter:app:id:iphone" content="544007664">
+    <meta name="twitter:app:name:ipad" content="YouTube">
+    <meta name="twitter:app:id:ipad" content="544007664">
+      <meta name="twitter:app:url:iphone" content="vnd.youtube://watch/ABm7DuBwJd8">
+      <meta name="twitter:app:url:ipad" content="vnd.youtube://watch/ABm7DuBwJd8">
+    <meta name="twitter:app:name:googleplay" content="YouTube">
+    <meta name="twitter:app:id:googleplay" content="com.google.android.youtube">
+    <meta name="twitter:app:url:googleplay" content="http://www.youtube.com/watch?v=ABm7DuBwJd8">
+      <meta name="twitter:player" content="https://www.youtube.com/embed/ABm7DuBwJd8">
+      <meta name="twitter:player:width" content="1280">
+      <meta name="twitter:player:height" content="720">
+</head>
+<body>
+</body>
+</html>
+"""
+
 YOUTUBE_OEMBED_RESPONSE = json.dumps({u'provider_url': u'http://www.youtube.com/', u'title': u'Auto-Tune the News #8: dragons. geese. Michael Vick. (ft. T-Pain)', u'html': u'<iframe width="459" height="344" src="http://www.youtube.com/embed/bDOYN-6gdRE?feature=oembed" frameborder="0" allowfullscreen></iframe>', u'author_name': u'schmoyoho', u'height': 344, u'thumbnail_width': 480, u'width': 459, u'version': u'1.0', u'author_url': u'http://www.youtube.com/user/schmoyoho', u'thumbnail_height': 360, u'thumbnail_url': u'http://i1.ytimg.com/vi/bDOYN-6gdRE/hqdefault.jpg', u'type': u'video', u'provider_name': u'YouTube'})
 VIMEO_OEMBED_RESPONSE = json.dumps({u'is_plus': u'0', u'provider_url': u'https://vimeo.com/', u'description': u'Brad finally gets the attention he deserves.', u'title': u'Brad!', u'video_id': 7100569, u'html': u'<iframe src="http://player.vimeo.com/video/7100569" width="1280" height="720" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>', u'author_name': u'Casey Donahue', u'height': 720, u'thumbnail_width': 1280, u'width': 1280, u'version': u'1.0', u'author_url': u'http://vimeo.com/caseydonahue', u'duration': 118, u'provider_name': u'Vimeo', u'thumbnail_url': u'http://b.vimeocdn.com/ts/294/128/29412830_1280.jpg', u'type': u'video', u'thumbnail_height': 720})
 BIT_LY_RESPONSE = """{ "status_code": 200, "status_txt": "OK", "data": { "long_url": "http:\/\/daringfireball.net\/2013\/05\/facebook_home_dogfooding?utm_medium=App.net&utm_source=PourOver", "url": "http:\/\/bit.ly\/123", "hash": "1c3ehlA", "global_hash": "1c3ehlB", "new_hash": 0 } }"""
@@ -119,6 +161,12 @@ class BusterTestCase(MockUrlfetchTest):
         taskqueue_stub._root_path = dircontainingqueuedotyaml
 
         self.taskqueue_stub = taskqueue_stub
+        for i in xrange(0, 12):
+            for b in xrange(0, 12):
+                unique_key = 'test%s_%s' % (i, b)
+                unique_key2 = 'test_%s' % (i)
+                self.set_response('http://example.com/buster/%s' % (unique_key), content=HTML_PAGE_TEMPLATE_WITH_META % ({'unique_key': unique_key}))
+                self.set_response('http://example.com/buster/%s' % (unique_key2), content=HTML_PAGE_TEMPLATE_WITH_META % ({'unique_key': unique_key2}))
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -476,6 +524,8 @@ class BusterTestCase(MockUrlfetchTest):
     def testLinkedListMode(self):
         data = get_file_from_data('/data/df_feed.xml')
         self.set_rss_response('http://daringfireball.net/index.xml', content=data)
+        self.set_response('http://daringfireball.net/linked/2013/07/17/pourover', content=HTML_PAGE_TEMPLATE_WITH_META)
+        self.set_response('http://blog.app.net/2013/07/15/pourover-for-app-net-is-now-available/', content=HTML_PAGE_TEMPLATE_WITH_META)
         resp = self.app.get('/api/feed/preview?feed_url=http://daringfireball.net/index.xml', headers=self.authHeaders())
         data = json.loads(resp.data)
         assert data['data'][0]['html'] == "<span><a href='http://blog.app.net/2013/07/15/pourover-for-app-net-is-now-available/?utm_medium=App.net&utm_source=PourOver'>PourOver for App.net</a></span>"
