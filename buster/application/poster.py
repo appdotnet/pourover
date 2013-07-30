@@ -407,7 +407,19 @@ def format_for_adn(entry, feed):
     summary_text = ''
     if feed.include_summary:
         summary_text = strip_html_tags(entry.summary)
-        summary_text = ellipse_text(splitter.split(summary_text[0:201])[0], 200)
+        sentances = list(splitter.split(summary_text))
+        sentances.reverse()
+        summary_text = sentances.pop()
+        while len(summary_text) <= 200:
+            try:
+                next_sentance = sentances.pop()
+            except IndexError:
+                break
+
+            if len(summary_text + ' ' + next_sentance) <= 200:
+                summary_text += ' ' + next_sentance
+
+        summary_text = ellipse_text(summary_text, 200)
 
     if entry.feed_item:
         link = get_link_for_item(feed, entry.feed_item)

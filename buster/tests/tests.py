@@ -692,11 +692,11 @@ class BusterTestCase(MockUrlfetchTest):
                 assert data['data'][0]['thumbnail_image_url'] == thumbnail_url
                 assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
 
-    def testIncludeSummary(self):
+    def testIncludeSummarySentanceSplit(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
-        sentance_1 = 'x' * 199 + '.'
-        sentance_2 = ' xxx.'
+        sentance_1 = 'Dog' + ('x' * 196) + '.'
+        sentance_2 = ' Dxx Dxx.'
         description  = sentance_1 + sentance_2
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
         resp = self.app.get('/api/feed/preview?include_summary=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
@@ -710,6 +710,14 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.get('/api/feed/preview?include_summary=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
         data = json.loads(resp.data)
         assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1[0:199] + u"\u2026")
+
+        sentances = ['Dog ' * 11 + '.' for i in range(0, 8)]
+        description = ' '.join(sentances)
+        expected = ' '.join(['Dog ' * 11 + '.' for i in range(0, 4)])
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
+        resp = self.app.get('/api/feed/preview?include_summary=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (expected)
 
     def testShortUrl(self):
         self.setMockUser()
