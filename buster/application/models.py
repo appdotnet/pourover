@@ -102,7 +102,7 @@ class Entry(ndb.Model):
         parsed_feed, resp = yield fetch_parsed_feed_for_url(feed.feed_url)
 
         # Try and fix bad feed_urls on the fly
-        new_feed_url = find_feed_url(parsed_feed, resp)
+        new_feed_url = find_feed_url(resp)
         if new_feed_url:
             parsed_feed, resp = yield fetch_parsed_feed_for_url(new_feed_url)
 

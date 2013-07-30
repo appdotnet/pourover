@@ -144,14 +144,16 @@ def fetch_parsed_feed_for_feed(feed):
     # No mater what happens after this point we are going to save the feed obj
     feed.last_fetched_content_hash = content_hash
 
-    parsed_feed, resp = yield fetch_parsed_feed_for_url(feed.feed_url, feed.etag)
+    # parsed_feed, resp = yield fetch_parsed_feed_for_url(feed.feed_url, feed.etag)
     if getattr(feed, 'first_time', None):
         # Try and fix bad feed_urls on the fly
-        new_feed_url = find_feed_url(parsed_feed, resp)
+        new_feed_url = find_feed_url(resp)
         if new_feed_url:
-            parsed_feed, resp = yield fetch_parsed_feed_for_url(new_feed_url)
+            resp = yield fetch_url(new_feed_url)
             feed.feed_url = new_feed_url
 
     yield feed.put_async()
+
+    parsed_feed = feedparser.parse(resp.content)
 
     raise ndb.Return((parsed_feed, resp))

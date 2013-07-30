@@ -76,24 +76,21 @@ def get_language(lang=None):
     return None
 
 
-def find_feed_url(feed, resp):
-    if feed.bozo == 1 and len(feed.entries) == 0:
-        content_type = resp.headers.get('Content-Type')
-        logger.info('Feed failed bozo detection feed_url:%s content_type:%s', resp.final_url, content_type)
-        if content_type and content_type.startswith('text/html'):
-            # If we have this lets try and find a feed
-            logger.info('Feed might be a web page trying to find feed_url:%s', resp.final_url)
-            soup = BeautifulSoup(resp.content)
-            # The thinking here is that the main RSS feed will be shorter in length then any others
-            links = [x.get('href') for x in soup.findAll('link', type='application/rss+xml')]
-            links += [x.get('href') for x in soup.findAll('link', type='application/atom+xml')]
-            shortest_link = None
-            for link in links:
-                if shortest_link is None:
-                    shortest_link = link
-                elif len(link) < len(shortest_link):
-                    shortest_link = link
+def find_feed_url(resp):
+    content_type = resp.headers.get('Content-Type')
+    if content_type and content_type.startswith('text/html'):
+        logger.info('Feed sent back content type html content_type:%s', content_type)
+        soup = BeautifulSoup(resp.content)
+        # The thinking here is that the main RSS feed will be shorter in length then any others
+        links = [x.get('href') for x in soup.findAll('link', type='application/rss+xml')]
+        links += [x.get('href') for x in soup.findAll('link', type='application/atom+xml')]
+        shortest_link = None
+        for link in links:
+            if shortest_link is None:
+                shortest_link = link
+            elif len(link) < len(shortest_link):
+                shortest_link = link
 
-            return shortest_link
+        return shortest_link
 
     return None
