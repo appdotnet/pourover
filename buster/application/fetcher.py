@@ -68,7 +68,7 @@ def fetch_url(url, etag=None):
 
     except urlfetch.DownloadError, e:
         logger.info('Failed to download feed: %s', url)
-        logger.exception(e)
+        # logger.exception(e)
         raise FetchException('Failed to fetch that URL.')
     except urlfetch.DeadlineExceededError:
         logger.info('Feed took too long: %s', url)
@@ -120,6 +120,7 @@ def fetch_parsed_feed_for_feed(feed):
     except FetchException, e:
         # If we haven't been able to fetch this feed in the last 24 hours lets disable it
         # This doesn't do anything right now, just want to make sure we are doing this correctly
+        logger.info('Failed fetch url: %s Last last_successful_fetch: %s', feed.feed_url, feed.last_successful_fetch)
         if feed.last_successful_fetch and feed.last_successful_fetch < now - datetime.timedelta(days=1):
             feed.feed_disabled = True
             logging.warning('Would have deleted feed:%s', feed.key.urlsafe())
