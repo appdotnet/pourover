@@ -304,7 +304,7 @@ def get_meta_data_for_url(url):
                 if isinstance(ref.get(part), basestring):
                     ref[part] = {'url': ref[part]}
             ref = ref[part]
-
+    logger.info('Found some meta data: %s', data)
     raise ndb.Return(data)
 
 
