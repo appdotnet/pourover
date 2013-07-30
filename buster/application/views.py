@@ -445,6 +445,50 @@ def try_push_resub():
 try_push_resub.login_required = False
 
 
+@app.route('/api/feeds/all', methods=['GET'])
+@ndb.synctasklet
+def all_feeds():
+    """Post all new items for feeds for a specific interval"""
+    access_token = request.headers.get('Authorization', '').replace('Bearer ', '')
+
+    ctx = ndb.get_context()
+    resp = yield ctx.urlfetch('https://alpha-api.app.net/stream/0/token', headers={'Authorization': 'Bearer %s' % (access_token)})
+    if resp.status_code != 200:
+        logger.info('Token call failed: %s' % resp.content)
+        raise ndb.Return(jsonify_error('Not Authorized', code=401))
+
+    token = json.loads(resp.content).get('data', {})
+
+    if token.get('app', {}).get('client_id') != app.config['CLIENT_ID']:
+        logger.info('Client ID mismatch: %s' % resp.content)
+        raise ndb.Return(jsonify_error('Not Authorized', code=401))
+
+    if token.get('user'):
+        logger.info('Token had a user not an app token: %s' % resp.content)
+        raise ndb.Return(jsonify_error('Not Authorized', code=401))
+
+    feeds = Feed.query().iter()
+
+    feeds_response = []
+
+    def feed_to_dict(feed):
+        return {
+            'feed_key': feed.key.urlsafe(),
+            'feed_url': feed.feed_url,
+            'etag': feed.etag,
+            'last_hash': feed.last_fetched_content_hash,
+        }
+
+    while (yield feeds.has_next_async()):
+        feed = feeds.next()
+        feeds_response.append(feed_to_dict(feed))
+
+    logger.info('Returning all the feeds')
+    raise ndb.Return(jsonify(status='ok', data=feeds_response))
+
+all_feeds.login_required = False
+
+
 @app.route('/_ah/warmup')
 @app.route('/_ah/start')
 @app.route('/_ah/stop')

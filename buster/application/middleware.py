@@ -69,7 +69,10 @@ class ADNTokenAuthMiddleware(object):
                 if user_data:
                     token = json.loads(user_data).get('data', {})
                     if token and token['app']['client_id'] == current_app.config['CLIENT_ID']:
-                        adn_user = EasyDict(token['user'])
+                        try:
+                            adn_user = EasyDict(token['user'])
+                        except KeyError:
+                            pass
 
         view_func = self.app.view_functions.get(request.endpoint)
         login_required = getattr(view_func, 'login_required', None)
