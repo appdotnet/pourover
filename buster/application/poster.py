@@ -10,6 +10,7 @@ import urllib
 from bs4 import BeautifulSoup
 from fnl.nlp import sentencesplitter as splitter
 from google.appengine.ext import ndb
+from google.appengine.api.images import Image
 from constants import FORMAT_MODE
 from django.utils.encoding import iri_to_uri
 from utils import (append_query_string, strip_html_tags, ellipse_text, get_language,
@@ -214,20 +215,46 @@ def get_link_for_item(feed, item):
 
     return main_item_link
 
+@ndb.tasklet
+def get_image_from_url(url):
+    ctx = ndb.get_context()
+    try:
+        resp = yield ctx.urlfetch(url, deadline=60)
+        image = Image(image_data=resp.content)
+    except Exception, e:
+        logger.exception(e)
+        raise ndb.Return(None) 
 
-def find_thumbnail(item):
+    raise ndb.Return(image)
+
+@ndb.tasklet
+def find_thumbnail(item, meta_tags, preview=False):
     min_d = 200
     max_d = 1000
+
+    def image_fits(w, h):
+        return all([w, h, w >= min_d, w <= max_d, h >= min_d, w <= max_d])
+
+    def image_dict(url, w, h):
+        return {
+            'thumbnail_image_url': url,
+            'thumbnail_image_width': int(w),
+            'thumbnail_image_height': int(h)
+        }
+
     media_thumbnails = item.get('media_thumbnail') or []
+    # print 'Media thumbnails %s' % (media_thumbnails)
     for thumb in media_thumbnails:
         w = int(thumb.get('width', 0))
         h = int(thumb.get('height', 0))
-        if all([w, h, w >= min_d, w <= max_d, h >= min_d, w <= max_d]):
-            return {
-                'thumbnail_image_url': thumb['url'],
-                'thumbnail_image_width': int(thumb['width']),
-                'thumbnail_image_height': int(thumb['height'])
-            }
+        if not (w and h):
+            image = yield get_image_from_url(thumb['url'])
+            if image:
+                w = image.width
+                h = image.height
+
+        if image_fits(w, h):
+            raise ndb.Return(image_dict(thumb['url'], w, h))
 
     soup = BeautifulSoup(item.get('summary', ''))
     for image in soup.findAll('img'):
@@ -250,14 +277,18 @@ def find_thumbnail(item):
         except:
             continue
 
-        if all([w, h, w >= min_d, w <= max_d, h >= min_d, w <= max_d]):
-            return {
-                'thumbnail_image_url': image['src'],
-                'thumbnail_image_width': w,
-                'thumbnail_image_height': h,
-            }
+        if image_fits(w, h):
+            raise ndb.Return(image_dict(image['src'], w, h))
 
-    return None
+    # If we are still here lets grab the first image, and try and download it.
+    first_image = soup.find('img')
+    if first_image:
+        image_url = first_image.get('src')
+        image = get_image_from_url(image_url)
+        if image and image_fits(image.width, image.height):
+            raise ndb.Return(image_dict(image_url, image.width, image.height))
+
+    raise ndb.Return(None)
 
 
 @ndb.tasklet
@@ -372,12 +403,18 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
     if feed:
         kwargs['parent'] = feed.key
 
+    kwargs['meta_tags'] = dict()
+    preview = getattr(feed, 'preview', None)
+    if not preview:
+        kwargs['meta_tags'] = yield get_meta_data_for_url(link)
+
     try:
-        thumbnail = find_thumbnail(item)
+        thumbnail = yield find_thumbnail(item, kwargs['meta_tags'], preview)
         if thumbnail:
             kwargs.update(thumbnail)
     except Exception, e:
         logger.info("Exception while trying to find thumbnail %s", e)
+        logger.exception(e)
 
     if feed.language:
         kwargs['language'] = feed.language
@@ -392,10 +429,6 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
         embed = yield find_video_oembed(item)
         if embed:
             kwargs['video_oembed'] = embed
-
-    preview = getattr(feed, 'preview', False)
-    if not preview:
-        kwargs['meta_tags'] = yield get_meta_data_for_url(link)
 
     kwargs['feed_item'] = item
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
+from collections import defaultdict
 import logging
 import os
 import sys
@@ -42,27 +43,27 @@ from application.utils import append_query_string
 from application.fetcher import hash_content
 from application import settings
 
-RSS_ITEM = """
-    <item>
-        <title>
-            %(unique_key)s
-        </title>
-        <description>
-            %(description)s
-        </description>
-        <pubDate>Wed, 19 Jun 2013 17:59:53 -0000</pubDate>
-        <guid>http://example.com/buster/%(unique_key)s</guid>
-        <link>http://example.com/buster/%(unique_key)s</link>
-        %(tags)s
-        %(author)s
-    </item>
+RSS_ITEM = """<item>
+    <title>
+        %(unique_key)s
+    </title>
+    <description>
+        %(description)s
+    </description>
+    <pubDate>Wed, 19 Jun 2013 17:59:53 -0000</pubDate>
+    <guid>http://example.com/buster/%(unique_key)s</guid>
+    <link>http://example.com/buster/%(unique_key)s</link>
+    %(tags)s
+    %(author)s
+    %(media_thumbnail)s
+</item>
 """
 
 XML_TEMPLATE = """
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" xmlns:georss="http://www.georss.org/georss" version="2.0">
     <channel>
-        %(hub)s
+        %(push_hub)s
         <title>Busters RSS feed</title>
         <link>http://example.com/buster</link>
         <description>
@@ -134,16 +135,22 @@ YOUTUBE_OEMBED_RESPONSE = json.dumps({u'provider_url': u'http://www.youtube.com/
 VIMEO_OEMBED_RESPONSE = json.dumps({u'is_plus': u'0', u'provider_url': u'https://vimeo.com/', u'description': u'Brad finally gets the attention he deserves.', u'title': u'Brad!', u'video_id': 7100569, u'html': u'<iframe src="http://player.vimeo.com/video/7100569" width="1280" height="720" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>', u'author_name': u'Casey Donahue', u'height': 720, u'thumbnail_width': 1280, u'width': 1280, u'version': u'1.0', u'author_url': u'http://vimeo.com/caseydonahue', u'duration': 118, u'provider_name': u'Vimeo', u'thumbnail_url': u'http://b.vimeocdn.com/ts/294/128/29412830_1280.jpg', u'type': u'video', u'thumbnail_height': 720})
 BIT_LY_RESPONSE = """{ "status_code": 200, "status_txt": "OK", "data": { "long_url": "http:\/\/daringfireball.net\/2013\/05\/facebook_home_dogfooding?utm_medium=App.net&utm_source=PourOver", "url": "http:\/\/bit.ly\/123", "hash": "1c3ehlA", "global_hash": "1c3ehlB", "new_hash": 0 } }"""
 
+
 def get_file_from_data(fname):
     return open(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + fname).read()
 
 
 FAKE_POST_OBJ_RESP = get_file_from_data('/data/post_resp.json')
 
+FAKE_SMALL_IMAGE = get_file_from_data('/data/small_image.jpg')
+FAKE_RIGHT_IMAGE = get_file_from_data('/data/right_image.jpg')
+FAKE_LARGE_IMAGE = get_file_from_data('/data/large_image.jpg')
+
 FAKE_ACCESS_TOKEN = 'theres_always_posts_in_the_banana_stand'
 
 logger = logging.getLogger()
 logger.setLevel(logging.WARNING)
+
 
 class BusterTestCase(MockUrlfetchTest):
     def setUp(self):
@@ -171,29 +178,43 @@ class BusterTestCase(MockUrlfetchTest):
     def tearDown(self):
         self.testbed.deactivate()
 
-    def buildRSS(self, unique_key, use_hub=False, items=1, use_lang=None, tags=None, author=None, description=None):
-        hub = ''
-        if use_hub:
-            hub = '<link rel="hub" href="http://pubsubhubbub.appspot.com"/>'
+    def buildRSS(self, unique_key, items=1, **kw):
+        kwargs = defaultdict(unicode)
+        kwargs.update(kw)
 
-        language = ''
-        if use_lang:
-            language = '<language>%s</language>' % use_lang
+        if kwargs['push_hub']:
+            kwargs['push_hub'] = '<link rel="hub" href="http://pubsubhubbub.appspot.com"/>'
 
-        if tags:
-            tags = '\n'.join(["<category><![CDATA[%s]]></category>" % tag for tag in tags])
-        else:
-            tags = ''
+        if kwargs['language']:
+            kwargs['language'] = '<language>%s</language>' % kwargs['language']
 
-        if author:
-            author = '<dc:creator>%s</dc:creator>' % author
-        else:
-            author = ''
+        if kwargs['tags']:
+            kwargs['tags'] = '\n'.join(["<category><![CDATA[%s]]></category>" % tag for tag in kwargs['tags']])
 
-        description = description or unique_key
-        items = [RSS_ITEM % {'unique_key': '%s_%s' % (unique_key, x), 'tags': tags, 'author': author, 'description': description} for x in xrange(0, items)]
+        if kwargs['author']:
+            kwargs['author'] = '<dc:creator>%s</dc:creator>' % kwargs['author']
 
-        return XML_TEMPLATE % ({'hub': hub, 'items': ''.join(items), 'language': language})
+        kwargs['description'] = kwargs.get('description', unique_key)
+
+        if kwargs['media_thumbnail']:
+            if kwargs['thumb_width']:
+                kwargs['thumb_width'] = 'width="%(thumb_width)s"' % kwargs
+
+            if kwargs['thumb_height']:
+                kwargs['thumb_height'] = 'height="%(thumb_height)s"' % kwargs
+
+            kwargs['media_thumbnail'] = '<media:thumbnail url="%(media_thumbnail)s" %(thumb_width)s %(thumb_height)s time="12:05:01.123" />' % kwargs
+
+        rss_items = []
+        for x in xrange(0, items):
+            kwargs.update({'unique_key': '%s_%s' % (unique_key, x)})
+            rss_items.append(RSS_ITEM % kwargs)
+
+        kwargs.update({
+            'items': ''.join(rss_items)
+        })
+
+        return XML_TEMPLATE % kwargs
 
     def set_rss_response(self, url, content='', status_code=200, headers=None):
         self.set_response(url, content=content, status_code=status_code, headers=headers)
@@ -381,7 +402,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.setMockUser()
         self.set_response('http://pubsubhubbub.appspot.com', content='', status_code=200, method="POST")
         test_feed_url = 'http://example.com/rss'
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test', use_hub=True), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', push_hub=True), status_code=200)
         resp = self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
@@ -399,8 +420,6 @@ class BusterTestCase(MockUrlfetchTest):
         })
 
         assert resp.data == 'testing'
-
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test2', use_hub=True), status_code=200)
 
         resp = self.app.post('/api/feeds/%s/subscribe' % (feed.key.urlsafe(), ), data=self.buildRSS('test2'), headers={
             'Content-Type': 'application/xml',
@@ -617,7 +636,7 @@ class BusterTestCase(MockUrlfetchTest):
         feed = Feed.query().get()
         assert feed.language is None
 
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=6, use_lang='en-US'), status_code=200)
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=6, language='en-US'), status_code=200)
         self.pollUpdate()
         feed = Feed.query().get()
         assert feed.language == 'en'
@@ -691,6 +710,46 @@ class BusterTestCase(MockUrlfetchTest):
                 data = json.loads(resp.data)
                 assert data['data'][0]['thumbnail_image_url'] == thumbnail_url
                 assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
+
+    def testThumbnail(self):
+        self.setMockUser()
+        self.set_response('http://example.com/small.jpg', FAKE_SMALL_IMAGE)
+        self.set_response('http://example.com/right.jpg', FAKE_RIGHT_IMAGE)
+        self.set_response('http://example.com/large.jpg', FAKE_LARGE_IMAGE)
+        test_feed_url = 'http://example.com/rss'
+
+        # The basic thumbnail discover can be tested through previews
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail='http://example.com/small.jpg', thumb_width='100', thumb_height='100'), status_code=200)
+        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0].get('thumbnail_image_url') is None
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail='http://example.com/right.jpg', thumb_width='201', thumb_height='201'), status_code=200)
+        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0].get('thumbnail_image_url') == 'http://example.com/right.jpg'
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail='http://example.com/large.jpg', thumb_width='1001', thumb_height='1001'), status_code=200)
+        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0].get('thumbnail_image_url') is None
+
+
+        # The basic thumbnail discover can be tested through previews
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail='http://example.com/small.jpg'), status_code=200)
+        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0].get('thumbnail_image_url') is None
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail='http://example.com/right.jpg'), status_code=200)
+        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0].get('thumbnail_image_url') == 'http://example.com/right.jpg'
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail='http://example.com/large.jpg'), status_code=200)
+        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0].get('thumbnail_image_url') is None
 
     def testIncludeSummarySentanceSplit(self):
         self.setMockUser()
