@@ -7,6 +7,7 @@ import json
 import logging
 import datetime
 import hmac
+import uuid
 
 from google.appengine.ext import ndb
 
@@ -449,27 +450,6 @@ try_push_resub.login_required = False
 @ndb.synctasklet
 def all_feeds():
     """Post all new items for feeds for a specific interval"""
-    access_token = request.headers.get('Authorization', '').replace('Bearer ', '')
-
-    ctx = ndb.get_context()
-    resp = yield ctx.urlfetch('https://alpha-api.app.net/stream/0/token', headers={'Authorization': 'Bearer %s' % (access_token)})
-    if resp.status_code != 200:
-        logger.info('Token call failed: %s' % resp.content)
-        raise ndb.Return(jsonify_error('Not Authorized', code=401))
-
-    token = json.loads(resp.content).get('data', {})
-
-    if token.get('app', {}).get('client_id') != app.config['CLIENT_ID']:
-        logger.info('Client ID mismatch: %s' % resp.content)
-        raise ndb.Return(jsonify_error('Not Authorized', code=401))
-
-    if token.get('user'):
-        logger.info('Token had a user not an app token: %s' % resp.content)
-        raise ndb.Return(jsonify_error('Not Authorized', code=401))
-
-    feeds = Feed.query().iter()
-
-    feeds_response = []
 
     def feed_to_dict(feed):
         return {
@@ -479,13 +459,23 @@ def all_feeds():
             'last_hash': feed.last_fetched_content_hash,
         }
 
-    while (yield feeds.has_next_async()):
-        feed = feeds.next()
-        feeds_response.append(feed_to_dict(feed))
+    qit = Feed.query().iter()
+    feeds_response = []
+    while (yield qit.has_next_async()):
+        feeds_response.append(feed_to_dict(qit.next()))
 
-    logger.info('Returning all the feeds')
-    raise ndb.Return(jsonify(status='ok', data=feeds_response))
+    poller_run_id = uuid.uuid4().hex
 
+    logger.info('Poller run %s dispatched with %d feeds', poller_run_id, len(feeds_response))
+
+    response = {
+        'poller_run_id': poller_run_id,
+        'feeds': feeds_response,
+    }
+
+    raise ndb.Return(jsonify(status='ok', data=response))
+
+all_feeds.app_token_required = True
 all_feeds.login_required = False
 
 
