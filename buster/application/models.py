@@ -276,6 +276,12 @@ class Entry(ndb.Model):
         return cls.query(cls.published == published, cls.creating == False, ancestor=feed.key).order(-cls.added)
 
     @classmethod
+    def latest(cls, feed):
+        published = True
+        q = cls.query(cls.published == published, cls.creating == False, ancestor=feed.key).order(cls.added)
+        return q
+
+    @classmethod
     def latest_published(cls, feed, since=None):
         published = True
         q = cls.query(cls.published == published, cls.creating == False, ancestor=feed.key).order(-cls.published_at).order(-cls.added)

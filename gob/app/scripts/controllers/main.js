@@ -59,7 +59,7 @@ angular.module('pourOver')
 
   var refreshEntries = function () {
     ApiClient.get({
-      url: 'feeds/' + $rootScope.feed.feed_id + '/published'
+      url: 'feeds/' + $rootScope.feed.feed_id + '/latest'
     }).success(function (resp) {
       if (resp.data && resp.data.entries) {
         $scope.published_entries = resp.data.entries;

@@ -187,7 +187,7 @@ def unpublished_entries_for_feed(feed_id):
     return jsonify(status='ok', data=feed_data)
 
 
-@app.route('/api/feeds/<int:feed_id>/published', methods=['GET'])
+@app.route('/api/feeds/<int:feed_id>/latest', methods=['GET'])
 def published_entries_for_feed(feed_id):
     feed = Feed.get_by_id(feed_id, parent=g.user.key)
     if not feed:
@@ -195,7 +195,7 @@ def published_entries_for_feed(feed_id):
 
     feed_data = feed.to_json()
     entries = [entry.to_json(include=['title', 'link', 'published', 'published_at'])
-               for entry in Entry.latest_published(feed).fetch(20)]
+               for entry in Entry.latest(feed).fetch(23)[3:]]
     feed_data['entries'] = entries
 
     return jsonify(status='ok', data=feed_data)
@@ -214,7 +214,7 @@ def save_feed_preview(feed_id):
 
     form.populate_obj(feed)
     feed.preview = True
-    preview_entries = Entry.entry_preview(Entry.latest_published(feed).fetch(3), feed, format=True)
+    preview_entries = Entry.entry_preview(Entry.latest(feed).fetch(3), feed, format=True)
 
     return jsonify(status='ok', data=preview_entries)
 
