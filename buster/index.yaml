@@ -27,6 +27,13 @@ indexes:
   - name: creating
   - name: published
   - name: added
+
+- kind: Entry
+  ancestor: yes
+  properties:
+  - name: creating
+  - name: published
+  - name: added
     direction: desc
 
 - kind: Entry
