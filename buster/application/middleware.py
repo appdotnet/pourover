@@ -59,8 +59,10 @@ class ADNTokenAuthMiddleware(object):
     def before_request(self):
         '''Try and setup user for this request'''
 
-        authorization_header = request.headers.get('Authorization')
         adn_user = None
+        is_app_token = False
+
+        authorization_header = request.headers.get('Authorization')
         if authorization_header:
             method, access_token = authorization_header.split(' ', 1)
             if access_token:
@@ -69,15 +71,21 @@ class ADNTokenAuthMiddleware(object):
                 if user_data:
                     token = json.loads(user_data).get('data', {})
                     if token and token['app']['client_id'] == current_app.config['CLIENT_ID']:
-                        try:
-                            adn_user = EasyDict(token['user'])
-                        except KeyError:
-                            pass
+                        if token.get('is_app_token'):
+                            is_app_token = True
+                        else:
+                            try:
+                                adn_user = EasyDict(token['user'])
+                            except:
+                                pass
 
         view_func = self.app.view_functions.get(request.endpoint)
-        login_required = getattr(view_func, 'login_required', None)
-        login_required = login_required is None or login_required is True
-        if login_required and adn_user is None:
+        login_required = getattr(view_func, 'login_required', True)
+        if login_required and not adn_user:
+            abort(401)
+
+        app_token_required = getattr(view_func, 'app_token_required', False)
+        if app_token_required and not is_app_token:
             abort(401)
 
         if adn_user:
