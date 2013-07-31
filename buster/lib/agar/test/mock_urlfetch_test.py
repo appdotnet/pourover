@@ -44,7 +44,7 @@ class MockURLFetchServiceStub(apiproxy_stub.APIProxyStub):
         http_response = MockURLFetchServiceStub._responses.get((url, method)) or MockURLFetchServiceStub._responses.get((url, None))
 
         if http_response is None:
-            raise Exception("No HTTP response was found for the URL '%s' %s" % (url, repr(MockURLFetchServiceStub._responses)))
+            raise Exception("No HTTP response was found for the URL '%s'" % (url))
 
         if isinstance(http_response['content'], DownloadError):
             raise http_response['content']

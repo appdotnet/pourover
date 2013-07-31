@@ -228,7 +228,7 @@ def get_image_from_url(url):
     raise ndb.Return(image)
 
 @ndb.tasklet
-def find_thumbnail(item, meta_tags, preview=False):
+def find_thumbnail(item, meta_tags):
     min_d = 200
     max_d = 1000
 
@@ -284,9 +284,18 @@ def find_thumbnail(item, meta_tags, preview=False):
     first_image = soup.find('img')
     if first_image:
         image_url = first_image.get('src')
-        image = get_image_from_url(image_url)
+        image = yield get_image_from_url(image_url)
         if image and image_fits(image.width, image.height):
             raise ndb.Return(image_dict(image_url, image.width, image.height))
+
+    og = meta_tags.get('og', {})
+    twitter = meta_tags.get('twitter', {})
+
+    meta_tags_image_url = og.get('image', twitter.get('image'))
+    if meta_tags_image_url:
+        image = yield get_image_from_url(meta_tags_image_url)
+        if image and image_fits(image.width, image.height):
+            raise ndb.Return(image_dict(meta_tags_image_url, image.width, image.height))
 
     raise ndb.Return(None)
 
@@ -403,13 +412,10 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
     if feed:
         kwargs['parent'] = feed.key
 
-    kwargs['meta_tags'] = dict()
-    preview = getattr(feed, 'preview', None)
-    if not preview:
-        kwargs['meta_tags'] = yield get_meta_data_for_url(link)
+    kwargs['meta_tags'] = yield get_meta_data_for_url(link)
 
     try:
-        thumbnail = yield find_thumbnail(item, kwargs['meta_tags'], preview)
+        thumbnail = yield find_thumbnail(item, kwargs['meta_tags'])
         if thumbnail:
             kwargs.update(thumbnail)
     except Exception, e:

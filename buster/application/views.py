@@ -122,7 +122,7 @@ def feed_preview():
     if error:
         return jsonify(status='error', message=error)
 
-    return jsonify(status='ok', data=entries[0:3])
+    return jsonify(status='ok', data=entries[0:2])
 
 
 @app.route('/api/feeds/<int:feed_id>', methods=['GET'])
@@ -334,13 +334,6 @@ def feed_push_update(feed_key):
     logger.info('Got PuSH headers: %s', request.headers)
 
     parsed_feed = feedparser.parse(data)
-    print "yoyoyoyo"
-    print data
-    print parsed_feed
-    exc = parsed_feed.bozo_exception
-    print exc
-    print exc.getMessage()
-    print exc.getLineNumber()
     new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)
     yield Entry.publish_for_feed(feed, skip_queue=True)
 

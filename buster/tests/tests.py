@@ -43,12 +43,13 @@ from application.utils import append_query_string
 from application.fetcher import hash_content
 from application import settings
 
-RSS_ITEM = """<item>
+RSS_ITEM = u"""
+<item>
     <title>
         %(unique_key)s
     </title>
     <description>
-        %(description)s
+        %(content_image)s %(description)s
     </description>
     <pubDate>Wed, 19 Jun 2013 17:59:53 -0000</pubDate>
     <guid>http://example.com/buster/%(unique_key)s</guid>
@@ -59,7 +60,7 @@ RSS_ITEM = """<item>
 </item>
 """
 
-XML_TEMPLATE = """
+XML_TEMPLATE = u"""
 <?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" xmlns:georss="http://www.georss.org/georss" version="2.0">
     <channel>
@@ -92,22 +93,22 @@ HTML_PAGE_TEMPLATE_WITH_META = """
 <!DOCTYPE html>
 <html>
 <head>
-        <meta property="og:site_name" content="YouTube">
+    <meta property="og:site_name" content="YouTube">
     <meta property="og:url" content="http://www.youtube.com/watch?v=ABm7DuBwJd8">
     <meta property="og:title" content="Reggie Watts: A send-off in style">
     <meta property="og:type" content="video">
     <meta property="og:image" content="http://i1.ytimg.com/vi/ABm7DuBwJd8/hqdefault.jpg?feature=og">
 
-      <meta property="og:description" content="Reggie Watts, the final performer on the PopTech 2011 stage, sends the audience off in style with his characteristic blend of wry improvisational humor and u...">
+    <meta property="og:description" content="Reggie Watts, the final performer on the PopTech 2011 stage, sends the audience off in style with his characteristic blend of wry improvisational humor and u...">
 
-        <meta property="og:video" content="http://www.youtube.com/v/ABm7DuBwJd8?version=3&amp;autohide=1">
-      <meta property="og:video:type" content="application/x-shockwave-flash">
-      <meta property="og:video:width" content="1280">
-      <meta property="og:video:height" content="720">
+    <meta property="og:video" content="http://www.youtube.com/v/ABm7DuBwJd8?version=3&amp;autohide=1">
+    <meta property="og:video:type" content="application/x-shockwave-flash">
+    <meta property="og:video:width" content="1280">
+    <meta property="og:video:height" content="720">
 
     <meta property="fb:app_id" content="87741124305">
 
-        <meta name="twitter:card" content="player">
+    <meta name="twitter:card" content="player">
     <meta name="twitter:site" content="@youtube">
     <meta name="twitter:url" content="http://www.youtube.com/watch?v=ABm7DuBwJd8">
     <meta name="twitter:title" content="Reggie Watts: A send-off in style">
@@ -117,14 +118,14 @@ HTML_PAGE_TEMPLATE_WITH_META = """
     <meta name="twitter:app:id:iphone" content="544007664">
     <meta name="twitter:app:name:ipad" content="YouTube">
     <meta name="twitter:app:id:ipad" content="544007664">
-      <meta name="twitter:app:url:iphone" content="vnd.youtube://watch/ABm7DuBwJd8">
-      <meta name="twitter:app:url:ipad" content="vnd.youtube://watch/ABm7DuBwJd8">
+    <meta name="twitter:app:url:iphone" content="vnd.youtube://watch/ABm7DuBwJd8">
+    <meta name="twitter:app:url:ipad" content="vnd.youtube://watch/ABm7DuBwJd8">
     <meta name="twitter:app:name:googleplay" content="YouTube">
     <meta name="twitter:app:id:googleplay" content="com.google.android.youtube">
     <meta name="twitter:app:url:googleplay" content="http://www.youtube.com/watch?v=ABm7DuBwJd8">
-      <meta name="twitter:player" content="https://www.youtube.com/embed/ABm7DuBwJd8">
-      <meta name="twitter:player:width" content="1280">
-      <meta name="twitter:player:height" content="720">
+    <meta name="twitter:player" content="https://www.youtube.com/embed/ABm7DuBwJd8">
+    <meta name="twitter:player:width" content="1280">
+    <meta name="twitter:player:height" content="720">
 </head>
 <body>
 </body>
@@ -168,6 +169,7 @@ class BusterTestCase(MockUrlfetchTest):
         taskqueue_stub._root_path = dircontainingqueuedotyaml
 
         self.taskqueue_stub = taskqueue_stub
+        self.set_response('http://i1.ytimg.com/vi/ABm7DuBwJd8/hqdefault.jpg?feature=og', content=FAKE_SMALL_IMAGE, method="GET")
         for i in xrange(0, 12):
             for b in xrange(0, 12):
                 unique_key = 'test%s_%s' % (i, b)
@@ -204,6 +206,15 @@ class BusterTestCase(MockUrlfetchTest):
                 kwargs['thumb_height'] = 'height="%(thumb_height)s"' % kwargs
 
             kwargs['media_thumbnail'] = '<media:thumbnail url="%(media_thumbnail)s" %(thumb_width)s %(thumb_height)s time="12:05:01.123" />' % kwargs
+
+        if kwargs['content_image']:
+            if kwargs['thumb_width']:
+                kwargs['thumb_width'] = 'width="%(thumb_width)spx"' % kwargs
+
+            if kwargs['thumb_height']:
+                kwargs['thumb_height'] = 'height="%(thumb_height)spx"' % kwargs
+
+            kwargs['content_image'] = '<img src="%(content_image)s" %(thumb_width)s %(thumb_height)s/>' % kwargs
 
         rss_items = []
         for x in xrange(0, items):
@@ -420,8 +431,8 @@ class BusterTestCase(MockUrlfetchTest):
         })
 
         assert resp.data == 'testing'
-
-        resp = self.app.post('/api/feeds/%s/subscribe' % (feed.key.urlsafe(), ), data=self.buildRSS('test2'), headers={
+        data = get_file_from_data('/data/df_feed.xml')
+        resp = self.app.post('/api/feeds/%s/subscribe' % (feed.key.urlsafe(), ), data=data, headers={
             'Content-Type': 'application/xml',
         })
 
@@ -713,43 +724,50 @@ class BusterTestCase(MockUrlfetchTest):
 
     def testThumbnail(self):
         self.setMockUser()
-        self.set_response('http://example.com/small.jpg', FAKE_SMALL_IMAGE)
-        self.set_response('http://example.com/right.jpg', FAKE_RIGHT_IMAGE)
-        self.set_response('http://example.com/large.jpg', FAKE_LARGE_IMAGE)
+        self.set_response('http://example.com/small.jpg', content=FAKE_SMALL_IMAGE)
+        self.set_response('http://example.com/right.jpg', content=FAKE_RIGHT_IMAGE)
+        self.set_response('http://example.com/large.jpg', content=FAKE_LARGE_IMAGE)
         test_feed_url = 'http://example.com/rss'
 
-        # The basic thumbnail discover can be tested through previews
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail='http://example.com/small.jpg', thumb_width='100', thumb_height='100'), status_code=200)
-        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0].get('thumbnail_image_url') is None
+        test_images = [
+            (False, 'http://example.com/small.jpg', '100', '100', FAKE_SMALL_IMAGE),
+            (True, 'http://example.com/right.jpg', '201', '201', FAKE_RIGHT_IMAGE),
+            (False, 'http://example.com/large.jpg', '1001', '1001', FAKE_LARGE_IMAGE),
+        ]
 
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail='http://example.com/right.jpg', thumb_width='201', thumb_height='201'), status_code=200)
-        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0].get('thumbnail_image_url') == 'http://example.com/right.jpg'
+        for embed_type in ['media_thumbnail', 'content_image']:
+            for should_work, url, width, height, img_content in test_images:
+                kwargs = {
+                    embed_type: url
+                }
 
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail='http://example.com/large.jpg', thumb_width='1001', thumb_height='1001'), status_code=200)
-        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0].get('thumbnail_image_url') is None
+                for i in range(0, 1):
+                    self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, **kwargs), status_code=200)
+                    resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+                    data = json.loads(resp.data)
+                    if should_work:
+                        #print '%s %s %s' % (embed_type, data['data'][0].get('thumbnail_image_url'), url)
+                        assert data['data'][0].get('thumbnail_image_url') == url
+                    else:
+                        assert data['data'][0].get('thumbnail_image_url') is None
 
+                    kwargs.update({
+                        'width': width,
+                        'height': height,
+                    })
 
-        # The basic thumbnail discover can be tested through previews
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail='http://example.com/small.jpg'), status_code=200)
-        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0].get('thumbnail_image_url') is None
-
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail='http://example.com/right.jpg'), status_code=200)
-        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0].get('thumbnail_image_url') == 'http://example.com/right.jpg'
-
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail='http://example.com/large.jpg'), status_code=200)
-        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0].get('thumbnail_image_url') is None
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test'), status_code=200)
+        for should_work, url, width, height, img_content in test_images:
+            # Final test for meta tags
+            html = HTML_PAGE_TEMPLATE_WITH_META % ({'unique_key': 'test_0'})
+            html = html.replace('http://i1.ytimg.com/vi/ABm7DuBwJd8/hqdefault.jpg?feature=og', url)
+            self.set_response('http://example.com/buster/test_0', content=html, method='GET')
+            resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+            data = json.loads(resp.data)
+            if should_work:
+                assert data['data'][0].get('thumbnail_image_url') == url
+            else:
+                assert data['data'][0].get('thumbnail_image_url') is None
 
     def testIncludeSummarySentanceSplit(self):
         self.setMockUser()
