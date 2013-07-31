@@ -1,5 +1,8 @@
 import logging
 import urllib
+import time
+
+from google.appengine.api import memcache
 
 from bs4 import BeautifulSoup
 from django.utils.encoding import smart_str
@@ -94,3 +97,7 @@ def find_feed_url(resp):
         return shortest_link
 
     return None
+
+def write_epoch_to_cache(key):
+    epoch_time = int(time.mktime(time.gmtime()))
+    memcache.add(key=key, value=epoch_time, time=60 * 5)

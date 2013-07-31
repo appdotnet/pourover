@@ -3,13 +3,14 @@ views.py
 
 URL route handlers
 """
-import json
-import logging
 import datetime
 import hmac
+import json
+import logging
 import uuid
 
 from google.appengine.ext import ndb
+from google.appengine.api import memcache
 
 import feedparser
 from flask import request, render_template, g, Response, url_for
@@ -21,6 +22,7 @@ from constants import UPDATE_INTERVAL
 from models import Entry, Feed
 from fetcher import FetchException
 from forms import FeedCreate, FeedUpdate, FeedPreview
+from utils import write_epoch_to_cache
 
 logger = logging.getLogger(__name__)
 
@@ -280,6 +282,7 @@ def tq_feed_poll():
             logger.exception('Failed to update feed:%s, i=%s' % (feed.feed_url, i))
 
     logger.info('Polled feeds entries_created: %s success: %s errors: %s', entries_created, success, errors)
+    write_epoch_to_cache('poll_job')
 
     raise ndb.Return(jsonify(status='ok'))
 
@@ -404,7 +407,7 @@ def post_all_feeds():
             logger.exception('Failed to Publish feed:%s' % (feed.feed_url, ))
 
     logger.info('Post Feeds success:%s errors: %s num_posted: %s', success, errors, num_posted)
-
+    write_epoch_to_cache('post_job')
     raise ndb.Return(jsonify(status='ok'))
 
 post_all_feeds.login_required = False
@@ -477,6 +480,21 @@ def all_feeds():
 
 all_feeds.app_token_required = True
 all_feeds.login_required = False
+
+
+@app.route('/api/feeds/monitor', methods=['GET'])
+@ndb.synctasklet
+def monitor_jobs():
+    """Are the jobs running"""
+
+    response = {
+        'post': memcache.get('post_job'),
+        'poll': memcache.get('poll_job'),
+    }
+
+    raise ndb.Return(jsonify(status='ok', data=response))
+
+monitor_jobs.login_required = False
 
 
 @app.route('/_ah/warmup')
