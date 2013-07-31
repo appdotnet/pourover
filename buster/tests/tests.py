@@ -38,7 +38,8 @@ feedparser.parse = fake_parse
 from agar.test import MockUrlfetchTest
 # from rss_to_adn import Feed
 from application import app
-from application.models import Entry, User, Feed, OVERFLOW_REASON
+from application.models import Entry, User, Feed
+from application.constants import FEED_STATE, OVERFLOW_REASON
 from application.utils import append_query_string
 from application.fetcher import hash_content
 from application import settings
@@ -867,6 +868,34 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert feed.feed_disabled is True
 
+    def testFeedReauthoirzation(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            include_summary=True,
+            max_stories_per_period=2,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+
+        self.set_response("https://alpha-api.app.net/stream/0/posts", content=FAKE_POST_OBJ_RESP, status_code=401, method="POST")
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1), status_code=200)
+        self.pollUpdate()
+        feed = Feed.query().get()
+
+        assert feed.status == FEED_STATE.NEEDS_REAUTH
+
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            max_stories_per_period=1,
+            schedule_period=5,
+        ), headers={'Authorization': 'Bearer NEW_ACCESS_TOKEN'})
+
+        feed = Feed.query().get()
+
+        assert feed.status == FEED_STATE.ACTIVE
 
 if __name__ == '__main__':
     unittest.main()

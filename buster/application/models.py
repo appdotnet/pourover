@@ -136,6 +136,7 @@ class Entry(ndb.Model):
             return
 
         if resp.status_code == 401:
+            logger.info("Disabling feed authorization has been pulled: %s", feed.key.urlsafe())
             feed.status = FEED_STATE.NEEDS_REAUTH
             yield feed.put_async()
         elif resp.status_code == 200:
@@ -326,6 +327,7 @@ class Feed(ndb.Model):
     @classmethod
     @ndb.tasklet
     def reauthorize(cls, user):
+        logger.info("Reauthorizing feeds for user: %s", user.key.urlsafe())
         qit = cls.query(cls.status == FEED_STATE.NEEDS_REAUTH, ancestor=user.key).iter()
         while (yield qit.has_next_async()):
             feed = qit.next()
