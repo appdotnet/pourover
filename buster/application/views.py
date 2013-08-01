@@ -272,6 +272,7 @@ def tq_feed_poll():
         futures.append((i, Entry.update_for_feed(feed)))
 
     for i, future in futures:
+        parsed_feed = None
         try:
             parsed_feed, num_new_entries = yield future
             entries_created += num_new_entries

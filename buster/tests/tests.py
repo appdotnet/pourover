@@ -897,5 +897,21 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert feed.status == FEED_STATE.ACTIVE
 
+    def testFeedMetaDataUpdate(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            max_stories_per_period=1,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+        assert feed.link == 'http://example.com/buster'
+        assert feed.title == 'Busters RSS feed'
+        assert feed.description == 'Hi, my name is Buster. This is the second sentence.'
+
+
 if __name__ == '__main__':
     unittest.main()

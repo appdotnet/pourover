@@ -128,6 +128,15 @@ def fetch_parsed_feed_for_feed(feed):
 
         raise e
 
+    parsed_feed = None
+    # Need to update something in the database
+    if not feed.link:
+        parsed_feed = feedparser.parse(resp.content)
+        try:
+            yield feed.update_feed_from_parsed_feed(parsed_feed)
+        except Exception, e:
+            logger.exception(e)
+
     feed.last_successful_fetch = now
     yield feed.put_async()
 
@@ -154,6 +163,6 @@ def fetch_parsed_feed_for_feed(feed):
 
     yield feed.put_async()
 
-    parsed_feed = feedparser.parse(resp.content)
+    parsed_feed = parsed_feed or feedparser.parse(resp.content)
 
     raise ndb.Return((parsed_feed, resp))

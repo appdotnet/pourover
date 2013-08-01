@@ -294,6 +294,9 @@ class Entry(ndb.Model):
 class Feed(ndb.Model):
     """Keep track of users"""
     feed_url = ndb.StringProperty()
+    title = ndb.StringProperty()
+    description = ndb.StringProperty()
+    link = ndb.StringProperty()
     hub = ndb.StringProperty()
     subscribed_at_hub = ndb.BooleanProperty(default=False)
     verify_token = ndb.StringProperty()
@@ -317,6 +320,30 @@ class Feed(ndb.Model):
     last_fetched_content_hash = ndb.StringProperty()
     last_successful_fetch = ndb.DateTimeProperty()
     feed_disabled = ndb.BooleanProperty(default=False)
+
+    @ndb.tasklet
+    def update_feed_from_parsed_feed(self, parsed_feed):
+        if not parsed_feed:
+            raise ndb.Return()
+
+        feed_info = parsed_feed.get('feed', {})
+
+        link = feed_info.get('link')
+        if not link:
+            try:
+                urlparts = urlparse(feed.feed_url)
+                link = '%s://%s' % (urlparts.scheme, urlparts.netloc)
+            except:
+                link = None
+
+        title = feed_info.get('title')
+        description = feed_info.get('subtitle', feed_info.get('subtitle'))
+
+        if any([self.link != link, self.title != title, self.description != description]):
+            self.link = link
+            self.title = title
+            self.description = description
+            yield self.put_async()
 
     @classmethod
     def for_user(cls, user):
@@ -366,6 +393,12 @@ class Feed(ndb.Model):
         # Sync pull down the latest feeds
 
         parsed_feed, num_new_entries = yield Entry.update_for_feed(feed, overflow=overflow, overflow_reason=overflow_reason)
+
+        try:
+            yield feed.update_feed_from_parsed_feed(parsed_feed)
+        except Exception, e:
+            logger.exception(e)
+
         hub_url = None
         feed_links = parsed_feed.feed.links if 'links' in parsed_feed.feed else []
         for link in feed_links:
