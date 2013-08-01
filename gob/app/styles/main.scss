@@ -68,6 +68,40 @@
 @import "../components/Ladda/css/ladda.scss";
 //@import "../components/Ladda/css/ladda-theme.scss";
 
+.hero-unit.main {
+    padding: 50px;
+    h1 {
+        margin-top: 0;
+    }
+    h2.main-h2 {
+        margin-top: 0;
+        font-size: 25px;
+        color: lighten($blueDark, 15%);
+    }
+}
+ul.steps-list {
+    margin: 25px -50px 25px -50px;
+    border-top: 1px solid darken($grayLighter, 10%);
+    li {
+        padding: 30px 50px 30px 50px;
+        border-bottom: 1px solid darken($grayLighter, 10%);
+        &:nth-child(odd) {
+            background-color: darken($grayLighter, 5%);
+        }
+        .step {
+            display: inline-block;
+            margin-right: 20px;
+            width: 60px;
+            height: 60px;
+            color: $white;
+            line-height: 60px;
+            font-size: 25px;
+            text-shadow: 0 2px 0 transparentize($black, 0.1);
+            background-color: $blueDark;
+            @include border-radius(60px);
+        }
+    }
+}
 
 .input-super-mini { width: 22px; }
 .like-link {
@@ -95,6 +129,7 @@
     overflow: hidden;
 }
 .ta-right {text-align: right;}
+.ta-center {text-align: center;}
 
 .tab-content > .active, .pill-content > .active {
     padding-left: 2px;
