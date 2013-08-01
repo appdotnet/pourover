@@ -340,7 +340,7 @@ def feed_push_update(feed_key):
 
     parsed_feed = feedparser.parse(data)
     new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)
-    yield Entry.publish_for_feed(feed, skip_queue=True)
+    yield Entry.publish_for_feed(feed, skip_queue=False)
 
     raise ndb.Return('')
 
