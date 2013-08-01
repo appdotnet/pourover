@@ -329,7 +329,7 @@ class Feed(ndb.Model):
         feed_info = parsed_feed.get('feed', {})
 
         link = feed_info.get('link')
-        if not link:
+        if not link or not link.startswith('http'):
             try:
                 urlparts = urlparse(feed.feed_url)
                 link = '%s://%s' % (urlparts.scheme, urlparts.netloc)
