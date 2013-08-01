@@ -4,6 +4,7 @@ from wtforms.form import Form
 from wtforms import fields
 from wtforms import validators
 from wtforms.validators import ValidationError
+from urlparse import urlparse
 
 from constants import PERIOD_SCHEDULE, FORMAT_MODE
 
@@ -12,6 +13,12 @@ logger = logging.getLogger(__name__)
 
 def boolean_filter(value):
     return value is True or value == 'true'
+
+
+def adn_rss_feed_check(form, field):
+    urlparts = urlparse(field.data)
+    if urlparts.netloc.endswith('alpha-api.app.net'):
+        raise ValidationError('App.net RSS feeds are disallowed')
 
 
 class FeedUpdate(Form):
@@ -27,8 +34,8 @@ class FeedUpdate(Form):
 
 
 class FeedPreview(FeedUpdate):
-    feed_url = fields.TextField(validators=[validators.DataRequired(), validators.URL()])
+    feed_url = fields.TextField(validators=[validators.DataRequired(), validators.URL(), adn_rss_feed_check])
 
 
 class FeedCreate(FeedUpdate):
-    feed_url = fields.TextField(validators=[validators.DataRequired(), validators.URL()])
+    feed_url = fields.TextField(validators=[validators.DataRequired(), validators.URL(), adn_rss_feed_check])
