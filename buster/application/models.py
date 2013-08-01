@@ -336,8 +336,16 @@ class Feed(ndb.Model):
             except:
                 link = None
 
+        if link:
+            link = link[0:499]
+
         title = feed_info.get('title')
+        if title:
+            title = title[0:499]
+
         description = feed_info.get('subtitle', feed_info.get('subtitle'))
+        if description:
+            description = description[0:499]
 
         if any([self.link != link, self.title != title, self.description != description]):
             self.link = link
