@@ -244,6 +244,16 @@ class BusterTestCase(MockUrlfetchTest):
             }
         }
 
+    def buildMockAppResponse(self):
+        return {
+            'data': {
+                'is_app_token': True,
+                'app': {
+                    'client_id': settings.CLIENT_ID,
+                }
+            }
+        }
+
     def authHeaders(self, access_token=FAKE_ACCESS_TOKEN):
         return {
             'Authorization': 'Bearer %s' % access_token
@@ -294,6 +304,10 @@ class BusterTestCase(MockUrlfetchTest):
         memcache.set('user:%s' % access_token, json.dumps(user_data), 60 * 60)
         user = User(access_token=access_token)
         user.put()
+
+    def setMockAppToken(self):
+        app_data = self.buildMockAppResponse()
+        self.set_response('https://alpha-api.app.net/stream/0/token', content=json.dumps(app_data), method='GET')
 
     def pollUpdate(self, interval_id=1, n=1, queue_name='poll'):
         resp = self.app.get('/api/feeds/all/update/%s' % (interval_id), headers={'X-Appengine-Cron': 'true'})
@@ -516,6 +530,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert burned_entries[0].overflow_reason == OVERFLOW_REASON.BACKLOG
 
     def testRssFeedDetection(self):
+        self.setMockUser()
         self.set_rss_response('http://techcrunch.com/feed/', content=self.buildRSS('test'), status_code=200)
         self.set_response('http://techcrunch.com', content=HTML_PAGE_TEMPLATE, status_code=200, headers={'Content-Type': 'text/html'})
         resp = self.app.get('/api/feed/preview?feed_url=http://techcrunch.com', headers=self.authHeaders())
@@ -531,6 +546,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert feed.feed_url == 'http://techcrunch.com/feed/'
 
     def testFeedPreview(self):
+        self.setMockUser()
         self.set_rss_response('http://techcrunch.com/feed/', content=self.buildRSS('test'), status_code=200)
         resp = self.app.get('/api/feed/preview?feed_url=http://techcrunch.com/feed/', headers=self.authHeaders())
         assert 1 == len(json.loads(resp.data)['data'])
@@ -553,6 +569,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert 'data' in json.loads(resp.data)
 
     def testLinkedListMode(self):
+        self.setMockUser()
         data = get_file_from_data('/data/df_feed.xml')
         self.set_rss_response('http://daringfireball.net/index.xml', content=data)
         self.set_response('http://daringfireball.net/linked/2013/07/17/pourover', content=HTML_PAGE_TEMPLATE_WITH_META)
@@ -911,6 +928,54 @@ class BusterTestCase(MockUrlfetchTest):
         assert feed.link == 'http://example.com/buster'
         assert feed.title == 'Busters RSS feed'
         assert feed.description == 'Hi, my name is Buster. This is the second sentence.'
+
+    def testImageBlacklist(self):
+        self.setMockUser()
+        self.set_response('http://example.com/right.jpg', content=FAKE_RIGHT_IMAGE)
+        test_feed_url = 'http://example.com/rss'
+        image_url = 'http://example.com/right.jpg'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, media_thumbnail=image_url, thumbnail_width='201', thumb_height='201'), status_code=200)
+        self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            max_stories_per_period=1,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        entry = Entry.query().get()
+
+        assert entry.thumbnail_image_url == image_url
+        feed = Feed.query().get()
+        feed.image_in_rss = False
+        feed.put()
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1, media_thumbnail=image_url, thumbnail_width='201', thumb_height='201'), status_code=200)
+        self.pollUpdate()
+
+        entry = Entry.query().fetch(2)[0]
+
+        assert entry.thumbnail_image_url is None
+
+        feed = Feed.query().get()
+        feed.image_in_content = False
+        feed.put()
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test2', items=1, content_image=image_url, thumbnail_width='201', thumb_height='201'), status_code=200)
+        self.pollUpdate()
+
+        entry = Entry.query().get()
+
+        assert entry.thumbnail_image_url is None
+
+        feed = Feed.query().get()
+        feed.image_in_meta = False
+        feed.put()
+        self.set_response('http://i1.ytimg.com/vi/ABm7DuBwJd8/hqdefault.jpg?feature=og', content=FAKE_RIGHT_IMAGE, method="GET")
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test3', items=1), status_code=200)
+        self.pollUpdate()
+
+        entry = Entry.query().get()
+
+        assert entry.thumbnail_image_url is None
 
 
 if __name__ == '__main__':

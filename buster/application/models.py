@@ -321,6 +321,23 @@ class Feed(ndb.Model):
     last_successful_fetch = ndb.DateTimeProperty()
     feed_disabled = ndb.BooleanProperty(default=False)
 
+    # Image finding strategies
+    image_in_rss = ndb.BooleanProperty(default=True)
+    image_in_content = ndb.BooleanProperty(default=True)
+    image_in_meta = ndb.BooleanProperty(default=True)
+
+    @property
+    def image_strategy_blacklist(self):
+        blacklist = list()
+        if not self.image_in_rss:
+            blacklist.append('rss')
+        if not self.image_in_content:
+            blacklist.append('content')
+        if not self.image_in_meta:
+            blacklist.append('meta')
+
+        return set(blacklist)
+
     @ndb.tasklet
     def update_feed_from_parsed_feed(self, parsed_feed):
         if not parsed_feed:

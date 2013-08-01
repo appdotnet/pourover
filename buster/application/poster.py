@@ -227,10 +227,13 @@ def get_image_from_url(url):
 
     raise ndb.Return(image)
 
+
 @ndb.tasklet
-def find_thumbnail(item, meta_tags):
+def find_thumbnail(item, meta_tags, image_strategy_blacklist=None):
     min_d = 200
     max_d = 1000
+
+    image_strategy_blacklist = image_strategy_blacklist or set()
 
     def image_fits(w, h):
         return all([w, h, w >= min_d, w <= max_d, h >= min_d, w <= max_d])
@@ -242,60 +245,63 @@ def find_thumbnail(item, meta_tags):
             'thumbnail_image_height': int(h)
         }
 
-    media_thumbnails = item.get('media_thumbnail') or []
-    # print 'Media thumbnails %s' % (media_thumbnails)
-    for thumb in media_thumbnails:
-        w = int(thumb.get('width', 0))
-        h = int(thumb.get('height', 0))
-        if not (w and h):
-            image = yield get_image_from_url(thumb['url'])
-            if image:
-                w = image.width
-                h = image.height
+    if 'rss' not in image_strategy_blacklist:
+        media_thumbnails = item.get('media_thumbnail') or []
+        # print 'Media thumbnails %s' % (media_thumbnails)
+        for thumb in media_thumbnails:
+            w = int(thumb.get('width', 0))
+            h = int(thumb.get('height', 0))
+            if not (w and h):
+                image = yield get_image_from_url(thumb['url'])
+                if image:
+                    w = image.width
+                    h = image.height
 
-        if image_fits(w, h):
-            raise ndb.Return(image_dict(thumb['url'], w, h))
+            if image_fits(w, h):
+                raise ndb.Return(image_dict(thumb['url'], w, h))
 
-    soup = BeautifulSoup(item.get('summary', ''))
-    for image in soup.findAll('img'):
-        w = image.get('width', 0)
-        h = image.get('height', 0)
-        if not (w and h):
-            style = parse_style_tag(image.get('style'))
-            if style:
-                w = style.get('width', w)
-                h = style.get('height', h)
+    if 'content' not in image_strategy_blacklist:
+        soup = BeautifulSoup(item.get('summary', ''))
+        for image in soup.findAll('img'):
+            w = image.get('width', 0)
+            h = image.get('height', 0)
+            if not (w and h):
+                style = parse_style_tag(image.get('style'))
+                if style:
+                    w = style.get('width', w)
+                    h = style.get('height', h)
 
-        if not(w and h):
-            continue
+            if not(w and h):
+                continue
 
-        w, h = map(lambda x: x.replace('px', ''), (w, h))
+            w, h = map(lambda x: x.replace('px', ''), (w, h))
 
-        try:
-            w = int(w)
-            h = int(h)
-        except:
-            continue
+            try:
+                w = int(w)
+                h = int(h)
+            except:
+                continue
 
-        if image_fits(w, h):
-            raise ndb.Return(image_dict(image['src'], w, h))
+            if image_fits(w, h):
+                raise ndb.Return(image_dict(image['src'], w, h))
 
-    # If we are still here lets grab the first image, and try and download it.
-    first_image = soup.find('img')
-    if first_image:
-        image_url = first_image.get('src')
-        image = yield get_image_from_url(image_url)
-        if image and image_fits(image.width, image.height):
-            raise ndb.Return(image_dict(image_url, image.width, image.height))
+        # If we are still here lets grab the first image, and try and download it.
+        first_image = soup.find('img')
+        if first_image:
+            image_url = first_image.get('src')
+            image = yield get_image_from_url(image_url)
+            if image and image_fits(image.width, image.height):
+                raise ndb.Return(image_dict(image_url, image.width, image.height))
 
-    og = meta_tags.get('og', {})
-    twitter = meta_tags.get('twitter', {})
+    if 'meta' not in image_strategy_blacklist:
+        og = meta_tags.get('og', {})
+        twitter = meta_tags.get('twitter', {})
 
-    meta_tags_image_url = og.get('image', twitter.get('image'))
-    if meta_tags_image_url:
-        image = yield get_image_from_url(meta_tags_image_url)
-        if image and image_fits(image.width, image.height):
-            raise ndb.Return(image_dict(meta_tags_image_url, image.width, image.height))
+        meta_tags_image_url = og.get('image', twitter.get('image'))
+        if meta_tags_image_url:
+            image = yield get_image_from_url(meta_tags_image_url)
+            if image and image_fits(image.width, image.height):
+                raise ndb.Return(image_dict(meta_tags_image_url, image.width, image.height))
 
     raise ndb.Return(None)
 
@@ -415,7 +421,7 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
     kwargs['meta_tags'] = yield get_meta_data_for_url(link)
 
     try:
-        thumbnail = yield find_thumbnail(item, kwargs['meta_tags'])
+        thumbnail = yield find_thumbnail(item, kwargs['meta_tags'], feed.image_strategy_blacklist)
         if thumbnail:
             kwargs.update(thumbnail)
     except Exception, e:
