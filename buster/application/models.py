@@ -296,7 +296,7 @@ class Feed(ndb.Model):
     feed_url = ndb.StringProperty()
     title = ndb.StringProperty()
     description = ndb.StringProperty()
-    link = ndb.StringProperty()
+    link = ndb.StringProperty()  # Link is a semantic thing, where as feed_url is a technical thing
     hub = ndb.StringProperty()
     subscribed_at_hub = ndb.BooleanProperty(default=False)
     verify_token = ndb.StringProperty()
@@ -353,6 +353,18 @@ class Feed(ndb.Model):
             self.description = description
             yield self.put_async()
 
+    @property
+    def effective_title(self):
+        return self.title or self.link or self.feed_url
+
+    @property
+    def effective_description(self):
+        return self.description or ''
+
+    @property
+    def effective_link(self):
+        return self.title or self.feed_url
+
     @classmethod
     def for_user(cls, user):
         return cls.query(ancestor=user.key)
@@ -366,7 +378,7 @@ class Feed(ndb.Model):
         return cls.query(cls.update_interval == interval_id, cls.status == FEED_STATE.ACTIVE)
 
     @classmethod
-    @ndb.tasklet
+    @ndb.synctasklet
     def reauthorize(cls, user):
         logger.info("Reauthorizing feeds for user: %s", user.key.urlsafe())
         qit = cls.query(ancestor=user.key).iter()
@@ -459,6 +471,9 @@ class Feed(ndb.Model):
             'max_stories_per_period': self.max_stories_per_period,
             'bitly_login': self.bitly_login,
             'bitly_api_key': self.bitly_api_key,
+            'title': self.effective_title,
+            'link': self.effective_link,
+            'description': self.effective_description,
         }
 
 
