@@ -19,10 +19,10 @@ from flask_cache import Cache
 
 from application import app
 from constants import UPDATE_INTERVAL
-from models import Entry, Feed
+from models import Entry, Feed, Stat
 from fetcher import FetchException
 from forms import FeedCreate, FeedUpdate, FeedPreview
-from utils import write_epoch_to_cache
+from utils import write_epoch_to_stat, get_epoch_from_stat
 
 logger = logging.getLogger(__name__)
 
@@ -283,7 +283,7 @@ def tq_feed_poll():
             logger.exception('Failed to update feed:%s, i=%s' % (feed.feed_url, i))
 
     logger.info('Polled feeds entries_created: %s success: %s errors: %s', entries_created, success, errors)
-    write_epoch_to_cache('poll_job')
+    write_epoch_to_stat(Stat, 'poll_job')
 
     raise ndb.Return(jsonify(status='ok'))
 
@@ -408,7 +408,7 @@ def post_all_feeds():
             logger.exception('Failed to Publish feed:%s' % (feed.feed_url, ))
 
     logger.info('Post Feeds success:%s errors: %s num_posted: %s', success, errors, num_posted)
-    write_epoch_to_cache('post_job')
+    write_epoch_to_stat(Stat, 'post_job')
     raise ndb.Return(jsonify(status='ok'))
 
 post_all_feeds.login_required = False
@@ -487,10 +487,12 @@ all_feeds.login_required = False
 @ndb.synctasklet
 def monitor_jobs():
     """Are the jobs running"""
+    post_value = yield get_epoch_from_stat(Stat, 'post_job')
+    poll_value = yield get_epoch_from_stat(Stat, 'poll_job')
 
     response = {
-        'post': memcache.get('post_job'),
-        'poll': memcache.get('poll_job'),
+        'post': post_value,
+        'poll': poll_value,
     }
 
     raise ndb.Return(jsonify(status='ok', data=response))

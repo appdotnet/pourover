@@ -2,8 +2,7 @@ import logging
 import urllib
 import time
 
-from google.appengine.api import memcache
-
+from google.appengine.ext import ndb
 from bs4 import BeautifulSoup
 from django.utils.encoding import smart_str
 from django.utils.text import Truncator
@@ -98,6 +97,26 @@ def find_feed_url(resp):
 
     return None
 
-def write_epoch_to_cache(key):
+
+@ndb.tasklet
+def write_epoch_to_stat(model, name):
     epoch_time = int(time.time())
-    memcache.add(key=key, value=epoch_time, time=60 * 15)
+    key = ndb.Key(model, name)
+    stat = yield key.get_async()
+    if not stat:
+        stat = model(key=key, name=name)
+
+    stat.value = unicode(epoch_time)
+    yield stat.put_async()
+
+
+@ndb.tasklet
+def get_epoch_from_stat(model, name):
+    key = ndb.Key(model, name)
+    stat = yield key.get_async()
+    if not stat:
+        value = None
+    else:
+        value = stat.value
+
+    raise ndb.Return(value)

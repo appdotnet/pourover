@@ -460,3 +460,9 @@ class Feed(ndb.Model):
             'bitly_login': self.bitly_login,
             'bitly_api_key': self.bitly_api_key,
         }
+
+
+class Stat(ndb.Model):
+    """Keep track of users"""
+    name = ndb.StringProperty()
+    value = ndb.StringProperty()
