@@ -282,8 +282,8 @@ def tq_feed_poll():
             feed = feeds[i]
             logger.exception('Failed to update feed:%s, i=%s' % (feed.feed_url, i))
 
+    stat = yield write_epoch_to_stat(Stat, 'poll_job')
     logger.info('Polled feeds entries_created: %s success: %s errors: %s', entries_created, success, errors)
-    yield write_epoch_to_stat(Stat, 'poll_job')
 
     raise ndb.Return(jsonify(status='ok'))
 
@@ -407,8 +407,8 @@ def post_all_feeds():
             errors += 1
             logger.exception('Failed to Publish feed:%s' % (feed.feed_url, ))
 
+    stat = yield write_epoch_to_stat(Stat, 'post_job')
     logger.info('Post Feeds success:%s errors: %s num_posted: %s', success, errors, num_posted)
-    yield write_epoch_to_stat(Stat, 'post_job')
     raise ndb.Return(jsonify(status='ok'))
 
 post_all_feeds.login_required = False

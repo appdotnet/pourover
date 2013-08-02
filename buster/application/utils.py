@@ -108,7 +108,7 @@ def write_epoch_to_stat(model, name):
 
     stat.value = unicode(epoch_time)
     yield stat.put_async()
-
+    raise ndb.Return(stat)
 
 @ndb.tasklet
 def get_epoch_from_stat(model, name):
