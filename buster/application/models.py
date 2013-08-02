@@ -68,6 +68,7 @@ class Entry(ndb.Model):
 
     feed_item = ndb.PickleProperty()
     meta_tags = ndb.JsonProperty()
+    images_in_html = ndb.JsonProperty(repeated=True)
 
     def to_json(self, include=None, feed=None, format=False):
         include = include or []
@@ -325,6 +326,7 @@ class Feed(ndb.Model):
     image_in_rss = ndb.BooleanProperty(default=True)
     image_in_content = ndb.BooleanProperty(default=True)
     image_in_meta = ndb.BooleanProperty(default=True)
+    image_in_html = ndb.BooleanProperty(default=False)
 
     @property
     def image_strategy_blacklist(self):
@@ -335,6 +337,8 @@ class Feed(ndb.Model):
             blacklist.append('content')
         if not self.image_in_meta:
             blacklist.append('meta')
+        if not self.image_in_html:
+            blacklist.append('html')
 
         return set(blacklist)
 

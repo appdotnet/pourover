@@ -1,6 +1,7 @@
 from collections import defaultdict
 import logging
 from lxml import html
+from lxml.cssselect import CSSSelector
 import json
 import StringIO
 from urlparse import urlparse
@@ -215,6 +216,7 @@ def get_link_for_item(feed, item):
 
     return main_item_link
 
+
 @ndb.tasklet
 def get_image_from_url(url):
     ctx = ndb.get_context()
@@ -223,27 +225,30 @@ def get_image_from_url(url):
         image = Image(image_data=resp.content)
     except Exception, e:
         logger.exception(e)
-        raise ndb.Return(None) 
+        raise ndb.Return(None)
 
     raise ndb.Return(image)
 
 
+MIN_IMAGE_DIMENSION = 200
+MAX_IMAGE_DIMENSION = 1000
+
+
+def image_fits(w, h):
+    return all([w, h, w >= MIN_IMAGE_DIMENSION, w <= MAX_IMAGE_DIMENSION, h >= MIN_IMAGE_DIMENSION, h <= MAX_IMAGE_DIMENSION])
+
+
+def image_dict(url, w, h):
+    return {
+        'thumbnail_image_url': url,
+        'thumbnail_image_width': int(w),
+        'thumbnail_image_height': int(h)
+    }
+
+
 @ndb.tasklet
 def find_thumbnail(item, meta_tags, image_strategy_blacklist=None):
-    min_d = 200
-    max_d = 1000
-
     image_strategy_blacklist = image_strategy_blacklist or set()
-
-    def image_fits(w, h):
-        return all([w, h, w >= min_d, w <= max_d, h >= min_d, w <= max_d])
-
-    def image_dict(url, w, h):
-        return {
-            'thumbnail_image_url': url,
-            'thumbnail_image_width': int(w),
-            'thumbnail_image_height': int(h)
-        }
 
     if 'rss' not in image_strategy_blacklist:
         media_thumbnails = item.get('media_thumbnail') or []
@@ -306,17 +311,7 @@ def find_thumbnail(item, meta_tags, image_strategy_blacklist=None):
     raise ndb.Return(None)
 
 
-@ndb.tasklet
-def get_meta_data_for_url(url):
-    ctx = ndb.get_context()
-
-    try:
-        resp = yield ctx.urlfetch(url=url, deadline=60, follow_redirects=True)
-    except Exception:
-        logger.exception('Failed to fetch meta data for %s' % url)
-        raise ndb.Return({})
-
-    doc = html.parse(StringIO.StringIO(resp.content))
+def parse_meta_data(doc):
     data = defaultdict(dict)
     props = doc.xpath('//meta[re:test(@name|@property, "^twitter|og:.*$", "i")]',
                       namespaces={"re": "http://exslt.org/regular-expressions"})
@@ -342,7 +337,7 @@ def get_meta_data_for_url(url):
         ref = data[key.pop(0)]
 
         for idx, part in enumerate(key):
-            if not key[idx:-1]: # no next values
+            if not key[idx:-1]:  # no next values
                 ref[part] = value
                 break
             if not ref.get(part):
@@ -352,6 +347,50 @@ def get_meta_data_for_url(url):
                     ref[part] = {'url': ref[part]}
             ref = ref[part]
     logger.info('Found some meta data: %s', data)
+
+    return data
+
+
+def parse_images(doc):
+    sel = CSSSelector('img')
+    images = []
+    for image in sel(doc):
+        try:
+            w = int(image.get('width', '').replace('px', ''))
+            h = int(image.get('height', '').replace('px', ''))
+        except ValueError, e:
+            continue
+        except Exception, e:
+            logger.exception(e)
+            continue
+
+        src = image.get('src')
+
+        if src and image_fits(w, h):
+            images += [image_dict(src, w, h)]
+
+    # We could sort images by closest to a specific aspect ratio here
+    sorted(images, key=lambda x: x['thumbnail_image_width'] + x['thumbnail_image_height'])
+
+    return images
+
+
+@ndb.tasklet
+def get_meta_data_for_url(url):
+    ctx = ndb.get_context()
+
+    try:
+        resp = yield ctx.urlfetch(url=url, deadline=60, follow_redirects=True)
+    except Exception:
+        logger.exception('Failed to fetch meta data for %s' % url)
+        raise ndb.Return({})
+
+    doc = html.parse(StringIO.StringIO(resp.content))
+    data = {
+        'meta_tags': parse_meta_data(doc),
+        'images_in_html': parse_images(doc),
+    }
+
     raise ndb.Return(data)
 
 
@@ -379,6 +418,9 @@ def get_short_url(entry, link, feed):
             raise ndb.Return(link)
 
 
+# Next steps for this function, it should probably just get a bunch of meta data at the top of the function
+# And then be a bunch of functions that parse through that meta data in various manners to get the good stuff
+# out of it.
 @ndb.tasklet
 def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reason=None, published=False):
     title_detail = item.get('title_detail')
@@ -418,8 +460,10 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
     if feed:
         kwargs['parent'] = feed.key
 
-    kwargs['meta_tags'] = yield get_meta_data_for_url(link)
+    page_data = yield get_meta_data_for_url(link)
+    kwargs.update(page_data)
 
+    thumbnail = None
     try:
         thumbnail = yield find_thumbnail(item, kwargs['meta_tags'], feed.image_strategy_blacklist)
         if thumbnail:
@@ -427,6 +471,11 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
     except Exception, e:
         logger.info("Exception while trying to find thumbnail %s", e)
         logger.exception(e)
+
+    # If we still don't have a thumbnail and we haven't blacklisted looking for images on the webpage
+    # Lets take the first image on the page
+    if 'html' not in feed.image_strategy_blacklist and not thumbnail and kwargs['images_in_html']:
+        kwargs.update(kwargs['images_in_html'][0])
 
     if feed.language:
         kwargs['language'] = feed.language
@@ -550,11 +599,11 @@ def format_for_adn(entry, feed):
                 "title": entry.title,
                 "width": entry.thumbnail_image_width,
                 "height": entry.thumbnail_image_height,
-                "url": entry.thumbnail_image_url,
+                "url": iri_to_uri(entry.thumbnail_image_url),
                 "thumbnail_width": entry.thumbnail_image_width,
                 "thumbnail_height": entry.thumbnail_image_height,
-                "thumbnail_url": entry.thumbnail_image_url,
-                "embeddable_url": entry.link,
+                "thumbnail_url": iri_to_uri(entry.thumbnail_image_url),
+                "embeddable_url": iri_to_uri(entry.link),
             }
         })
 

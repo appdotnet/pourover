@@ -133,6 +133,24 @@ HTML_PAGE_TEMPLATE_WITH_META = """
 </html>
 """
 
+HTML_PAGE_TEMPLATE_WITH_IMAGES = """
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+    <img src='http://example.com/bad.jpg'>
+    <img src='http://example.com/bad.jpg' width=''>
+    <img src='http://example.com/bad.jpg' width='a' height='b'>
+    <img src='http://example.com/bad.jpg' width='199px' height='199px'>
+    <img src='http://example.com/bad.jpg' width='201px' height='199px'>
+    <img src='http://example.com/good.jpg' width='210px' height='210px'>
+    <img src='http://example.com/bad.jpg' width='201px' height='201px'>
+    <img src='http://example.com/bad.jpg' width='999px' height='1001px'>
+</body>
+</html>
+"""
+
 YOUTUBE_OEMBED_RESPONSE = json.dumps({u'provider_url': u'http://www.youtube.com/', u'title': u'Auto-Tune the News #8: dragons. geese. Michael Vick. (ft. T-Pain)', u'html': u'<iframe width="459" height="344" src="http://www.youtube.com/embed/bDOYN-6gdRE?feature=oembed" frameborder="0" allowfullscreen></iframe>', u'author_name': u'schmoyoho', u'height': 344, u'thumbnail_width': 480, u'width': 459, u'version': u'1.0', u'author_url': u'http://www.youtube.com/user/schmoyoho', u'thumbnail_height': 360, u'thumbnail_url': u'http://i1.ytimg.com/vi/bDOYN-6gdRE/hqdefault.jpg', u'type': u'video', u'provider_name': u'YouTube'})
 VIMEO_OEMBED_RESPONSE = json.dumps({u'is_plus': u'0', u'provider_url': u'https://vimeo.com/', u'description': u'Brad finally gets the attention he deserves.', u'title': u'Brad!', u'video_id': 7100569, u'html': u'<iframe src="http://player.vimeo.com/video/7100569" width="1280" height="720" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>', u'author_name': u'Casey Donahue', u'height': 720, u'thumbnail_width': 1280, u'width': 1280, u'version': u'1.0', u'author_url': u'http://vimeo.com/caseydonahue', u'duration': 118, u'provider_name': u'Vimeo', u'thumbnail_url': u'http://b.vimeocdn.com/ts/294/128/29412830_1280.jpg', u'type': u'video', u'thumbnail_height': 720})
 BIT_LY_RESPONSE = """{ "status_code": 200, "status_txt": "OK", "data": { "long_url": "http:\/\/daringfireball.net\/2013\/05\/facebook_home_dogfooding?utm_medium=App.net&utm_source=PourOver", "url": "http:\/\/bit.ly\/123", "hash": "1c3ehlA", "global_hash": "1c3ehlB", "new_hash": 0 } }"""
@@ -786,6 +804,25 @@ class BusterTestCase(MockUrlfetchTest):
                 assert data['data'][0].get('thumbnail_image_url') == url
             else:
                 assert data['data'][0].get('thumbnail_image_url') is None
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test1'), status_code=200)
+        self.set_response('http://example.com/buster/test1_0', content=HTML_PAGE_TEMPLATE_WITH_IMAGES, method='GET')
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+        ), headers=self.authHeaders())
+
+        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
+        data = json.loads(resp.data)
+        assert data['data'][0].get('thumbnail_image_url') is None
+
+        feed = Feed.query().get()
+        feed.image_in_html = True
+        feed.put()
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test2'), status_code=200)
+        self.set_response('http://example.com/buster/test2_0', content=HTML_PAGE_TEMPLATE_WITH_IMAGES, method='GET')
+        self.pollUpdate()
+        assert Entry.query().fetch(2)[1].thumbnail_image_url == "http://example.com/good.jpg"
 
     def testIncludeSummarySentanceSplit(self):
         self.setMockUser()
