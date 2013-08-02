@@ -1,21 +1,22 @@
-<div class="hero-unit">
+<div class="hero-unit main ta-center">
   <h1>PourOver <small>from App.net</small></h1>
-  <p>PourOver is a tool that allows you to publish any RSS feed to App.net.</p>
-  <ul class='unstyled'>
-    <li><b>Step 1</b> Click the Authorize with App.net button below</li>
-    <li><b>Step 2</b> Sign up or Log in</li>
-    <li><b>Step 3</b> Enter your RSS feed</li>
+  <h2 class="main-h2">PourOver is a tool that allows you to publish any RSS feed to App.net.</h2>
+  <p>It's an easy to way to syndicate whatever you are publishing to the growing community of App.net users.  Getting started is easy, even if you don't yet have an App.net account. <a href='http://join.app.net'>Learn more about App.net.</a></p>
+  <ul class='unstyled steps-list ta-left'>
+    <li>
+        <span class="step ta-center">1</span>
+        Click the Authorize with App.net button:
+        <a href='https://account.app.net/oauth/authenticate?client_id={{client_id}}&response_type=token&scope=write_post&redirect_uri={{ redirect_uri }}' class='adn-button' data-type='authorize_v2' data-width="147" data-height="22">Authorize with App.net</a>
+    </li>
+    <li><span class="step ta-center">2</span> Sign up or log in</li>
+    <li><span class="step ta-center">3</span> Enter your RSS feed URL and save it</li>
   </ul>
-  <p>
-    <a href='https://account.app.net/oauth/authenticate?client_id={{client_id}}&response_type=token&scope=write_post&redirect_uri={{ redirect_uri }}' class='adn-button' data-type='authorize_v2' data-width="147" data-height="22">Authorize with App.net</a>
-  </p>
-  <p>It's an easy to way to syndicate whatever you are publishing to the growing community of App.net users.  Getting started is easy, even if you don't yet have an App.net account. <a href='http://join.app.net'>Learn more about App.net.</a>
-  <p>Some examples:</P>
-  <ul class='unstyled'>
-    <li><img src='https://plus.google.com/_/favicon?domain=http://arstechnica.com/' width='16px'> <a href='https://alpha.app.net/arstechnica'>Arstechnica</a></li>
-    <li><img src='https://plus.google.com/_/favicon?domain=http://daringfireball.net' width='16px'> <a href='https://alpha.app.net/daringfireball'>Daring Fireball</a></li>
-    <li><img src='https://plus.google.com/_/favicon?domain=http://the-magazine.org/' width='16px'> <a href='https://alpha.app.net/themagazinerss'>The Magazine</a></li>
-  </ul>
+  <h2 class="main-h2">Who's Using PourOver</h2>
+  <div class="row-fluid sites-using-pourover">
+      <a class="span4 sites-magazine" href="https://alpha.app.net/themagazinerss"></a>
+      <a class="span4 sites-daring-fireball" href="https://alpha.app.net/daringfireball"></a>
+      <a class="span4 sites-ars-technica" href="https://alpha.app.net/arstechnica"></a>
+  </div>
 <script>(function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='//d2zh9g63fcvyrq.cloudfront.net/adn.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'adn-button-js'));</script>
 </div>
 
