@@ -101,11 +101,6 @@ ul.steps-list {
             background-color: darken($grayLighter, 5%);
             @include box-shadow(#{inset 0 2px 0 rgba(0, 0, 0, 0.05), inset 0 -2px 0 rgba(0, 0, 0, 0.05)});
         }
-        &:last-child {
-            background-position: 620px 0;
-            background-repeat: no-repeat;
-            background-image: url(/images/pourover-url.png);
-        }
         .step {
             display: inline-block;
             margin-right: 20px;
@@ -118,6 +113,57 @@ ul.steps-list {
             background-color: $blueDark;
             border: 2px solid $white;
             @include border-radius(60px);
+        }
+    }
+}
+
+a.adn-button-large, a.adn-button-large:visited {
+    margin-left: 10px;
+    position: relative;
+    display: inline-block;
+    width: auto;
+    height: 38px;
+    border: 3px solid #4a484c;
+    background-color: $white;
+    white-space: nowrap;
+    color: #4a484c;
+    font-size: 24px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    line-height: 38px;
+    text-decoration: none;
+    @include border-radius(58px);
+    @include transition(all 0.15s ease-out);
+
+    &:hover {
+        color: $white;
+        background-color: #4a484c;
+    }
+
+    .button-text {
+        font-weight: normal;
+        padding-left: 46px;
+        padding-right: 18px;
+    }
+
+    .adn-logo {
+        position: absolute;
+        display: inline-block;
+        width: 34px;
+        height: 34px;
+        top: 2px;
+        left: 2px;
+        background-color: #4a484c;
+        background-size: 22px 16px;
+        background-repeat: no-repeat;
+        background-position: 6px 7px;
+        background-image: url('/images/adn-logo.png');
+        @include border-radius(34px);
+
+        @media only screen and (-webkit-min-device-pixel-ratio: 1.5),
+               only screen and (min--moz-device-pixel-ratio: 1.5),
+               only screen and (-o-min-device-pixel-ratio: 3/2),
+               only screen and (min-device-pixel-ratio: 1.5) {
+                   background-image: url('/images/adn-logo@2x.png');
         }
     }
 }
