@@ -74,11 +74,11 @@ def fetch_url(url, etag=None):
         logger.info('Feed took too long: %s', url)
         raise FetchException('URL took to long to fetch.')
     except urlfetch.InvalidURLError:
-        logger.info('Invalud URL: %s', url)
+        logger.info('Invalid URL: %s', url)
         raise FetchException('The URL for this feeds seems to be invalid.')
 
     if resp.status_code not in VALID_STATUS:
-        raise FetchException('Could not fetch url. url:%s status_code:%s final_url:%s' % (url, resp.status_code, resp.final_url))
+        raise FetchException('Could not fetch url. url:%s status_code:%s final_url:%s resp:%s' % (url, resp.status_code, resp.final_url, resp.content))
 
     # Let upstream consumers know if they need to update their URL or not
     resp.was_permanente_redirect = was_permanente_redirect
