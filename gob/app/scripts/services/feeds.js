@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('pourOver').factory('Feeds', ['$rootScope', 'ApiClient', function ($rootScope, ApiClient) {
+angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', function ($q, $rootScope, ApiClient) {
 
   var DEFAULT_FEED_OBJ = {
     max_stories_per_period: 1,
@@ -44,6 +44,14 @@ angular.module('pourOver').factory('Feeds', ['$rootScope', 'ApiClient', function
 
   return {
     DEFAULT_FEED_OBJ: DEFAULT_FEED_OBJ,
+    serialize_feed: function (feed) {
+      _.each(['linked_list_mode', 'include_thumb', 'include_summary', 'include_video'], function (el) {
+        if (!feed[el]) {
+          delete feed[el];
+        }
+      });
+      return feed;
+    },
     setFeed: function (feed_id) {
       selected_feed = feed_id;
       _.each($rootScope.feeds, function (item) {
@@ -56,12 +64,19 @@ angular.module('pourOver').factory('Feeds', ['$rootScope', 'ApiClient', function
       new_feed = true;
       $rootScope.feed = _.extend({}, DEFAULT_FEED_OBJ);
     },
-    deleteCurrentFeed: function () {
-      var current_feed_id = $rootScope.feed.feed_id;
-      $rootScope.feed = _.extend({}, DEFAULT_FEED_OBJ);
-      $rootScope.feeds = _.filter($rootScope.feeds, function (item) {
-        return item.feed_id !== current_feed_id;
+    deleteFeed: function (feed_id) {
+      var deferred = $q.defer();
+
+      ApiClient.delete({
+        url: 'feeds/' + feed_id
+      }).success(function () {
+        $rootScope.feeds = _.filter($rootScope.feeds, function (item) {
+          return item.feed_id !== feed_id;
+        });
+        deferred.resolve();
       });
+
+      return deferred.promise;
     },
     updateFeeds: updateFeeds
   };

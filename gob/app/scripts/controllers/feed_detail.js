@@ -19,16 +19,6 @@ angular.module('pourOver')
     }
   }
 
-
-  var serialize_feed = function (feed) {
-    _.each(['linked_list_mode', 'include_thumb', 'include_summary', 'include_video'], function (el) {
-      if (!feed[el]) {
-        delete feed[el];
-      }
-    });
-    return feed;
-  };
-
   $scope.feed_error = undefined;
   $scope.$watch('feed', _.debounce(function () {
     var preview_url = 'feed/preview';
@@ -42,7 +32,7 @@ angular.module('pourOver')
     jQuery('.loading-icon').show();
     ApiClient.get({
       url: preview_url,
-      params: serialize_feed($rootScope.feed)
+      params: Feeds.serialize_feed($rootScope.feed)
     }).error(function () {
       jQuery('.loading-icon').hide();
     }).success(function (resp, status, headers, config) {
@@ -99,7 +89,7 @@ angular.module('pourOver')
     }
     ApiClient.post({
       url: url,
-      data: serialize_feed($rootScope.feed)
+      data: Feeds.serialize_feed($rootScope.feed)
     }).success(function (resp, status, headers, config) {
       if (resp.data && resp.data.feed_id) {
         if (!$rootScope.feed.feed_id) {
@@ -121,15 +111,14 @@ angular.module('pourOver')
     if (!sure) {
       return false;
     }
+
     var feed_id = $rootScope.feed.feed_id;
-    ApiClient.delete({
-      url: 'feeds/' + $rootScope.feed.feed_id
-    }).success(function () {
-      Feeds.deleteCurrentFeed();
+    Feeds.deleteFeed(feed_id).then(function () {
       delete $scope.published_entries;
       delete $scope.unpublished_entries;
-      $location.path('/feed/new/');
+      $location.path('/');
     });
+
   };
 
   $scope.entryStatus = function (entry) {
