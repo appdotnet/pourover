@@ -431,6 +431,10 @@ class Feed(ndb.Model):
         ctx = ndb.get_context()
         resp = yield ctx.urlfetch(self.hub, method='POST', payload=form_data)
         logger.info('PuSH Subscribe request hub:%s status_code:%s response:%s', self.hub, resp.status_code, resp.content)
+        if resp.status_code == 402:
+            logger.info('Removing %s because we got a 402', self.feed_url)
+            self.hub = None
+            yield self.put_async()
 
     @classmethod
     @ndb.tasklet

@@ -68,7 +68,7 @@ def fetch_url(url, etag=None):
 
     except urlfetch.DownloadError, e:
         logger.info('Failed to download feed: %s', url)
-        # logger.exception(e)
+        logger.exception(e)
         raise FetchException('Failed to fetch that URL.')
     except urlfetch.DeadlineExceededError:
         logger.info('Feed took too long: %s', url)
