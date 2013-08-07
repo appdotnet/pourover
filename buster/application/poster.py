@@ -219,6 +219,7 @@ def get_link_for_item(feed, item):
 
 @ndb.tasklet
 def get_image_from_url(url):
+    # logger.info('Downloading image %s', url)
     ctx = ndb.get_context()
     try:
         resp = yield ctx.urlfetch(url, deadline=60)
@@ -303,7 +304,10 @@ def find_thumbnail(item, meta_tags, image_strategy_blacklist=None):
         twitter = meta_tags.get('twitter', {})
 
         meta_tags_image_url = og.get('image', twitter.get('image'))
-        if meta_tags_image_url:
+        if meta_tags_image_url and isinstance(meta_tags_image_url, dict):
+            raise ndb.Return(image_dict(meta_tags_image_url['url'], meta_tags_image_url['width'],
+                             meta_tags_image_url['height']))
+        elif meta_tags_image_url:
             image = yield get_image_from_url(meta_tags_image_url)
             if image and image_fits(image.width, image.height):
                 raise ndb.Return(image_dict(meta_tags_image_url, image.width, image.height))
@@ -381,11 +385,16 @@ def get_meta_data_for_url(url):
 
     try:
         resp = yield ctx.urlfetch(url=url, deadline=60, follow_redirects=True)
-    except Exception:
+    except Exception, e:
         logger.exception('Failed to fetch meta data for %s' % url)
         raise ndb.Return({})
 
-    doc = html.parse(StringIO.StringIO(resp.content))
+    try:
+        doc = html.parse(StringIO.StringIO(resp.content))
+    except Exception, e:
+        logger.exception('Failed to parse some html %s' % (e))
+        raise ndb.Return({})
+
     data = {
         'meta_tags': parse_meta_data(doc),
         'images_in_html': parse_images(doc),
@@ -465,7 +474,7 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
 
     thumbnail = None
     try:
-        thumbnail = yield find_thumbnail(item, kwargs['meta_tags'], feed.image_strategy_blacklist)
+        thumbnail = yield find_thumbnail(item, kwargs.get('meta_tags', {}), feed.image_strategy_blacklist)
         if thumbnail:
             kwargs.update(thumbnail)
     except Exception, e:

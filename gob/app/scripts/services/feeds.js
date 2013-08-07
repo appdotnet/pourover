@@ -14,28 +14,33 @@ angular.module('pourOver').factory('Feeds', ['$rootScope', 'ApiClient', function
   $rootScope.feeds = [];
   var selected_feed = false;
   var new_feed = false;
-  ApiClient.get({
-    url: 'feeds'
-  }).success(function (resp) {
-    if (resp.data && resp.data.length) {
-      $rootScope.feeds = resp.data;
-      if (new_feed) {
-        new_feed = false;
-        return;
-      }
-      if (!selected_feed) {
-        $rootScope.feed = resp.data[0];
-      } else {
-        _.each($rootScope.feeds, function (item) {
-          if (item.feed_id === +selected_feed) {
-            $rootScope.feed = item;
-          }
-        });
-        selected_feed = false;
-      }
-    }
-  });
 
+  var updateFeeds = function () {
+    ApiClient.get({
+      url: 'feeds'
+    }).success(function (resp) {
+      if (resp.data && resp.data.length) {
+        $rootScope.feeds = resp.data;
+        console.log($rootScope.feeds);
+        if (new_feed) {
+          new_feed = false;
+          return;
+        }
+        if (!selected_feed) {
+          $rootScope.feed = resp.data[0];
+        } else {
+          _.each($rootScope.feeds, function (item) {
+            if (item.feed_id === +selected_feed) {
+              $rootScope.feed = item;
+            }
+          });
+          selected_feed = false;
+        }
+      }
+    });
+  };
+
+  updateFeeds();
 
   return {
     DEFAULT_FEED_OBJ: DEFAULT_FEED_OBJ,
@@ -57,7 +62,8 @@ angular.module('pourOver').factory('Feeds', ['$rootScope', 'ApiClient', function
       $rootScope.feeds = _.filter($rootScope.feeds, function (item) {
         return item.feed_id !== current_feed_id;
       });
-    }
+    },
+    updateFeeds: updateFeeds
   };
 
 }]);

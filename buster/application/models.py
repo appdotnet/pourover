@@ -388,7 +388,7 @@ class Feed(ndb.Model):
 
     @property
     def effective_link(self):
-        return self.title or self.feed_url
+        return self.link or self.feed_url
 
     @classmethod
     def for_user(cls, user):
