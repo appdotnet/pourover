@@ -169,7 +169,7 @@ FAKE_LARGE_IMAGE = get_file_from_data('/data/large_image.jpg')
 FAKE_ACCESS_TOKEN = 'theres_always_posts_in_the_banana_stand'
 
 logger = logging.getLogger()
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.CRITICAL)
 
 
 class BusterTestCase(MockUrlfetchTest):
@@ -1014,6 +1014,22 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert entry.thumbnail_image_url is None
 
+
+    def testFeedMetaDataUpdate(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            max_stories_per_period=1,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1), status_code=200)
+        self.set_response("https://alpha-api.app.net/stream/0/posts", content=FAKE_POST_OBJ_RESP, status_code=400, method="POST")
+        self.pollUpdate()
+
+        assert Entry.query(Entry.overflow==True, Entry.overflow_reason==OVERFLOW_REASON.MALFORMED).count() == 1
 
 if __name__ == '__main__':
     unittest.main()

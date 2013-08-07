@@ -143,6 +143,10 @@ class Entry(ndb.Model):
         elif resp.status_code == 200:
             post_obj = json.loads(resp.content)
             logger.info('Published entry key=%s -> post_id=%s: %s', self.key.urlsafe(), post_obj['data']['id'], post)
+        elif resp.status_code == 400:
+            logger.warn("Couldn't post entry key=%s. Error: %s Post:%s putting on the backlog", self.key.urlsafe(), resp.content, post)
+            self.overflow = True
+            self.overflow_reason = OVERFLOW_REASON.MALFORMED
         else:
             logger.warn("Couldn't post entry key=%s. Error: %s Post:%s", self.key.urlsafe(), resp.content, post)
             raise Exception(resp.content)

@@ -57,6 +57,7 @@ PERIOD_SCHEDULE = DjangoEnum(
 OVERFLOW_REASON = DjangoEnum(
     (1, 'BACKLOG', 'Added from feed backlog'),
     (2, 'FEED_OVERFLOW', 'Feed backed up'),
+    (3, 'MALFORMED', 'This item was malformed'),
 )
 
 
