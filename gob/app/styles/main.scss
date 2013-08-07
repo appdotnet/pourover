@@ -68,6 +68,26 @@
 @import "../components/Ladda/css/ladda.scss";
 //@import "../components/Ladda/css/ladda-theme.scss";
 
+.pourover-heading {
+    margin: 0 auto 20px auto;
+    height: 100px;
+    width: 388px;
+    line-height: 100px;
+    background-size: 100px 100px;
+    background-repeat: no-repeat;
+    background-image: url('/images/pourover-logo.png');
+    @media only screen and (-webkit-min-device-pixel-ratio: 1.5),
+           only screen and (min--moz-device-pixel-ratio: 1.5),
+           only screen and (-o-min-device-pixel-ratio: 3/2),
+           only screen and (min-device-pixel-ratio: 1.5) {
+               background-image: url('/images/pourover-logo@2x.png');
+    }
+    h1 {
+        padding-left: 105px;
+        margin: 0;
+        line-height: 100px;
+    }
+}
 .hero-unit.main {
     padding: 40px;
     font-weight: 400;
@@ -171,15 +191,15 @@ a.adn-button-large, a.adn-button-large:visited {
 .sites-using-pourover {
     margin-top: 25px;
     .span4 {
-        border: 2px solid $white;
+        border: 2px solid $blueDark;
         height: 165px;
         @include opacity(0.9);
         @include border-radius(6px);
         &:hover {
             @include opacity(1.0);
         }
-        &.sites-magazine {
-            background-image: url(/images/sites-magazine.png);
+        &.sites-pitchfork {
+            background-image: url(/images/sites-pitchfork.png);
         }
         &.sites-daring-fireball {
             background-image: url(/images/sites-daring-fireball.png);
