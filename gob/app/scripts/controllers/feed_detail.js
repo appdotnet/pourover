@@ -83,25 +83,11 @@ angular.module('pourOver')
   var updateLoader = Ladda.create(jQuery('[data-save-btn]').get(0));
   $scope.createOrUpdateFeed = function () {
     updateLoader.start();
-    var url = 'feeds';
-    if ($rootScope.feed.feed_id)  {
-      url = 'feeds/' + $rootScope.feed.feed_id;
-    }
-    ApiClient.post({
-      url: url,
-      data: Feeds.serialize_feed($rootScope.feed)
-    }).success(function (resp, status, headers, config) {
-      if (resp.data && resp.data.feed_id) {
-        if (!$rootScope.feed.feed_id) {
-          $rootScope.feed.feed_id = resp.data.feed_id;
-          $location.path('/feed/' + resp.data.feed_id + '/');
-        }
-      } else {
-        window.alert('There was an error saving that feed.');
-      }
-      Feeds.updateFeeds();
+    var method = ($rootScope.feed.feed_id) ? 'updateFeed' : 'createFeed';
+    Feeds[method]($rootScope.feed).then(updateLoader.stop, function () {
       updateLoader.stop();
-    }).error(updateLoader.stop);
+      window.alert('Something wen\'t wrong while saving your feed');
+    });
 
     return false;
   };
