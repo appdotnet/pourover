@@ -11,6 +11,7 @@ import time
 
 from bs4 import BeautifulSoup
 from google.appengine.ext import ndb
+from google.appengine.ext.ndb import polymodel
 from google.appengine.api import urlfetch
 import urllib
 from urlparse import urlparse, parse_qs
@@ -308,16 +309,18 @@ class Entry(ndb.Model):
 
         return q
 
-
-class Feed(ndb.Model):
-    """Keep track of users"""
+class AbstractFeed(polymodel.PolyModel):
     feed_url = ndb.StringProperty()
     title = ndb.StringProperty()
     description = ndb.StringProperty()
-    link = ndb.StringProperty()  # Link is a semantic thing, where as feed_url is a technical thing
-    hub = ndb.StringProperty()
-    subscribed_at_hub = ndb.BooleanProperty(default=False)
-    verify_token = ndb.StringProperty()
+    added = ndb.DateTimeProperty(auto_now_add=True)
+    update_interval = ndb.IntegerProperty(default=UPDATE_INTERVAL.MINUTE_5)
+
+    # Posting Schedule By Default will be auto controlled
+    manual_control = ndb.BooleanProperty(default=False)
+    schedule_period = ndb.IntegerProperty(default=PERIOD_SCHEDULE.MINUTE_5)
+    max_stories_per_period = ndb.IntegerProperty(default=1)
+
     status = ndb.IntegerProperty(default=FEED_STATE.ACTIVE)
     include_summary = ndb.BooleanProperty(default=False)
     include_thumb = ndb.BooleanProperty(default=False)
@@ -325,23 +328,26 @@ class Feed(ndb.Model):
     linked_list_mode = ndb.BooleanProperty(default=False)
     format_mode = ndb.IntegerProperty(default=FORMAT_MODE.LINKED_TITLE)
     template = ndb.TextProperty(default='')
-    added = ndb.DateTimeProperty(auto_now_add=True)
-    update_interval = ndb.IntegerProperty(default=UPDATE_INTERVAL.MINUTE_5)
-    extra_info = ndb.JsonProperty()
-
-    # Posting Schedule By Default will be auto controlled
-    manual_control = ndb.BooleanProperty(default=False)
-    schedule_period = ndb.IntegerProperty(default=PERIOD_SCHEDULE.MINUTE_5)
-    max_stories_per_period = ndb.IntegerProperty(default=1)
 
     etag = ndb.StringProperty()
     language = ndb.StringProperty()
-    hub_secret = ndb.StringProperty()
+
     bitly_login = ndb.StringProperty()
     bitly_api_key = ndb.StringProperty()
     last_fetched_content_hash = ndb.StringProperty()
     last_successful_fetch = ndb.DateTimeProperty()
     feed_disabled = ndb.BooleanProperty(default=False)
+
+    extra_info = ndb.JsonProperty()
+
+class Feed(AbstractFeed):
+    """Keep track of users"""
+
+    link = ndb.StringProperty()  # Link is a semantic thing, where as feed_url is a technical thing
+    hub = ndb.StringProperty()
+    subscribed_at_hub = ndb.BooleanProperty(default=False)
+    verify_token = ndb.StringProperty()
+    hub_secret = ndb.StringProperty()
 
     # Image finding strategies
     image_in_rss = ndb.BooleanProperty(default=True)
