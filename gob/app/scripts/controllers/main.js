@@ -24,12 +24,18 @@
       throttled_updates();
     });
 
-    var updateLoader = Ladda.create(jQuery('[data-save-btn]').get(0));
+    var button = jQuery('[data-save-btn]');
     $scope.createFeed = function () {
+      var updateLoader = button.data('updateLoader');
+      if (!updateLoader) {
+        updateLoader = Ladda.create(button.get(0));
+        button.data('updateLoader', updateLoader);
+      }
+
       updateLoader.start();
-      debugger;
+
       Feeds.createFeed($rootScope.feed).then(function (feed) {
-        $("#newFeedModal").modal('hide');
+        jQuery('#newFeedModal').modal('hide');
         $location.path('/feed/' + feed.feed_id);
       }, function () {
         window.alert('Something wen\'t wrong while saving your feed');
