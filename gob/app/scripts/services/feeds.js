@@ -21,7 +21,6 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
     }).success(function (resp) {
       if (resp.data && resp.data.length) {
         $rootScope.feeds = resp.data;
-
         if (new_feed) {
           new_feed = false;
           return;
@@ -106,6 +105,7 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
         data: _this.serialize_feed(feed)
       }).success(function (resp) {
         if (resp.data && resp.data.feed_id) {
+          selected_feed = feed.feed_id;
           _this.updateFeeds();
         } else {
           deferred.reject();

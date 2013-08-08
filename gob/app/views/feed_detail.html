@@ -1,85 +1,67 @@
-<div ng-include src="'/views/nav.html'"></div>
-<div class='authenticated-app'>
+<div ng-include="" src="'/views/nav.html'"></div>
+<div class="authenticated-app">
+    <div class="row">
+        <div class="span10">
+            <h3><span ng-bind='feed.title'></span> <small class='muted'><a ng-href="{{feed.feed_url}}" class='muted' target='_blank'><i class='icon-external-link'></i></a></small></h3>
+        </div>
+        <div class='span2'>
+            <h3><small><a data-target="#myModal" role="button" class="btn-inline like-link" data-toggle="modal">Advanced Settings</a></small></h3>
+        </div>
+    </div>
     <div class='row'>
-        <div class='span4'>
-            <h3>Feed Configuration</h3>
-            <form class="form-vertical">
-              <input type="hidden" id="feed_id" ng-model='feed.feed_id'>
-              <div class="control-group">
-                  <label class="control-label" for="inputEmail">Feed URL</label>
-                  <div class="controls">
-                    <div class='' ng-hide='feed.feed_id'>
-                      <input type="text" id="inputEmail" placeholder="https://example.com/rss" ng-model='feed.feed_url' ng-show='!feed.feed_id'>
-                      <span class='loading-icon' style='display: none;'>
-                        <i class="icon-refresh icon-spin"></i>
-                      <span>
-                    </div>
-                    <p ng-show='feed.feed_id'>
-                      <a ng-href='{{feed.feed_url}}' ng-bind='feed.feed_url' class='ellipses'></a>
-                    </p>
-                  </div>
-              </div>
-              <div class="control-group">
-                <div class="controls">
-                  <button type="submit" class="btn btn-primary ladda-button" data-save-btn data-style="slide-left" ng-click='createOrUpdateFeed()'><span class='ladda-label' ng-bind="feed.feed_id && 'Update Feed' || 'Save Feed'"></span></button>
-                </div>
-              </div>
-              <p>
-                <small>For more options, check out the <a data-target="#myModal" role="button" class="btn-inline like-link" data-toggle="modal">Advanced Settings.</a></small>
-              </p>
-            </form>
-            <div class="modal hide fade" id='myModal'>
+        <div class='span12'>
+            <div class="modal hide fade" id="myModal">
               <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h3>Advanced Settings</h3>
               </div>
               <div class="modal-body">
-                <form class='form-inline'>
+                <form class="form-inline">
                   <ul class="nav nav-tabs">
-                    <li class="active"><a data-target="#schedule" data-toggle="tab" class='like-link'>Schedule</a></li>
-                    <li><a data-target="#format" data-toggle="tab" class='like-link'>Format</a></li>
-                    <li><a data-target="#options" data-toggle="tab" class='like-link'>Options</a></li>
-                    <li><a data-target="#actions" data-toggle="tab" class='like-link' ng-show='feed.feed_id'>Actions</a></li>
+                    <li class="active"><a data-target="#schedule" data-toggle="tab" class="like-link">Schedule</a></li>
+                    <li><a data-target="#format" data-toggle="tab" class="like-link">Format</a></li>
+                    <li><a data-target="#options" data-toggle="tab" class="like-link">Options</a></li>
+                    <li><a data-target="#actions" data-toggle="tab" class="like-link" ng-show="feed.feed_id">Actions</a></li>
                   </ul>
                   <div class="tab-content">
                     <div class="tab-pane active" id="schedule">
                       <div class="control-group schedule">
                         <div>
                           <span>At most post <span>
-                          <input type='number' value='1' ng-min='1' ng-max='5' name='max_items_per_period' ng-model='feed.max_stories_per_period' ng-bind='feed.max_stories_per_period' class='input-super-mini'>
+                          <input type="number" value="1" ng-min="1" ng-max="5" name="max_items_per_period" ng-model="feed.max_stories_per_period" ng-bind="feed.max_stories_per_period" class="input-super-mini">
                           <span ng-bind="feed.max_stories_per_period == 1 && 'item' || 'items'"></span><span> every</span>
-                          <select class='input-small' ng-model='feed.schedule_period' name='schedule_period' ng-options="c.value as c.label for c in schedule_periods"></select>
-                        </div>
-                        <p><small>If the feed uses <a href='https://code.google.com/p/pubsubhubbub/' target='_blank'>PuSH</a> syndication is realtime.</small></p>
+                          <select class="input-small" ng-model="feed.schedule_period" name="schedule_period" ng-options="c.value as c.label for c in schedule_periods"></select>
+                        </span></span></div>
+                        <p><small>If the feed uses <a href="https://code.google.com/p/pubsubhubbub/" target="_blank">PuSH</a> syndication is realtime.</small></p>
                       </div>
                     </div>
                     <div class="tab-pane" id="format">
-                      <div class='control-group format-mode'>
+                      <div class="control-group format-mode">
                         <p><small>How do you want the title and link to show up in your App.net posts</small></p>
                         <p>
-                          <label class='radio'>
-                            <input type='radio' ng-model='feed.format_mode' value='1'> <span class='like-link'>Just The Story Title Linked</a>
-                          </label>
+                          <label class="radio">
+                            <input type="radio" ng-model="feed.format_mode" value="1"> <span class="like-link">Just The Story Title Linked
+                          </span></label>
                         </p>
                         <p>
-                          <label class='radio'>
-                            <input type='radio' ng-model='feed.format_mode' value='2'> The Story Title By Its Self Then A <span class='like-link'>link.com</span>
+                          <label class="radio">
+                            <input type="radio" ng-model="feed.format_mode" value="2"> The Story Title By Its Self Then A <span class="like-link">link.com</span>
                           </label>
                         </p>
                       </div>
                       <hr>
-                      <div class='control-group format-mode'>
-                        <p><small>Enter your Bit.ly credentials to turn on link shortening. <a href='https://bitly.com/a/your_api_key' target='_blank'>Find your API Key information.</a></small></p>
+                      <div class="control-group format-mode">
+                        <p><small>Enter your Bit.ly credentials to turn on link shortening. <a href="https://bitly.com/a/your_api_key" target="_blank">Find your API Key information.</a></small></p>
                         <div class="control-group">
                           <label class="control-label" for="bitly_login">Bit.ly Login</label>
                           <div class="controls">
-                            <input type='text' name='bitly_login' ng-model='feed.bitly_login'>
+                            <input type="text" name="bitly_login" ng-model="feed.bitly_login">
                           </div>
                         </div>
                         <div class="control-group">
-                          <label class="control-label" for='bitly_api_key'>Bit.ly API Key</label>
+                          <label class="control-label" for="bitly_api_key">Bit.ly API Key</label>
                           <div class="controls">
-                            <input type='text' name='bitly_api_key' ng-model='feed.bitly_api_key'>
+                            <input type="text" name="bitly_api_key" ng-model="feed.bitly_api_key">
                           </div>
                         </div>
                       </div>
@@ -87,28 +69,28 @@
                     <div class="tab-pane" id="options">
                       <div class="control-group">
                           <div class="controls">
-                            <label class='checkbox'>
-                              <input type='checkbox' name='include_summary' ng-model='feed.include_summary'> Include Summary
+                            <label class="checkbox">
+                              <input type="checkbox" name="include_summary" ng-model="feed.include_summary"> Include Summary
                             </label>
-                            <p class='help-block'>
+                            <p class="help-block">
                               <small>Include a portion of the feed item body.</small>
                             </p>
-                            <label class='checkbox'>
-                              <input type='checkbox' name='include_thumb' ng-model='feed.include_thumb'> Include Image
+                            <label class="checkbox">
+                              <input type="checkbox" name="include_thumb" ng-model="feed.include_thumb"> Include Image
                             </label>
-                            <p class='help-block'>
+                            <p class="help-block">
                               <small>If an image is included in the feed item it will be attached to the App.net post as an oEmbed annotation. To be included the image must specify its width and height. Dimension constraints: Min (200 x 200 px) Max (1000 x 1000 px). If both include video, and include image are checked include image will win.</small>
                             </p>
-                            <label class='checkbox'>
-                              <input type='checkbox' name='include_video' ng-model='feed.include_video'> Include Video
+                            <label class="checkbox">
+                              <input type="checkbox" name="include_video" ng-model="feed.include_video"> Include Video
                             </label>
-                            <p class='help-block'>
+                            <p class="help-block">
                               <small>If a video(Youtube/Vimeo) is embedded in the feed item it will be attached to the App.net post as an oEmbed annotation. If both include video, and include image are checked include image will win.</small>
                             </p>
-                            <label class='checkbox'>
-                              <input type='checkbox' name='linked_list' ng-model='feed.linked_list_mode'> Linked List Mode
+                            <label class="checkbox">
+                              <input type="checkbox" name="linked_list" ng-model="feed.linked_list_mode"> Linked List Mode
                             </label>
-                            <p class='help-block'>
+                            <p class="help-block">
                               <small>Use Linked List Mode if you run a link blog and you want the title to be linked to your website instead of the post permalink.</small>
                             </p>
                           </div>
@@ -117,9 +99,9 @@
                     <div class="tab-pane" id="actions">
                       <div class="control-group">
                         <div class="controls">
-                          <p>Delete your feed?<p>
-                          <p><a class='btn btn-danger' data-dismiss="modal" ng-click='deleteFeed()'>Delete Feed</a>
-                        </div>
+                          <p>Delete your feed?</p><p>
+                          </p><p><a class="btn btn-danger" data-dismiss="modal" ng-click="deleteFeed()">Delete Feed</a>
+                        </p></div>
                       </div>
                     </div>
                   </div>
@@ -127,51 +109,53 @@
               </div>
               <div class="modal-footer">
                 <a href="#" class="btn" data-dismiss="modal">Close</a>
-                  <button type="submit" class="btn btn-primary ladda-button" data-dismiss="modal" data-save-btn data-style="slide-left" ng-click='createOrUpdateFeed()'><span class='ladda-label' ng-bind="feed.feed_id && 'Update Feed' || 'Save Feed'"></span></button>
+                  <button type="submit" class="btn btn-primary ladda-button" data-dismiss="modal" data-save-btn="" data-style="slide-left" ng-click="createOrUpdateFeed()"><span class="ladda-label" ng-bind="feed.feed_id && 'Update Feed' || 'Save Feed'"></span></button>
               </div>
             </div>
-        </div>
-        <div class='span8' ng-show='posts && feed.feed_url'>
-            <h3>Feed Preview</h3>
-            <div class="media" ng-repeat="post in posts">
-              <span class="pull-left">
-                <img class="media-object " ng-src='{{ current_user.avatar_image.url }}' width='50px' height='50px'>
-              </span>
-              <div class="media-body">
-                <b class="media-heading"><span ng-bind="current_user.username"></span></b>
-                <span class='pull-right' ng-show='post.thumbnail_image_url'>
-                  <img class='media-object' ng-src='{{ post.thumbnail_image_url }}' width='100px'>
-                </span>
-                <div class='media-body'>
-                  <p ng-bind-html-unsafe='post.html'></p>
-                </div>
-              </div>
-            </div>
-            <p ng-show='feed.bitly_api_key && feed.bitly_login'><small>Links will be shortened with Bit.ly when they are published.</small></p>
-        </div>
-        <div class='span8' ng-hide='posts && feed.feed_url'>
-          <h3>Feed Preview</h3>
-          <p ng-hide='feed_error && feed.feed_url'>Add a feed url to see an approximation of what the App.net posts would look like.</p>
-          <p ng-show='feed_error && feed.feed_url' class='alert error' ng-bind='feed_error'></p>
         </div>
     </div>
     <div class='row'>
-      <hr>
-      <div class='span6'>
-        <h4>Future Entries</h4>
-        <div ng-show='unpublished_entries'>
-          <div ng-repeat='entry in unpublished_entries' ng-include="'/views/entry.html'"></div>
+        <div class="span8" ng-show="posts && feed.feed_url">
+            <h5>Feed Preview</h5>
+            <div class="media" ng-repeat="post in posts">
+              <span class="pull-left">
+                <img class="media-object" ng-src="{{ current_user.avatar_image.url }}" width="50px" height="50px">
+              </span>
+              <div class="media-body">
+                <b class="media-heading"><span ng-bind="current_user.username"></span></b>
+                <span class="pull-right" ng-show="post.thumbnail_image_url">
+                  <img class="media-object" ng-src="{{ post.thumbnail_image_url }}" width="100px">
+                </span>
+                <div class="media-body">
+                  <p ng-bind-html-unsafe="post.html"></p>
+                </div>
+              </div>
+            </div>
+            <p ng-show="feed.bitly_api_key && feed.bitly_login"><small>Links will be shortened with Bit.ly when they are published.</small></p>
         </div>
-        <div ng-show='!unpublished_entries || unpublished_entries == []'>
+        <div class="span8" ng-hide="posts && feed.feed_url">
+          <h3>Feed Preview</h3>
+          <p ng-hide="feed_error && feed.feed_url">Add a feed url to see an approximation of what the App.net posts would look like.</p>
+          <p ng-show="feed_error && feed.feed_url" class="alert error" ng-bind="feed_error"></p>
+        </div>
+    </div>
+    <div class="row">
+      <hr>
+      <div class="span6">
+        <h4>Future Entries</h4>
+        <div ng-show="unpublished_entries">
+          <div ng-repeat="entry in unpublished_entries" ng-include="'/views/entry.html'"></div>
+        </div>
+        <div ng-show="!unpublished_entries || unpublished_entries == []">
           <p>There are no unpublished entries at this time.</p>
         </div>
       </div>
-      <div class='span6'>
+      <div class="span6">
         <h4>Past Entries</h4>
-        <div ng-show='published_entries'>
-          <div ng-repeat='entry in published_entries' ng-include="'/views/entry.html'"></div>
+        <div ng-show="published_entries">
+          <div ng-repeat="entry in published_entries" ng-include="'/views/entry.html'"></div>
         </div>
-        <div ng-show='!published_entries || published_entries == []'>
+        <div ng-show="!published_entries || published_entries == []">
           <p>There are no past entries at this time.</p>
         </div>
       </div>
