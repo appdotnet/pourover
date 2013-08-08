@@ -347,7 +347,7 @@ class Feed(ndb.Model):
         return set(blacklist)
 
     @ndb.tasklet
-    def update_feed_from_parsed_feed(self, parsed_feed):
+    def update_feed_from_parsed_feed(self, parsed_feed, save=False):
         if not parsed_feed:
             raise ndb.Return()
 
@@ -376,7 +376,9 @@ class Feed(ndb.Model):
             self.link = link
             self.title = title
             self.description = description
-            yield self.put_async()
+            raise ndb.Return(True)
+
+        raise ndb.Return(False)
 
     @property
     def effective_title(self):
@@ -442,11 +444,14 @@ class Feed(ndb.Model):
         # Sync pull down the latest feeds
 
         parsed_feed, num_new_entries = yield Entry.update_for_feed(feed, overflow=overflow, overflow_reason=overflow_reason)
-
+        updated = False
         try:
-            yield feed.update_feed_from_parsed_feed(parsed_feed)
+            updated = yield feed.update_feed_from_parsed_feed(parsed_feed)
         except Exception, e:
             logger.exception(e)
+
+        if updated:
+            yield feed.put_async()
 
         hub_url = None
         feed_links = parsed_feed.feed.links if 'links' in parsed_feed.feed else []

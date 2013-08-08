@@ -6,18 +6,14 @@
     <tr>
       <th>Title</th>
       <th>Link</th>
-      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
     <tr ng-repeat='feed in feeds'>
-      <td ng-bind='feed.title'></td>
-      <td ng-bind='feed.feed_url'></td>
       <td>
-        <a ng-href='/feed/{{feed.feed_id}}/'>
-          edit
-        </a>
+        <a ng-href='/feed/{{feed.feed_id}}/' ng-bind='feed.title'></a>
       </td>
+      <td ng-bind='feed.feed_url'></td></td>
     </tr>
   </tbody>
 </table>
@@ -31,26 +27,26 @@
   </div>
   <div class="modal-body">
     <form class="form-vertical">
-      <div class="control-group">
-          <label class="control-label">Feed URL</label>
-          <div class="controls">
-            <div>
-              <input type="text" placeholder="https://example.com/rss" ng-model='feed.feed_url'>
-              <span class='loading-icon' style='display: none;'>
-                <i class="icon-refresh icon-spin"></i>
-              <span>
-            </div>
-          </div>
+      <label class="control-label">Feed URL</label>
+      <div class="controls">
+        <input type="text" placeholder="https://example.com/rss" ng-model='feed.feed_url' class='span5'>
+        <span class='loading-icon' style='display: none;'>
+          <i class="icon-refresh icon-spin"></i>
+        <span>
       </div>
-      <div class="control-group">
-        <div class="controls">
-          
+      <div ng-show='valid_feed'>
+        <h5>Found a Feed</h5>
+        <div class='ellipses'>
+          <b>Name:</b> <span ng-bind='feed.title'></span>
+        </div>
+        <div class='ellipses'>
+          <b>Feed URL:</b><span ng-bind='feed.feed_url'></span>
         </div>
       </div>
     </form>
   </div>
   <div class="modal-footer">
-    <a href="#" class="btn">Close</a>
-    <a type="submit" class="btn btn-primary ladda-button" data-save-btn data-style="slide-left" ng-click='createFeed()' ng-disabled='feed_good'><span class='ladda-label'>Save Feed</span></a>
+    <a href="#" class="btn" data-close data-dismiss="modal">Close</a>
+    <button type="submit" class="btn btn-primary ladda-button" data-save-btn data-style="slide-left" ng-click='createFeed()' ng-disabled='!valid_feed'><span class='ladda-label'>Save Feed</span></button>
   </div>
 </div>

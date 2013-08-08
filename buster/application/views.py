@@ -20,7 +20,7 @@ from flask_cache import Cache
 from application import app
 from constants import UPDATE_INTERVAL
 from models import Entry, Feed, Stat
-from fetcher import FetchException
+from fetcher import FetchException, fetch_parsed_feed_for_feed
 from forms import FeedCreate, FeedUpdate, FeedPreview
 from utils import write_epoch_to_stat, get_epoch_from_stat
 
@@ -96,13 +96,13 @@ def feed_create():
 
     return jsonify(status='ok', data=feed.to_json())
 
-
 @app.route('/api/feed/preview', methods=['GET'])
+@ndb.synctasklet
 def feed_preview():
     """preview a feed"""
     form = FeedPreview(request.args)
     if not form.validate():
-        return jsonify(status='error', form_errors=form.errors)
+        raise ndb.Return(jsonify(status='error', form_errors=form.errors))
 
     feed = Feed()
     form.populate_obj(feed)
@@ -123,9 +123,36 @@ def feed_preview():
         error = 'The feed doesn\'t have any entries'
 
     if error:
-        return jsonify(status='error', message=error)
+        raise ndb.Return(jsonify(status='error', message=error))
 
-    return jsonify(status='ok', data=entries[0:2])
+    raise ndb.Return(jsonify(status='ok', data=entries[0:2]))
+
+@app.route('/api/feeds/validate', methods=['POST'])
+@ndb.synctasklet
+def feed_validate():
+    """preview a feed"""
+    form = FeedPreview(request.form)
+    if not form.validate():
+        raise ndb.Return(jsonify(status='error', form_errors=form.errors))
+
+    feed = Feed()
+    form.populate_obj(feed)
+    feed.preview = True
+    error = None
+
+    try:
+        parsed_feed, resp = yield fetch_parsed_feed_for_feed(feed)
+        feed.update_feed_from_parsed_feed(parsed_feed)
+    except FetchException, e:
+        error = unicode(e)
+    except:
+        error = 'Something went wrong while fetching your URL.'
+        logger.exception('Feed Preview: Failed to update feed:%s' % (feed.feed_url, ))
+
+    if error:
+        raise ndb.Return(jsonify(status='error', message=error))
+
+    raise ndb.Return(jsonify(status='ok', data=feed.to_json()))
 
 
 @app.route('/api/feeds/<int:feed_id>', methods=['GET'])

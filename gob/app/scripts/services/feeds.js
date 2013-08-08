@@ -67,17 +67,16 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
     validateFeed: function (feed) {
       var deferred = $q.defer();
       var _this = this;
-
       ApiClient.post({
         url: 'feeds/validate',
         data: _this.serialize_feed(feed)
-      }).then(function (resp) {
+      }).success(function (resp) {
         if (resp.status === 'ok') {
-          deferred.resolve();
+          deferred.resolve(resp.data);
           return;
         }
         deferred.reject();
-      }, deferred.reject);
+      }).error(deferred.reject);
 
       return deferred.promise;
     },
@@ -91,10 +90,10 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
         if (resp.data && resp.data.feed_id) {
           feed.feed_id = resp.data.feed_id;
           _this.updateFeeds();
+          deferred.resolve(resp.data);
         } else {
           deferred.reject();
         }
-        deferred.resolve();
       }, deferred.reject);
 
       return deferred.promise;

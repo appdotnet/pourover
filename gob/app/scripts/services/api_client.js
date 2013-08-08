@@ -14,6 +14,7 @@ angular.module('pourOver').factory('ApiClient', ['$rootScope', '$http', function
         conf.data = jQuery.param(conf.data);
         conf.headers['Content-Type'] = 'application/x-www-form-urlencoded';
       }
+
       return $http(conf);
     };
   };

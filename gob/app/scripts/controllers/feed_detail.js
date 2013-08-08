@@ -11,16 +11,8 @@ angular.module('pourOver')
     {label: '60 mins', value: 60},
   ];
 
-  if ($routeParams.feed_id) {
-    if ($routeParams.feed_id !== 'new') {
-      Feeds.setFeed($routeParams.feed_id);
-    } else {
-      Feeds.setNewFeed();
-    }
-  }
-
   $scope.feed_error = undefined;
-  $scope.$watch('feed', _.debounce(function () {
+  $scope.$watch('feed', function () {
     var preview_url = 'feed/preview';
     if($rootScope.feed.feed_id) {
       preview_url = 'feeds/' + $rootScope.feed.feed_id + '/preview';
@@ -45,7 +37,9 @@ angular.module('pourOver')
       }
       jQuery('.loading-icon').hide();
     });
-  }, 300), true);
+  }, true);
+
+  Feeds.setFeed($routeParams.feed_id);
 
   var refreshEntries = function () {
     ApiClient.get({

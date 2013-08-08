@@ -132,10 +132,14 @@ def fetch_parsed_feed_for_feed(feed):
     # Need to update something in the database
     if not feed.link:
         parsed_feed = feedparser.parse(resp.content)
+        updated = False
         try:
-            yield feed.update_feed_from_parsed_feed(parsed_feed)
+            updated = yield feed.update_feed_from_parsed_feed(parsed_feed)
         except Exception, e:
             logger.exception(e)
+
+        if updated:
+            yield feed.put_async()
 
     feed.last_successful_fetch = now
     yield feed.put_async()
