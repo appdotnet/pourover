@@ -27,7 +27,7 @@ angular.module('pourOver')
       params: Feeds.serialize_feed($rootScope.feed)
     }).error(function () {
       jQuery('.loading-icon').hide();
-    }).success(function (resp, status, headers, config) {
+    }).success(function (resp) {
       if (resp.status === 'ok') {
         $scope.posts = resp.data;
         $scope.feed_error = undefined;
@@ -46,13 +46,17 @@ angular.module('pourOver')
       url: 'feeds/' + $rootScope.feed.feed_id + '/latest'
     }).success(function (resp) {
       if (resp.data && resp.data.entries) {
-        $scope.published_entries = resp.data.entries;
+        var blah = _.groupBy(resp.data.entries, function (x) {
+          return x.overflow_reason;
+        });
+        $scope.all_published_entries = resp.data.entries;
+        $scope.published_entries = blah.undefined;
       }
     });
 
     ApiClient.get({
       url: 'feeds/' + $rootScope.feed.feed_id + '/unpublished'
-    }).success(function (resp, status, headers, config) {
+    }).success(function (resp) {
       if (resp.data && resp.data.entries) {
         $scope.unpublished_entries = resp.data.entries;
       }
@@ -74,8 +78,13 @@ angular.module('pourOver')
     refreshEntries();
   });
 
-  var updateLoader = Ladda.create(jQuery('[data-save-btn]').get(0));
   $scope.createOrUpdateFeed = function () {
+    var button = jQuery('[data-save-btn]');
+    var updateLoader = button.data('updateLoader');
+    if (!updateLoader) {
+      updateLoader = Ladda.create(button.get(0));
+      button.data('updateLoader', updateLoader);
+    }
     updateLoader.start();
     var method = ($rootScope.feed.feed_id) ? 'updateFeed' : 'createFeed';
     Feeds[method]($rootScope.feed).then(updateLoader.stop, function () {
@@ -110,6 +119,22 @@ angular.module('pourOver')
 
     if (entry.overflow_reason) {
       status = entry.overflow_reason;
+    }
+
+    return status;
+  };
+
+  $scope.entryAction = function (entry) {
+    var status = 'Republish Now';
+
+    if (entry.published) {
+      status = 'Republish Now';
+    } else {
+      status = 'Publish Now';
+    }
+
+    if (entry.overflow_reason) {
+      status = 'Try Publishing Now';
     }
 
     return status;

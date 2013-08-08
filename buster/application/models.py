@@ -7,7 +7,7 @@ App Engine datastore models
 import logging
 import uuid
 from datetime import datetime, timedelta
-
+import time
 
 from bs4 import BeautifulSoup
 from google.appengine.ext import ndb
@@ -70,8 +70,8 @@ class Entry(ndb.Model):
     meta_tags = ndb.JsonProperty()
     images_in_html = ndb.JsonProperty(repeated=True)
 
-    def to_json(self, include=None, feed=None, format=False):
-        include = include or []
+    def to_json(self, feed=None, format=False):
+        include = ['title', 'link', 'published', 'published_at', 'added']
         data = {}
         for attr in include:
             data[attr] = getattr(self, attr, None)
@@ -81,6 +81,12 @@ class Entry(ndb.Model):
 
         if self.key:
             data['id'] = self.key.urlsafe()
+
+        if self.published_at:
+            data['published_at_in_secs'] = time.mktime(self.published_at.timetuple())
+
+        if self.added:
+            data['added_at_in_secs'] = time.mktime(self.added.timetuple())
 
         feed = feed or self.key.parent().get()
         if format:
