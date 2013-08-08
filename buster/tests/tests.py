@@ -577,10 +577,8 @@ class BusterTestCase(MockUrlfetchTest):
         self.setMockUser()
         self.set_rss_response('http://techcrunch.com/feed/', content=self.buildRSS('test'), status_code=200)
         self.set_response('http://techcrunch.com', content=HTML_PAGE_TEMPLATE, status_code=200, headers={'Content-Type': 'text/html'})
-        resp = self.app.get('/api/feed/preview?feed_url=http://techcrunch.com', headers=self.authHeaders())
-        assert 1 == len(json.loads(resp.data)['data'])
 
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url='http://techcrunch.com',
             max_stories_per_period=1,
             schedule_period=5,
@@ -589,42 +587,35 @@ class BusterTestCase(MockUrlfetchTest):
         feed = Feed.query().get()
         assert feed.feed_url == 'http://techcrunch.com/feed/'
 
-    def testFeedPreview(self):
-        self.setMockUser()
-        self.set_rss_response('http://techcrunch.com/feed/', content=self.buildRSS('test'), status_code=200)
-        resp = self.app.get('/api/feed/preview?feed_url=http://techcrunch.com/feed/', headers=self.authHeaders())
-        assert 1 == len(json.loads(resp.data)['data'])
-        self.set_rss_response('http://techcrunch.com/feed/2', content=self.buildRSS('test'), status_code=500)
-        resp = self.app.get('/api/feed/preview?feed_url=http://techcrunch.com/feed/2', headers=self.authHeaders())
-        assert json.loads(resp.data)['message']
-
-        test_feed_url = 'http://example.com/rss'
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test'), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
-            feed_url=test_feed_url,
-            include_summary=True,
-            max_stories_per_period=2,
-            schedule_period=5,
-        ), headers=self.authHeaders())
-
-        assert 1 == Entry.query(Entry.published == True, Entry.overflow == True).count()
-        feed = Feed.query().get()
-        resp = self.app.get('/api/feeds/%s/preview' % (feed.key.id(), ), headers=self.authHeaders())
-        assert 'data' in json.loads(resp.data)
-
     def testLinkedListMode(self):
         self.setMockUser()
         data = get_file_from_data('/data/df_feed.xml')
         self.set_rss_response('http://daringfireball.net/index.xml', content=data)
         self.set_response('http://daringfireball.net/linked/2013/07/17/pourover', content=HTML_PAGE_TEMPLATE_WITH_META)
         self.set_response('http://blog.app.net/2013/07/15/pourover-for-app-net-is-now-available/', content=HTML_PAGE_TEMPLATE_WITH_META)
-        resp = self.app.get('/api/feed/preview?feed_url=http://daringfireball.net/index.xml', headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0]['html'] == "<span><a href='http://blog.app.net/2013/07/15/pourover-for-app-net-is-now-available/?utm_medium=App.net&utm_source=PourOver'>PourOver for App.net</a></span>"
 
-        resp = self.app.get('/api/feed/preview?linked_list_mode=true&feed_url=http://daringfireball.net/index.xml', headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0]['html'] == "<span><a href='http://daringfireball.net/linked/2013/07/17/pourover?utm_medium=App.net&utm_source=PourOver'>PourOver for App.net</a></span>"
+        self.app.post('/api/feeds', data=dict(
+            feed_url='http://daringfireball.net/index.xml',
+            max_stories_per_period=1,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        entry = Entry.query().get()
+        assert entry.link == 'http://blog.app.net/2013/07/15/pourover-for-app-net-is-now-available/'
+
+        entry.key.delete()
+        Feed.query().get().key.delete()
+
+        self.app.post('/api/feeds', data=dict(
+            feed_url='http://daringfireball.net/index.xml',
+            max_stories_per_period=1,
+            schedule_period=5,
+            linked_list_mode='true',
+        ), headers=self.authHeaders())
+
+        entry = Entry.query().get()
+        assert entry.link == 'http://daringfireball.net/linked/2013/07/17/pourover'
+
 
     def testSingleItemPublish(self):
         self.setMockUser()
@@ -757,13 +748,20 @@ class BusterTestCase(MockUrlfetchTest):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
-        resp = self.app.get('/api/feed/preview?feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
+        feed = Feed(
+            feed_url=test_feed_url,
+            include_summary=False
+        )
+        feed.put()
+        Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG).get_result()
+        entry_json = Entry.query().get().to_json(format=True)      
+        assert entry_json['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
 
-        resp = self.app.get('/api/feed/preview?include_summary=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>test</span>"
+        feed.include_summary = True
+        feed.put()
+        entry_json = Entry.query().get().to_json(format=True)
+
+        assert entry_json['html']  == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>test</span>"
 
     def testIncludeVideo(self):
         self.setMockUser()
@@ -779,10 +777,17 @@ class BusterTestCase(MockUrlfetchTest):
             for embed_type in embed_types:
                 description = embed_type % url
                 self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
-                resp = self.app.get('/api/feed/preview?include_video=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-                data = json.loads(resp.data)
-                assert data['data'][0]['thumbnail_image_url'] == thumbnail_url
-                assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
+                feed = Feed(
+                    feed_url=test_feed_url,
+                    include_video=True
+                )
+                Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG).get_result()
+                entry = Entry.query().get().to_json(format=True)
+                assert entry['thumbnail_image_url'] == thumbnail_url
+                assert entry['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
+                Entry.query().get().key.delete()
+                feed.key.delete()
+
 
     def testThumbnail(self):
         self.setMockUser()
@@ -805,14 +810,20 @@ class BusterTestCase(MockUrlfetchTest):
 
                 for i in range(0, 1):
                     self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, **kwargs), status_code=200)
-                    resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-                    data = json.loads(resp.data)
+                    feed = Feed(
+                        feed_url=test_feed_url,
+                        include_thumb=True
+                    )
+                    Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG).get_result()
+                    entry = Entry.query().get().to_json(format=True)
+
                     if should_work:
                         #print '%s %s %s' % (embed_type, data['data'][0].get('thumbnail_image_url'), url)
-                        assert data['data'][0].get('thumbnail_image_url') == url
+                        assert entry.get('thumbnail_image_url') == url
                     else:
-                        assert data['data'][0].get('thumbnail_image_url') is None
-
+                        assert entry.get('thumbnail_image_url') is None
+                    Entry.query().get().key.delete()
+                    feed.key.delete()
                     kwargs.update({
                         'width': width,
                         'height': height,
@@ -824,22 +835,25 @@ class BusterTestCase(MockUrlfetchTest):
             html = HTML_PAGE_TEMPLATE_WITH_META % ({'unique_key': 'test_0'})
             html = html.replace('http://i1.ytimg.com/vi/ABm7DuBwJd8/hqdefault.jpg?feature=og', url)
             self.set_response('http://example.com/buster/test_0', content=html, method='GET')
-            resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-            data = json.loads(resp.data)
+            feed = Feed(
+                feed_url=test_feed_url,
+                include_thumb=True
+            )
+            Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG).get_result()
+            entry = Entry.query().get().to_json(format=True)
             if should_work:
-                assert data['data'][0].get('thumbnail_image_url') == url
+                assert entry.get('thumbnail_image_url') == url
             else:
-                assert data['data'][0].get('thumbnail_image_url') is None
+                assert entry.get('thumbnail_image_url') is None
+
+            Entry.query().get().key.delete()
+            feed.key.delete()
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1'), status_code=200)
         self.set_response('http://example.com/buster/test1_0', content=HTML_PAGE_TEMPLATE_WITH_IMAGES, method='GET')
         resp = self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
         ), headers=self.authHeaders())
-
-        resp = self.app.get('/api/feed/preview?include_thumb=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0].get('thumbnail_image_url') is None
 
         feed = Feed.query().get()
         feed.image_in_html = True
@@ -850,6 +864,19 @@ class BusterTestCase(MockUrlfetchTest):
         self.pollUpdate()
         assert Entry.query().fetch(2)[1].thumbnail_image_url == "http://example.com/good.jpg"
 
+    def createFeed(self, **kwargs):
+        feed = Feed(**kwargs)
+        Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG).get_result()
+        entry = Entry.query().get()
+
+        self.feed = feed
+        self.entry = entry
+        return feed, entry
+
+    def cleanFeed(self):
+        self.feed.key.delete()
+        self.entry.key.delete()
+
     def testIncludeSummarySentanceSplit(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
@@ -857,25 +884,25 @@ class BusterTestCase(MockUrlfetchTest):
         sentance_2 = ' Dxx Dxx.'
         description  = sentance_1 + sentance_2
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
-        resp = self.app.get('/api/feed/preview?include_summary=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1)
+        feed, entry = self.createFeed(include_summary=True, feed_url=test_feed_url)
+        assert entry.to_json(format=True)['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1)
+        self.cleanFeed()
 
         sentance_1 = 'x' * 201 + '.'
         sentance_2 = ' xxx.'
         description  = sentance_1 + sentance_2
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
-        resp = self.app.get('/api/feed/preview?include_summary=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1[0:199] + u"\u2026")
+        feed, entry = self.createFeed(include_summary=True, feed_url=test_feed_url)
+        assert entry.to_json(format=True)['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1[0:199] + u"\u2026")
+        self.cleanFeed()
 
         sentances = ['Dog ' * 11 + '.' for i in range(0, 8)]
         description = ' '.join(sentances)
         expected = ' '.join(['Dog ' * 11 + '.' for i in range(0, 4)])
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
-        resp = self.app.get('/api/feed/preview?include_summary=1&feed_url=%s' % (test_feed_url), headers=self.authHeaders())
-        data = json.loads(resp.data)
-        assert data['data'][0]['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (expected)
+        feed, entry = self.createFeed(include_summary=True, feed_url=test_feed_url)
+        assert entry.to_json(format=True)['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (expected)
+        self.cleanFeed()
 
     def testShortUrl(self):
         self.setMockUser()

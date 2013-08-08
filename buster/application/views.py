@@ -96,36 +96,6 @@ def feed_create():
 
     return jsonify(status='ok', data=feed.to_json())
 
-@app.route('/api/feed/preview', methods=['GET'])
-@ndb.synctasklet
-def feed_preview():
-    """preview a feed"""
-    form = FeedPreview(request.args)
-    if not form.validate():
-        raise ndb.Return(jsonify(status='error', form_errors=form.errors))
-
-    feed = Feed()
-    form.populate_obj(feed)
-    feed.preview = True
-    entries = []
-    error = None
-
-    try:
-        entries = Entry.entry_preview_for_feed(feed)
-    except FetchException, e:
-        error = unicode(e)
-    except:
-        raise
-        error = 'Something went wrong while fetching your URL.'
-        logger.exception('Feed Preview: Failed to update feed:%s' % (feed.feed_url, ))
-
-    if not entries and not error:
-        error = 'The feed doesn\'t have any entries'
-
-    if error:
-        raise ndb.Return(jsonify(status='error', message=error))
-
-    raise ndb.Return(jsonify(status='ok', data=entries[0:2]))
 
 @app.route('/api/feeds/validate', methods=['POST'])
 @ndb.synctasklet
