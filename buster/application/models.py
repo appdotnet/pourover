@@ -19,10 +19,10 @@ import json
 
 from flask import url_for
 from fetcher import fetch_parsed_feed_for_url, fetch_parsed_feed_for_feed
-from constants import ENTRY_STATE, FEED_STATE, FORMAT_MODE, UPDATE_INTERVAL, PERIOD_SCHEDULE, OVERFLOW_REASON
+from constants import (ENTRY_STATE, FEED_STATE, FORMAT_MODE, UPDATE_INTERVAL, PERIOD_SCHEDULE, OVERFLOW_REASON,
+                       DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD)
 from poster import build_html_from_post, format_for_adn, prepare_entry_from_item
-from utils import get_language, guid_for_item, find_feed_url
-
+from utils import get_language, guid_for_item, find_feed_url 
 
 logger = logging.getLogger(__name__)
 
@@ -177,11 +177,18 @@ class Entry(ndb.Model):
     @classmethod
     @ndb.tasklet
     def publish_for_feed(cls, feed, skip_queue=False):
+ 
+        minutes_schedule = DEFAULT_PERIOD_SCHEDULE
+        max_stories_to_publish = MAX_STORIES_PER_PERIOD
+        if feed.manual_control:
+            minutes_schedule = feed.schedule_period
+            max_stories_to_publish = feed.max_stories_per_period
+
         # How many stories have been published in the last period_length
         now = datetime.now()
-        period_ago = now - timedelta(minutes=feed.schedule_period)
+        period_ago = now - timedelta(minutes=minutes_schedule)
         lastest_published_entries = yield cls.latest_published(feed, since=period_ago).count_async()
-        max_stories_to_publish = feed.max_stories_per_period - lastest_published_entries
+        max_stories_to_publish = max_stories_to_publish - lastest_published_entries
         entries_posted = 0
         # If we still have time left in this period publish some more.
         if max_stories_to_publish > 0 or skip_queue:
@@ -321,8 +328,12 @@ class Feed(ndb.Model):
     added = ndb.DateTimeProperty(auto_now_add=True)
     update_interval = ndb.IntegerProperty(default=UPDATE_INTERVAL.MINUTE_5)
     extra_info = ndb.JsonProperty()
+
+    # Posting Schedule By Default will be auto controlled
+    manual_control = ndb.BooleanProperty(default=False)
     schedule_period = ndb.IntegerProperty(default=PERIOD_SCHEDULE.MINUTE_5)
     max_stories_per_period = ndb.IntegerProperty(default=1)
+
     etag = ndb.StringProperty()
     language = ndb.StringProperty()
     hub_secret = ndb.StringProperty()

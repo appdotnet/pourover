@@ -479,29 +479,36 @@ class BusterTestCase(MockUrlfetchTest):
 
     def testSchedule(self):
         self.setMockUser()
-        test_feed_url = 'http://example.com/rss'
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test1'), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
-            feed_url=test_feed_url,
-            include_summary=True,
-            max_stories_per_period=1,
-            schedule_period=5,
-        ), headers=self.authHeaders())
+        urls = ['http://example.com/rss', 'http://example.com/rss2']
 
-        assert 0 == Entry.query(Entry.published == True, Entry.overflow == False).count()
+        for test_feed_url in urls:
+            self.set_rss_response(test_feed_url, content=self.buildRSS('test1'), status_code=200)
+            resp = self.app.post('/api/feeds', data=dict(
+                feed_url=test_feed_url,
+                include_summary=True,
+                max_stories_per_period=1,
+                schedule_period=5,
+            ), headers=self.authHeaders())
+
+        feeds = Feed.query().fetch(2)
+        feeds[0].manual_control = True
+        feeds[0].put()
+
+        test_feed_url = feeds[0].feed_url
+        assert 0 == Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feeds[0].key).count()
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test2',), status_code=200)
         self.pollUpdate()
 
-        assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
+        assert 1 == Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feeds[0].key).count()
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test3'), status_code=200)
         self.pollUpdate()
         # Should have been rate limited
-        assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
+        assert 1 == Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feeds[0].key).count()
 
         # Set the entry back in time
-        first_entry = Entry.query(Entry.published == True, Entry.overflow == False).get()
+        first_entry = Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feeds[0].key).get()
         first_entry.published_at = first_entry.published_at - timedelta(minutes=10)
         first_entry.put()
 
@@ -509,7 +516,26 @@ class BusterTestCase(MockUrlfetchTest):
         self.pollUpdate()
 
         # Should not have been rate limited
-        assert 2 == Entry.query(Entry.published == True, Entry.overflow == False).count()
+        assert 2 == Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feeds[0].key).count()
+
+        test_feed_url = feeds[1].feed_url
+
+        assert 0 == Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feeds[1].key).count()
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test2',), status_code=200)
+        self.pollUpdate()
+
+        assert 1 == Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feeds[1].key).count()
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test3'), status_code=200)
+        self.pollUpdate()
+        assert 2 == Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feeds[1].key).count()
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test4'), status_code=200)
+        self.pollUpdate()
+        # Should have been rate limited
+        assert 2 == Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feeds[1].key).count()
+
 
     def testMulitpleSchedule(self):
         self.setMockUser()
