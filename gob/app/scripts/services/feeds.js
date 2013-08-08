@@ -21,7 +21,7 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
     }).success(function (resp) {
       if (resp.data && resp.data.length) {
         $rootScope.feeds = resp.data;
-        console.log($rootScope.feeds);
+
         if (new_feed) {
           new_feed = false;
           return;
@@ -63,6 +63,23 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
     setNewFeed: function () {
       new_feed = true;
       $rootScope.feed = _.extend({}, DEFAULT_FEED_OBJ);
+    },
+    validateFeed: function (feed) {
+      var deferred = $q.defer();
+      var _this = this;
+
+      ApiClient.post({
+        url: 'feeds/validate',
+        data: _this.serialize_feed(feed)
+      }).then(function (resp) {
+        if (resp.status === 'ok') {
+          deferred.resolve();
+          return;
+        }
+        deferred.reject();
+      }, deferred.reject);
+
+      return deferred.promise;
     },
     createFeed: function (feed) {
       var deferred = $q.defer();

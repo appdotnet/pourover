@@ -21,4 +21,36 @@
     </tr>
   </tbody>
 </table>
-<p><a href='/feed/new/' class='btn'>Create a new feed</a></p>
+
+<p><a data-target="#newFeedModal" role="button" class="btn" data-toggle="modal">Create a new feed</a></p>
+
+<div id='newFeedModal' class="modal hide fade">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h4>Create A New Feed</h4>
+  </div>
+  <div class="modal-body">
+    <form class="form-vertical">
+      <div class="control-group">
+          <label class="control-label">Feed URL</label>
+          <div class="controls">
+            <div>
+              <input type="text" placeholder="https://example.com/rss" ng-model='feed.feed_url'>
+              <span class='loading-icon' style='display: none;'>
+                <i class="icon-refresh icon-spin"></i>
+              <span>
+            </div>
+          </div>
+      </div>
+      <div class="control-group">
+        <div class="controls">
+          
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <a href="#" class="btn">Close</a>
+    <a type="submit" class="btn btn-primary ladda-button" data-save-btn data-style="slide-left" ng-click='createFeed()' ng-disabled='feed_good'><span class='ladda-label'>Save Feed</span></a>
+  </div>
+</div>
