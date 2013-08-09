@@ -340,6 +340,15 @@ class AbstractFeed(polymodel.PolyModel):
 
     extra_info = ndb.JsonProperty()
 
+
+class InstagramFeed(AbstractFeed):
+    # Feed URL can just be the API call that we make
+    # https://api.instagram.com/v1/users/3/media/recent/
+
+    access_token = ndb.StringProperty()
+    user_id = ndb.IntegerProperty()
+
+
 class Feed(AbstractFeed):
     """Keep track of users"""
 
@@ -532,6 +541,23 @@ class Feed(AbstractFeed):
             'link': self.effective_link,
             'description': self.effective_description,
         }
+
+
+class Configuration(ndb.Model):
+    name = ndb.StringProperty()
+    value = ndb.StringProperty()
+
+    @classmethod
+    def value_for_name(cls, name, default=None):
+        key = ndb.Key('Configuration', name)
+        conf = key.get()
+        if not conf:
+            return default
+
+        return conf.value
+
+    def _pre_put_hook(self):
+        self.key = ndb.Key('Configuration', self.name)
 
 
 class Stat(ndb.Model):

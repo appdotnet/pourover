@@ -38,7 +38,7 @@ feedparser.parse = fake_parse
 from agar.test import MockUrlfetchTest
 # from rss_to_adn import Feed
 from application import app
-from application.models import Entry, User, Feed
+from application.models import Entry, User, Feed, Configuration
 from application.constants import FEED_STATE, OVERFLOW_REASON
 from application.utils import append_query_string
 from application.fetcher import hash_content
@@ -1083,6 +1083,15 @@ class BusterTestCase(MockUrlfetchTest):
         self.pollUpdate()
 
         assert Entry.query(Entry.overflow==True, Entry.overflow_reason==OVERFLOW_REASON.MALFORMED).count() == 1
+
+    def testConfiguration(self):
+        key = ndb.Key(Configuration, 'test')
+        conf = Configuration(name='test', value='awesome', key=key)
+        conf.put()
+
+        assert 'awesome' == Configuration.value_for_name('test', default='Not Awesome')
+        assert 'Not Awesome' == Configuration.value_for_name('not_test', default='Not Awesome')
+
 
 if __name__ == '__main__':
     unittest.main()
