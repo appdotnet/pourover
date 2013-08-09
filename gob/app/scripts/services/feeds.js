@@ -3,6 +3,7 @@
 angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', function ($q, $rootScope, ApiClient) {
 
   var DEFAULT_FEED_OBJ = {
+    feed_type: 1,
     max_stories_per_period: 1,
     schedule_period: 1,
     format_mode: 1,

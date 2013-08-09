@@ -129,6 +129,13 @@ class Entry(ndb.Model):
     @ndb.tasklet
     def publish_entry(self, feed):
         feed = yield self.key.parent().get_async()
+        user_parent = feed.key.parent()
+        if not user_parent:
+            logger.info('Found feed without parent deleteing feed_url: %s')
+            yield Entry.delete_for_feed(feed)
+            feed.key.delete()
+            return
+
         user = yield feed.key.parent().get_async()
         # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
         post = yield format_for_adn(self, feed)
@@ -528,9 +535,8 @@ class Feed(ndb.Model):
         raise ndb.Return(feed)
 
     def to_json(self):
-        return {
+        feed_info = {
             'feed_url': self.feed_url,
-            'feed_id': self.key.id(),
             'include_summary': self.include_summary,
             'format_mode': self.format_mode,
             'include_thumb': self.include_thumb,
@@ -544,6 +550,11 @@ class Feed(ndb.Model):
             'link': self.effective_link,
             'description': self.effective_description,
         }
+
+        if getattr(self, 'preview', None) is None:
+            feed_info['feed_id'] = self.key.id()
+
+        return feed_info
 
 
 class Configuration(ndb.Model):

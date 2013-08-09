@@ -42,7 +42,7 @@ def fetch_url(url, etag=None):
             kwargs = {
                 'url': url,
                 'headers': {
-                    'User-Agent': 'PourOver/1.0 +https://adn-pourover.appspot.com/'
+                    'User-Agent': 'ADN PourOver/1.0 +https://adn-pourover.appspot.com/'
                 },
                 'follow_redirects': True,
                 'deadline': 60
