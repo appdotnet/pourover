@@ -287,7 +287,7 @@ tq_feed_poll.login_required = False
 
 
 @app.route('/api/feeds/instagram/subscribe', methods=['GET'])
-def instagram_subscribe(feed_key):
+def instagram_subscribe():
     mode = request.args['hub.mode']
     challenge = request.args['hub.challenge']
     verify_token = request.args.get('hub.verify_token')

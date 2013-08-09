@@ -309,7 +309,22 @@ class Entry(ndb.Model):
 
         return q
 
-class AbstractFeed(polymodel.PolyModel):
+class InstagramFeed(ndb.Model):
+    """
+    Feed URL can just be the API call that we make
+    https://api.instagram.com/v1/users/3/media/recent/
+    """
+
+    access_token = ndb.StringProperty()
+    user_id = ndb.IntegerProperty()
+    title = ndb.StringProperty()
+    description = ndb.StringProperty()
+    added = ndb.DateTimeProperty(auto_now_add=True)
+
+
+class Feed(ndb.Model):
+    """Keep track of users"""
+
     feed_url = ndb.StringProperty()
     title = ndb.StringProperty()
     description = ndb.StringProperty()
@@ -339,18 +354,6 @@ class AbstractFeed(polymodel.PolyModel):
     feed_disabled = ndb.BooleanProperty(default=False)
 
     extra_info = ndb.JsonProperty()
-
-
-class InstagramFeed(AbstractFeed):
-    # Feed URL can just be the API call that we make
-    # https://api.instagram.com/v1/users/3/media/recent/
-
-    access_token = ndb.StringProperty()
-    user_id = ndb.IntegerProperty()
-
-
-class Feed(AbstractFeed):
-    """Keep track of users"""
 
     link = ndb.StringProperty()  # Link is a semantic thing, where as feed_url is a technical thing
     hub = ndb.StringProperty()
