@@ -19,7 +19,7 @@ from flask_cache import Cache
 
 from application import app
 from constants import UPDATE_INTERVAL
-from models import Entry, Feed, Stat
+from models import Entry, Feed, Stat, Configuration
 from fetcher import FetchException, fetch_parsed_feed_for_feed
 from forms import FeedCreate, FeedUpdate, FeedPreview
 from utils import write_epoch_to_stat, get_epoch_from_stat
@@ -284,6 +284,49 @@ def tq_feed_poll():
     raise ndb.Return(jsonify(status='ok'))
 
 tq_feed_poll.login_required = False
+
+
+@app.route('/api/feeds/instagram/subscribe', methods=['GET'])
+def instagram_subscribe(feed_key):
+    mode = request.args['hub.mode']
+    challenge = request.args['hub.challenge']
+    verify_token = request.args.get('hub.verify_token')
+
+    if mode == 'subscribe':
+        instagram_verify_token = Configuration.value_from_name('instagram_verify_token')
+        if verify_token and verify_token != instagram_verify_token:
+            logger.info('Failed verification feed.verify_token:%s GET verify_token:%s', instagram_verify_token, verify_token)
+            return "Failed Verification", 400
+
+        logger.info('Responding to instagram challange: %s', challenge)
+        return challenge
+
+instagram_subscribe.login_required = False
+
+
+@app.route('/api/feeds/instagram/subscribe', methods=['POST'])
+@ndb.synctasklet
+def instagram_push_update():
+    data = request.stream.read()
+    instagram_client_id = Configuration.value_from_name('instagram_client_id')
+
+    server_signature = request.headers.get('X-Hub-Signature', None)
+    signature = hmac.new(instagram_client_id, data).hexdigest()
+
+    if server_signature != signature:
+        logger.warn('Got PuSH subscribe POST for feed key=%s w/o valid signature: sent=%s != expected=%s', feed_key,
+                    server_signature, signature)
+
+        raise ndb.Return('')
+
+    logger.info('Got PuSH body: %s', data)
+    logger.info('Got PuSH headers: %s', request.headers)
+
+    parsed_feed = json.loads(data)
+
+    raise ndb.Return('')
+
+instagram_push_update.login_required = False
 
 
 @app.route('/api/feeds/<feed_key>/subscribe', methods=['GET'])
