@@ -68,6 +68,7 @@ module.exports = function (grunt) {
             return [
               modRewrite([
                 '^/(login|logout|signup|feed)/$ /index.html [L]',
+                '^/login/instagram/$ /index.html [L]',
                 '^/feed/.*/$ /index.html [L]'
               ]),
               lrSnippet,

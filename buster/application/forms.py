@@ -6,7 +6,7 @@ from wtforms import validators
 from wtforms.validators import ValidationError
 from urlparse import urlparse
 
-from constants import PERIOD_SCHEDULE, FORMAT_MODE
+from constants import PERIOD_SCHEDULE, FORMAT_MODE, FEED_TYPE
 
 logger = logging.getLogger(__name__)
 
@@ -39,3 +39,15 @@ class FeedPreview(FeedUpdate):
 
 class FeedCreate(FeedUpdate):
     feed_url = fields.TextField(validators=[validators.DataRequired(), validators.URL(), adn_rss_feed_check])
+
+
+class InstagramFeedCreate(Form):
+    access_token = fields.TextField()
+    username = fields.TextField()
+    user_id = fields.IntegerField()
+
+
+FEED_TYPE_TO_FORM = {
+    FEED_TYPE.RSS: FeedCreate,
+    FEED_TYPE.INSTAGRAM: InstagramFeedCreate,
+}

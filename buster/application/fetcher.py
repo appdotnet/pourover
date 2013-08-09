@@ -128,9 +128,10 @@ def fetch_parsed_feed_for_feed(feed):
 
         raise e
 
+    feed_preview = getattr(feed, 'preview', None)
     parsed_feed = None
     # Need to update something in the database
-    if not feed.link:
+    if not feed.link and feed_preview is None:
         parsed_feed = feedparser.parse(resp.content)
         updated = False
         try:
@@ -142,7 +143,8 @@ def fetch_parsed_feed_for_feed(feed):
             yield feed.put_async()
 
     feed.last_successful_fetch = now
-    yield feed.put_async()
+    if feed_preview is None:
+        yield feed.put_async()
 
     if resp.status_code == 304:
         raise ndb.Return((None, resp))
@@ -165,7 +167,8 @@ def fetch_parsed_feed_for_feed(feed):
             resp = yield fetch_url(new_feed_url)
             feed.feed_url = new_feed_url
 
-    yield feed.put_async()
+    if feed_preview is None:
+        yield feed.put_async()
 
     parsed_feed = parsed_feed or feedparser.parse(resp.content)
 

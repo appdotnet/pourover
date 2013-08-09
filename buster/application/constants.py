@@ -60,6 +60,11 @@ OVERFLOW_REASON = DjangoEnum(
     (3, 'MALFORMED', 'This item was malformed'),
 )
 
+FEED_TYPE = DjangoEnum(
+    (1, 'RSS', 'RSS Feed'),
+    (2, 'INSTAGRAM', 'Instagram Feed'),
+)
+
 
 VALID_STATUS = (200, 304)
 DEFAULT_PERIOD_SCHEDULE = PERIOD_SCHEDULE.MINUTE_15

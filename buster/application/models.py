@@ -552,15 +552,11 @@ class Configuration(ndb.Model):
 
     @classmethod
     def value_for_name(cls, name, default=None):
-        key = ndb.Key('Configuration', name)
-        conf = key.get()
+        conf = cls.query(cls.name == name).get()
         if not conf:
             return default
 
         return conf.value
-
-    def _pre_put_hook(self):
-        self.key = ndb.Key('Configuration', self.name)
 
 
 class Stat(ndb.Model):

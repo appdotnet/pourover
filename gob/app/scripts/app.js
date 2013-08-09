@@ -34,6 +34,11 @@ pourOver.config(['$routeProvider', '$locationProvider', function ($routeProvider
     templateUrl: '/views/signup.html',
   });
 
+  $routeProvider.when('/login/instagram/', {
+    controller: 'InstagramCtrl',
+    templateUrl: '/views/signup.html',
+  });
+
   $routeProvider.when('/login/', {
     controller: 'LoginCtrl',
     templateUrl: '/views/signup.html',
