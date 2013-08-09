@@ -38,8 +38,8 @@ feedparser.parse = fake_parse
 from agar.test import MockUrlfetchTest
 # from rss_to_adn import Feed
 from application import app
-from application.models import Entry, User, Feed, Configuration
-from application.constants import FEED_STATE, OVERFLOW_REASON
+from application.models import Entry, User, Feed, Configuration, InstagramFeed
+from application.constants import FEED_STATE, OVERFLOW_REASON, FEED_TYPE
 from application.utils import append_query_string
 from application.fetcher import hash_content
 from application import settings
@@ -155,6 +155,31 @@ YOUTUBE_OEMBED_RESPONSE = json.dumps({u'provider_url': u'http://www.youtube.com/
 VIMEO_OEMBED_RESPONSE = json.dumps({u'is_plus': u'0', u'provider_url': u'https://vimeo.com/', u'description': u'Brad finally gets the attention he deserves.', u'title': u'Brad!', u'video_id': 7100569, u'html': u'<iframe src="http://player.vimeo.com/video/7100569" width="1280" height="720" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>', u'author_name': u'Casey Donahue', u'height': 720, u'thumbnail_width': 1280, u'width': 1280, u'version': u'1.0', u'author_url': u'http://vimeo.com/caseydonahue', u'duration': 118, u'provider_name': u'Vimeo', u'thumbnail_url': u'http://b.vimeocdn.com/ts/294/128/29412830_1280.jpg', u'type': u'video', u'thumbnail_height': 720})
 BIT_LY_RESPONSE = """{ "status_code": 200, "status_txt": "OK", "data": { "long_url": "http:\/\/daringfireball.net\/2013\/05\/facebook_home_dogfooding?utm_medium=App.net&utm_source=PourOver", "url": "http:\/\/bit.ly\/123", "hash": "1c3ehlA", "global_hash": "1c3ehlB", "new_hash": 0 } }"""
 
+INSTAGRAM_FEED_RESPONSE = json.dumps({
+  "data": [
+    {
+      "id": "253745046340559452_2359",
+      "caption": {
+        "text": "Mars",
+      },
+      "images": {
+        "standard_resolution": {
+          "height": 612,
+          "width": 612,
+          "url": "http://distilleryimage4.s3.amazonaws.com/68f3bae0e1b111e19fa512313820475a_7.jpg"
+        },
+        "low_resolution": {
+          "height": 306,
+          "width": 306,
+          "url": "http://distilleryimage4.s3.amazonaws.com/68f3bae0e1b111e19fa512313820475a_6.jpg"
+        }
+      },
+      "tags": [],
+      "type": "image",
+      "created_time": "1344468788",
+      "link": "http://instagram.com/p/OFe8Z2pOJc/"
+    }
+]})
 
 def get_file_from_data(fname):
     return open(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + fname).read()
@@ -1091,6 +1116,22 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert 'awesome' == Configuration.value_for_name('test', default='Not Awesome')
         assert 'Not Awesome' == Configuration.value_for_name('not_test', default='Not Awesome')
+
+    def testInstagramFeedCreate(self):
+        self.setMockUser()
+        self.set_response("https://api.instagram.com/v1/users/self/media/recent/?access_token=123", content=INSTAGRAM_FEED_RESPONSE, method="GET")
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_type=FEED_TYPE.INSTAGRAM,
+            user_id=3,
+            username='voidfiles',
+            access_token='123'
+        ), headers=self.authHeaders())
+        feed = InstagramFeed.query().get()
+        assert feed
+        entry = Entry.query().get()
+        assert entry
+        resp = json.loads(INSTAGRAM_FEED_RESPONSE)
+        assert entry.thumbnail_image_url == resp['data'][0]['images']['low_resolution']['url']
 
 
 if __name__ == '__main__':

@@ -18,8 +18,8 @@ from google.appengine.api.taskqueue import Task, Queue
 from flask_cache import Cache
 
 from application import app
-from constants import UPDATE_INTERVAL
-from models import Entry, Feed, Stat, Configuration
+from constants import UPDATE_INTERVAL, FEED_TYPE
+from models import Entry, Feed, Stat, Configuration, FEED_TYPE_TO_CLASS
 from fetcher import FetchException, fetch_parsed_feed_for_feed
 from forms import FeedCreate, FeedUpdate, FeedPreview, FEED_TYPE_TO_FORM
 from utils import write_epoch_to_stat, get_epoch_from_stat
@@ -84,15 +84,23 @@ def feeds():
 @app.route('/api/feeds', methods=['POST'])
 def feed_create():
     """List all examples"""
-    form = FeedCreate(request.form)
+    try:
+        # Get feed type default to RSS feeds
+        feed_type = int(request.form.get('feed_type', FEED_TYPE.RSS))
+        validation_form = FEED_TYPE_TO_FORM[feed_type]
+        feed_class = FEED_TYPE_TO_CLASS[feed_type]
+    except:
+        return jsonify_error(status='error', message='Invalid feed type')
+
+    form = validation_form(request.form)
     if not form.validate():
         return jsonify(status='error', message='The passed arguments failed validation')
 
-    existing_feeds = Feed.for_user_and_url(user=g.user, feed_url=form.data['feed_url'])
+    existing_feeds = feed_class.for_user_and_form(user=g.user, form=form)
     if existing_feeds.count():
         feed = existing_feeds.get()
     else:
-        feed = Feed.create_feed_from_form(g.user, form).get_result()
+        feed = feed_class.create_feed_from_form(g.user, form).get_result()
 
     return jsonify(status='ok', data=feed.to_json())
 

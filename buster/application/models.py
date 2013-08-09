@@ -19,9 +19,9 @@ import json
 
 
 from flask import url_for
-from fetcher import fetch_parsed_feed_for_url, fetch_parsed_feed_for_feed
+from fetcher import fetch_parsed_feed_for_url, fetch_parsed_feed_for_feed, fetch_url
 from constants import (ENTRY_STATE, FEED_STATE, FORMAT_MODE, UPDATE_INTERVAL, PERIOD_SCHEDULE, OVERFLOW_REASON,
-                       DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD)
+                       DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD, FEED_TYPE)
 from poster import build_html_from_post, format_for_adn, prepare_entry_from_item
 from utils import get_language, guid_for_item, find_feed_url 
 
@@ -324,9 +324,76 @@ class InstagramFeed(ndb.Model):
 
     access_token = ndb.StringProperty()
     user_id = ndb.IntegerProperty()
-    title = ndb.StringProperty()
+    username = ndb.StringProperty()
     description = ndb.StringProperty()
     added = ndb.DateTimeProperty(auto_now_add=True)
+
+    @property
+    def link(self):
+        return 'https://instagram.com/%s' % (self.username)
+
+    @property
+    def title(self):
+        return self.username
+
+    @property
+    def feed_url(self):
+        return "https://api.instagram.com/v1/users/self/media/recent/?access_token=%s" % (self.access_token)
+
+    @classmethod
+    def for_user_and_form(cls, user, form):
+        user_id = form.data['user_id']
+        return cls.query(cls.user_id == user_id, ancestor=user.key)
+
+    @classmethod
+    @ndb.tasklet
+    def create_feed_from_form(cls, user, form):
+        feed = cls(parent=user.key)
+        form.populate_obj(feed)
+        yield feed.put_async()
+        # This triggers special first time behavior when fetching the feed
+        feed.first_time = True
+        feed = yield cls.process_new_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
+        raise ndb.Return(feed)
+
+
+    @classmethod
+    @ndb.tasklet
+    def process_new_feed(cls, feed, overflow, overflow_reason):
+        # Sync pull down the latest feeds
+        resp = yield fetch_url(feed.feed_url)
+        parsed_feed = json.loads(resp.content)
+
+        posts = parsed_feed.get('data', [])
+        for post in posts:
+            key = ndb.Key(Entry, post.get('id'), parent=feed.key)
+            entry = yield key.get_async()
+            if not entry:
+                standard_resolution = post.get('images', {}).get('standard_resolution')
+                kwargs = {}
+                kwargs['image_url'] = standard_resolution.get('url')
+                kwargs['image_width'] = standard_resolution.get('width')
+                kwargs['image_height'] = standard_resolution.get('height')
+                low_resolution = post.get('images', {}).get('low_resolution')
+                kwargs['thumbnail_image_url'] = low_resolution.get('url')
+                kwargs['thumbnail_image_width'] = low_resolution.get('width')
+                kwargs['thumbnail_image_height'] = low_resolution.get('height')
+                kwargs['title'] = post.get('caption', {}).get('text', '')
+                kwargs['link'] = post.get('link')
+                entry = Entry(key=key, guid=post.get('id'), **kwargs)
+                yield entry.put_async()
+
+        raise ndb.Return(feed)
+
+    def to_json(self):
+        feed_info = {
+            'username': self.username,
+            'title': self.title,
+            'link': self.link,
+            'feed_id': self.key.id(),
+        }
+
+        return feed_info
 
 
 class Feed(ndb.Model):
@@ -439,7 +506,8 @@ class Feed(ndb.Model):
         return cls.query(ancestor=user.key)
 
     @classmethod
-    def for_user_and_url(cls, user, feed_url):
+    def for_user_and_form(cls, user, form):
+        feed_url = form.data['feed_url']
         return cls.query(cls.feed_url == feed_url, ancestor=user.key)
 
     @classmethod
@@ -555,6 +623,12 @@ class Feed(ndb.Model):
             feed_info['feed_id'] = self.key.id()
 
         return feed_info
+
+
+FEED_TYPE_TO_CLASS = {
+    FEED_TYPE.RSS: Feed,
+    FEED_TYPE.INSTAGRAM: InstagramFeed,
+}
 
 
 class Configuration(ndb.Model):
