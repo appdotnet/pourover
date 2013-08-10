@@ -5,6 +5,7 @@ URL route handlers
 """
 import datetime
 import hmac
+import hashlib
 import json
 import logging
 import uuid
@@ -19,7 +20,7 @@ from flask_cache import Cache
 
 from application import app
 from constants import UPDATE_INTERVAL, FEED_TYPE
-from models import Entry, Feed, Stat, Configuration, FEED_TYPE_TO_CLASS
+from models import Entry, Feed, Stat, Configuration, InstagramFeed, FEED_TYPE_TO_CLASS
 from fetcher import FetchException, fetch_parsed_feed_for_feed
 from forms import FeedCreate, FeedUpdate, FeedPreview, FEED_TYPE_TO_FORM
 from utils import write_epoch_to_stat, get_epoch_from_stat
@@ -54,6 +55,7 @@ def jsonify_error(message='There was an error', code=404):
 @app.route('/', endpoint='index')
 @app.route('/signup/', endpoint='signup')
 @app.route('/login/', endpoint='login')
+@app.route('/login/instagram/', endpoint='login_instagram')
 @app.route('/logout/', endpoint='logout')
 def index(feed_id=None):
     return render_template('index.html')
@@ -273,7 +275,10 @@ def tq_feed_poll():
             logger.info("Couldn't find feed for key: %s", ndb_keys[i])
             continue
 
-        futures.append((i, Entry.update_for_feed(feed)))
+        if isinstance(feed, InstagramFeed):
+            futures.append((i, InstagramFeed.process_feed(feed, None, None)))
+        else:
+            futures.append((i, Entry.update_for_feed(feed)))
 
     for i, future in futures:
         parsed_feed = None
@@ -316,13 +321,13 @@ instagram_subscribe.login_required = False
 @ndb.synctasklet
 def instagram_push_update():
     data = request.stream.read()
-    instagram_client_id = Configuration.value_for_name('instagram_client_id')
+    instagram_client_secret = Configuration.value_for_name('instagram_client_secret')
 
     server_signature = request.headers.get('X-Hub-Signature', None)
-    signature = hmac.new(instagram_client_id, data).hexdigest()
+    signature = hmac.new(str(instagram_client_secret), data, digestmod=hashlib.sha1).hexdigest()
 
     if server_signature != signature:
-        logger.warn('Got PuSH subscribe POST for feed key=%s w/o valid signature: sent=%s != expected=%s', feed_key,
+        logger.warn('Got PuSH subscribe POST from instagram w/o valid signature: sent=%s != expected=%s',
                     server_signature, signature)
 
         raise ndb.Return('')
@@ -331,8 +336,21 @@ def instagram_push_update():
     logger.info('Got PuSH headers: %s', request.headers)
 
     parsed_feed = json.loads(data)
+    user_ids = [int(x.get('object_id')) for x in parsed_feed]
+    feeds = InstagramFeed.query(InstagramFeed.user_id.IN(user_ids))
 
-    raise ndb.Return('')
+    cursor = None
+    more = True
+    keys = []
+    while more:
+        feed_keys, cursor, more = feeds.fetch_page(100, keys_only=True, start_cursor=cursor)
+        keys += feed_keys
+
+    keys = ','.join([x.urlsafe() for x in keys])
+    if keys:
+        yield Queue('poll').add_async(Task(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys}))
+
+    raise ndb.Return('ok')
 
 instagram_push_update.login_required = False
 
@@ -433,16 +451,18 @@ def post_all_feeds():
     if request.headers.get('X-Appengine-Cron') != 'true':
         raise ndb.Return(jsonify_error(message='Not a cron call'))
 
-    feeds = Feed.query().iter()
+    feed_classes = (Feed, InstagramFeed)
+    iterators = [x.query().iter() for x in feed_classes]
 
     errors = 0
     success = 0
     num_posted = 0
     futures = []
 
-    while (yield feeds.has_next_async()):
-        feed = feeds.next()
-        futures.append((feed, Entry.publish_for_feed(feed)))
+    for iterator in iterators:
+        while (yield iterator.has_next_async()):
+            feed = iterator.next()
+            futures.append((feed, Entry.publish_for_feed(feed)))
 
     for feed, future in futures:
         try:

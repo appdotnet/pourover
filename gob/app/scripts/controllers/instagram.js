@@ -22,7 +22,7 @@
       };
 
       ApiClient.post({
-        url: '/api/feeds',
+        url: 'feeds',
         data: data
       }).success(function (resp) {
 

@@ -505,6 +505,46 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
     raise ndb.Return(kwargs)
 
 
+def cross_post_annotation(link):
+    return {
+        "type": "net.app.core.crosspost",
+        "value": {
+            "canonical_url": link
+        }
+    }
+
+def image_annotation_for_entry(entry):
+    url, width, height = (entry.thumbnail_image_url, entry.thumbnail_image_width, entry.thumbnail_image_height)
+    if getattr(entry, 'image_url', None):
+        url, width, height = (entry.image_url, entry.image_width, entry.image_height)
+
+    return {
+        "type": "net.app.core.oembed",
+        "value": {
+            "version": "1.0",
+            "type": "photo",
+            "title": entry.title,
+            "width": width,
+            "height": height,
+            "url": iri_to_uri(url),
+            "thumbnail_width": entry.thumbnail_image_width,
+            "thumbnail_height": entry.thumbnail_image_height,
+            "thumbnail_url": iri_to_uri(entry.thumbnail_image_url),
+            "embeddable_url": iri_to_uri(entry.link),
+        }
+    }
+
+
+def instagram_format_for_adn(entry, feed):
+    max_chars = MAX_CHARS - len(entry.link) + 1
+    post_text = ellipse_text(entry.title, max_chars)
+    post_text += ' ' + entry.link
+    post = {
+        'text': post_text,
+        'annotations': [cross_post_annotation(entry.link), image_annotation_for_entry(entry)]
+    }
+    return post
+
 @ndb.tasklet
 def format_for_adn(entry, feed):
     post_text = entry.title
@@ -583,14 +623,7 @@ def format_for_adn(entry, feed):
 
     post = {
         'text': post_text,
-        'annotations': [
-            {
-                "type": "net.app.core.crosspost",
-                "value": {
-                    "canonical_url": link
-                }
-            }
-        ]
+        'annotations': [cross_post_annotation(link)]
     }
 
     if link_entities:
@@ -600,21 +633,7 @@ def format_for_adn(entry, feed):
 
     # logger.info('Info %s, %s', include_thumb, self.thumbnail_image_url)
     if feed.include_thumb and entry.thumbnail_image_url:
-        post['annotations'].append({
-            "type": "net.app.core.oembed",
-            "value": {
-                "version": "1.0",
-                "type": "photo",
-                "title": entry.title,
-                "width": entry.thumbnail_image_width,
-                "height": entry.thumbnail_image_height,
-                "url": iri_to_uri(entry.thumbnail_image_url),
-                "thumbnail_width": entry.thumbnail_image_width,
-                "thumbnail_height": entry.thumbnail_image_height,
-                "thumbnail_url": iri_to_uri(entry.thumbnail_image_url),
-                "embeddable_url": iri_to_uri(entry.link),
-            }
-        })
+        post['annotations'].append(image_annotation_for_entry(entry))
 
     if feed.include_video and entry.video_oembed:
         oembed = entry.video_oembed

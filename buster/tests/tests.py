@@ -2,6 +2,8 @@
 # encoding: utf-8
 from collections import defaultdict
 import logging
+import hmac
+import hashlib
 import os
 import sys
 import unittest
@@ -180,6 +182,9 @@ INSTAGRAM_FEED_RESPONSE = json.dumps({
       "link": "http://instagram.com/p/OFe8Z2pOJc/"
     }
 ]})
+INSTAGRAM_PUSH = '[{"changed_aspect": "media", "subscription_id": 3719094, "object": "user", "object_id": "2359", "time": 1376087142}]'
+INSTAGRAM_PUSH_HMAC = hmac.new(str('1234'), msg=str(INSTAGRAM_PUSH), digestmod=hashlib.sha1).hexdigest()
+
 
 def get_file_from_data(fname):
     return open(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + fname).read()
@@ -347,6 +352,7 @@ class BusterTestCase(MockUrlfetchTest):
         memcache.set('user:%s' % access_token, json.dumps(user_data), 60 * 60)
         user = User(access_token=access_token)
         user.put()
+        self.user = user
 
     def setMockAppToken(self):
         app_data = self.buildMockAppResponse()
@@ -1122,7 +1128,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.set_response("https://api.instagram.com/v1/users/self/media/recent/?access_token=123", content=INSTAGRAM_FEED_RESPONSE, method="GET")
         resp = self.app.post('/api/feeds', data=dict(
             feed_type=FEED_TYPE.INSTAGRAM,
-            user_id=3,
+            user_id=2359,
             username='voidfiles',
             access_token='123'
         ), headers=self.authHeaders())
@@ -1132,7 +1138,29 @@ class BusterTestCase(MockUrlfetchTest):
         assert entry
         resp = json.loads(INSTAGRAM_FEED_RESPONSE)
         assert entry.thumbnail_image_url == resp['data'][0]['images']['low_resolution']['url']
+        assert entry.feed_item['images']['low_resolution']['url'] == resp['data'][0]['images']['low_resolution']['url']
 
+    def testInstagramPush(self):
+        self.setMockUser()
+        feed = InstagramFeed(user_id=2359, username='voidfiles', access_token='123', key=ndb.Key(InstagramFeed, '2359', parent=self.user.key))
+        feed.put()
+        conf = Configuration(name='instagram_client_secret', value='1234')
+        conf.put()
+        resp = self.app.post('/api/feeds/instagram/subscribe', data=INSTAGRAM_PUSH, headers={
+            'X-Hub-Signature': INSTAGRAM_PUSH_HMAC,
+        })
+
+        assert 'ok' == resp.data
+
+        self.set_response("https://api.instagram.com/v1/users/self/media/recent/?access_token=123", content=INSTAGRAM_FEED_RESPONSE, method="GET")
+        self.execute_tasks(n=1, queue_name='poll')
+        assert 1 == Entry.query().count()
+        entry = Entry.query().get()
+        assert entry
+        resp = self.app.get('/api/feeds/all/post', headers={'X-Appengine-Cron': 'true'})
+        assert 1 == Entry.query().count()
+        entry = Entry.query().get()
+        assert entry.published == True
 
 if __name__ == '__main__':
     unittest.main()

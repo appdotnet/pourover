@@ -22,7 +22,7 @@ from flask import url_for
 from fetcher import fetch_parsed_feed_for_url, fetch_parsed_feed_for_feed, fetch_url
 from constants import (ENTRY_STATE, FEED_STATE, FORMAT_MODE, UPDATE_INTERVAL, PERIOD_SCHEDULE, OVERFLOW_REASON,
                        DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD, FEED_TYPE)
-from poster import build_html_from_post, format_for_adn, prepare_entry_from_item
+from poster import build_html_from_post, format_for_adn, prepare_entry_from_item, instagram_format_for_adn
 from utils import get_language, guid_for_item, find_feed_url 
 
 logger = logging.getLogger(__name__)
@@ -130,6 +130,7 @@ class Entry(ndb.Model):
     def publish_entry(self, feed):
         feed = yield self.key.parent().get_async()
         user_parent = feed.key.parent()
+
         if not user_parent:
             logger.info('Found feed without parent deleteing feed_url: %s')
             yield Entry.delete_for_feed(feed)
@@ -137,8 +138,13 @@ class Entry(ndb.Model):
             return
 
         user = yield feed.key.parent().get_async()
+
         # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
-        post = yield format_for_adn(self, feed)
+        if isinstance(feed, InstagramFeed):
+            post = instagram_format_for_adn(self, feed)
+        else:
+            post = yield format_for_adn(self, feed)
+
         ctx = ndb.get_context()
         try:
             resp = yield ctx.urlfetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), deadline=30,
@@ -328,6 +334,11 @@ class InstagramFeed(ndb.Model):
     description = ndb.StringProperty()
     added = ndb.DateTimeProperty(auto_now_add=True)
 
+    # Posting Schedule By Default will be auto controlled
+    manual_control = ndb.BooleanProperty(default=False)
+    schedule_period = ndb.IntegerProperty(default=PERIOD_SCHEDULE.MINUTE_5)
+    max_stories_per_period = ndb.IntegerProperty(default=1)
+
     @property
     def link(self):
         return 'https://instagram.com/%s' % (self.username)
@@ -348,23 +359,22 @@ class InstagramFeed(ndb.Model):
     @classmethod
     @ndb.tasklet
     def create_feed_from_form(cls, user, form):
-        feed = cls(parent=user.key)
+        feed = cls()
         form.populate_obj(feed)
+        feed.key = ndb.Key(cls, unicode(feed.user_id), parent=user.key)
         yield feed.put_async()
-        # This triggers special first time behavior when fetching the feed
-        feed.first_time = True
-        feed = yield cls.process_new_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
+        feed, new_entries = yield cls.process_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
         raise ndb.Return(feed)
-
 
     @classmethod
     @ndb.tasklet
-    def process_new_feed(cls, feed, overflow, overflow_reason):
+    def process_feed(cls, feed, overflow, overflow_reason):
         # Sync pull down the latest feeds
         resp = yield fetch_url(feed.feed_url)
         parsed_feed = json.loads(resp.content)
 
         posts = parsed_feed.get('data', [])
+        new_entries = 0
         for post in posts:
             key = ndb.Key(Entry, post.get('id'), parent=feed.key)
             entry = yield key.get_async()
@@ -378,12 +388,22 @@ class InstagramFeed(ndb.Model):
                 kwargs['thumbnail_image_url'] = low_resolution.get('url')
                 kwargs['thumbnail_image_width'] = low_resolution.get('width')
                 kwargs['thumbnail_image_height'] = low_resolution.get('height')
-                kwargs['title'] = post.get('caption', {}).get('text', '')
+                caption = post.get('caption')
+                if not caption:
+                    kwargs['title']  = '.'
+                else:
+                    kwargs['title'] = caption.get('text', '')
                 kwargs['link'] = post.get('link')
+                kwargs['feed_item'] = post
+                kwargs['creating'] = False
+                if overflow:
+                    kwargs['overflow'] = overflow
+                    kwargs['overflow_reason'] = overflow_reason
                 entry = Entry(key=key, guid=post.get('id'), **kwargs)
+                new_entries += 1
                 yield entry.put_async()
 
-        raise ndb.Return(feed)
+        raise ndb.Return((feed, new_entries))
 
     def to_json(self):
         feed_info = {
