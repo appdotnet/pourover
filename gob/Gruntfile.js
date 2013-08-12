@@ -36,7 +36,7 @@ module.exports = function (grunt) {
         tasks: ['compass']
       },
       templates: {
-        files: ['<%= yeoman.app %>/views/**.html'],
+        files: ['<%= yeoman.app %>/views/**/*.html'],
         tasks: ['ngtemplates']
       },
       livereload: {
@@ -178,7 +178,7 @@ module.exports = function (grunt) {
           module: 'pourOver',
           prepend: '/'
         },
-        src: '.tmp/views/*.html',
+        src: '.tmp/views/**/*.html',
         dest: '.tmp/scripts/templates.js'
       }
     },
@@ -232,7 +232,7 @@ module.exports = function (grunt) {
           {
             expand: true,
             cwd: '<%= yeoman.app %>',
-            src: 'views/*.html',
+            src: 'views/**/*.html',
             dest: '.tmp'
           },
           {

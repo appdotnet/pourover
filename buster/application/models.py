@@ -337,6 +337,9 @@ class InstagramFeed(ndb.Model):
     schedule_period = ndb.IntegerProperty(default=PERIOD_SCHEDULE.MINUTE_5)
     max_stories_per_period = ndb.IntegerProperty(default=1)
 
+    include_thumb = True
+    include_video = True
+
     # Class variables
     create_form = InstagramFeedCreate
     update_form = NoOpForm

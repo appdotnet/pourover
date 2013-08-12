@@ -1,4 +1,4 @@
-<div ng-include="" src="'/views/nav.html'"></div>
+<div ng-include="" src="'/views/includes/nav.html'"></div>
 <div class="authenticated-app">
   <div class="row">
     <div class="span12">
@@ -94,7 +94,7 @@
               </div>
             </div>
           </div>
-          <div ng-include="" src="'/views/settings_form.html'"></div>
+          <div ng-include="" src="'/views/includes/settings/' + feed.feed_type + '_form.html'"></div>
         </div>
       </div>
     </div>
