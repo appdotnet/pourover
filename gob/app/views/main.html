@@ -11,7 +11,7 @@
   <tbody>
     <tr ng-repeat='feed in feeds'>
       <td>
-        <a ng-href='/feed/{{feed.feed_id}}/' ng-bind='feed.title'></a>
+        <a ng-href='/feed/{{feed.feed_type}}/{{feed.feed_id}}/' ng-bind='feed.title'></a>
       </td>
       <td ng-bind='feed.feed_url'></td></td>
     </tr>

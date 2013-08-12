@@ -102,7 +102,7 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
       var deferred = $q.defer();
       var _this = this;
       ApiClient.post({
-        url: 'feeds/' + feed.feed_id,
+        url: 'feeds/' + feed.feed_type + '/' + feed.feed_id,
         data: _this.serialize_feed(feed)
       }).success(function (resp) {
         if (resp.data && resp.data.feed_id) {
@@ -116,11 +116,11 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
 
       return deferred.promise;
     },
-    deleteFeed: function (feed_id) {
+    deleteFeed: function (feed_type, feed_id) {
       var deferred = $q.defer();
 
       ApiClient.delete({
-        url: 'feeds/' + feed_id
+        url: 'feeds/' + feed_type + '/' + feed_id
       }).success(function () {
         $rootScope.feeds = _.filter($rootScope.feeds, function (item) {
           return item.feed_id !== feed_id;

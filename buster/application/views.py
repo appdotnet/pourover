@@ -57,14 +57,13 @@ def jsonify_error(message='There was an error', code=404):
 @app.route('/login/', endpoint='login')
 @app.route('/login/instagram/', endpoint='login_instagram')
 @app.route('/logout/', endpoint='logout')
-def index(feed_id=None):
+def index():
     return render_template('index.html')
 
 index.login_required = False
 
-
-@app.route('/feed/<feed_id>/', endpoint='feed_point')
-def feed_point(feed_id=None):
+@app.route('/feed/<feed_type>/<feed_id>/', endpoint='feed_point')
+def feed_point(feed_type, feed_id=None):
     return render_template('index.html')
 
 feed_point.login_required = False
@@ -135,10 +134,10 @@ def feed_validate():
     raise ndb.Return(jsonify(status='ok', data=feed.to_json()))
 
 
-@app.route('/api/feeds/<int:feed_id>', methods=['GET'])
-def feed(feed_id):
+@app.route('/api/feeds/<int:feed_type>/<int:feed_id>', methods=['GET'])
+def feed(feed_type, feed_id):
     """Get a feed"""
-    feed = Feed.get_by_id(feed_id, parent=g.user.key)
+    feed = FEED_TYPE_TO_CLASS[feed_type].get_by_id(feed_id, parent=g.user.key)
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
@@ -149,14 +148,14 @@ def feed(feed_id):
     return jsonify(status='ok', data=feed_data)
 
 
-@app.route('/api/feeds/<int:feed_id>', methods=['POST'])
-def feed_change(feed_id):
+@app.route('/api/feeds/<int:feed_type>/<int:feed_id>', methods=['POST'])
+def feed_change(feed_type, feed_id):
     """Get a feed"""
-    form = FeedUpdate(request.form)
+    form = FEED_TYPE_TO_CLASS[feed_type].update_form(request.form)
     if not form.validate():
         return jsonify_error(message="Invalid update data")
 
-    feed = Feed.get_by_id(feed_id, parent=g.user.key)
+    feed = FEED_TYPE_TO_CLASS[feed_type].get_by_id(feed_id, parent=g.user.key)
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
@@ -170,10 +169,11 @@ def feed_change(feed_id):
     return jsonify(status='ok', data=feed_data)
 
 
-@app.route('/api/feeds/<int:feed_id>', methods=['DELETE'])
-def delete_feed(feed_id):
+@app.route('/api/feeds/<int:feed_type>/<int:feed_id>', methods=['DELETE'])
+@ndb.synctasklet
+def delete_feed(feed_type, feed_id):
     """Get a feed"""
-    feed = Feed.get_by_id(feed_id, parent=g.user.key)
+    feed = FEED_TYPE_TO_CLASS[feed_type].get_by_id(feed_id, parent=g.user.key)
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
@@ -183,9 +183,9 @@ def delete_feed(feed_id):
     return jsonify(status='ok')
 
 
-@app.route('/api/feeds/<int:feed_id>/unpublished', methods=['GET'])
-def unpublished_entries_for_feed(feed_id):
-    feed = Feed.get_by_id(feed_id, parent=g.user.key)
+@app.route('/api/feeds/<int:feed_type>/<int:feed_id>/unpublished', methods=['GET'])
+def unpublished_entries_for_feed(feed_type, feed_id):
+    feed = FEED_TYPE_TO_CLASS[feed_type].get_by_id(feed_id, parent=g.user.key)
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
@@ -196,9 +196,9 @@ def unpublished_entries_for_feed(feed_id):
     return jsonify(status='ok', data=feed_data)
 
 
-@app.route('/api/feeds/<int:feed_id>/latest', methods=['GET'])
-def published_entries_for_feed(feed_id):
-    feed = Feed.get_by_id(feed_id, parent=g.user.key)
+@app.route('/api/feeds/<int:feed_type>/<int:feed_id>/latest', methods=['GET'])
+def published_entries_for_feed(feed_type, feed_id):
+    feed = FEED_TYPE_TO_CLASS[feed_type].get_by_id(feed_id, parent=g.user.key)
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
@@ -209,14 +209,14 @@ def published_entries_for_feed(feed_id):
     return jsonify(status='ok', data=feed_data)
 
 
-@app.route('/api/feeds/<int:feed_id>/preview', methods=['GET'])
-def save_feed_preview(feed_id):
+@app.route('/api/feeds/<int:feed_type>/<int:feed_id>/preview', methods=['GET'])
+def save_feed_preview(feed_type, feed_id):
     """preview a saved feed"""
-    form = FeedUpdate(request.args)
+    form = FEED_TYPE_TO_CLASS[feed_type].update_form(request.args)
     if not form.validate():
         return jsonify_error(message="Invalid update data")
 
-    feed = Feed.get_by_id(feed_id, parent=g.user.key)
+    feed = FEED_TYPE_TO_CLASS[feed_type].get_by_id(feed_id, parent=g.user.key)
     if not feed:
         return jsonify_error(message="Can't find that feed")
 
@@ -227,13 +227,13 @@ def save_feed_preview(feed_id):
     return jsonify(status='ok', data=preview_entries)
 
 
-@app.route('/api/feeds/<int:feed_id>/entries/<entry_id>/publish', methods=['POST'])
-def feed_entry_publish(feed_id, entry_id):
+@app.route('/api/feeds/<int:feed_type>/<int:feed_id>/entries/<entry_id>/publish', methods=['POST'])
+def feed_entry_publish(feed_type, feed_id, entry_id):
     """Get a feed"""
     logger.info('Manually publishing Feed:%s Entry: %s', feed_id, entry_id)
 
     key = ndb.Key(urlsafe=entry_id)
-    feed = Feed.get_by_id(feed_id, parent=g.user.key)
+    feed = FEED_TYPE_TO_CLASS[feed_type].get_by_id(feed_id, parent=g.user.key)
     if not (feed and key.parent() == feed.key):
         return jsonify_error(message="Can't find that feed")
 

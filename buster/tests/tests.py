@@ -364,6 +364,53 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.get('/api/feeds/all/post', headers={'X-Appengine-Cron': 'true'})
 
 
+    def testSmoke(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=10), status_code=200)
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            max_stories_per_period=1,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+        feed_json = feed.to_json()
+        resp = self.app.get('/api/feeds', headers=self.authHeaders())
+        assert 1 == len(json.loads(resp.data)['data'])
+
+        feed_detail_root = '/api/feeds/%s/%s' % (feed_json['feed_type'], feed_json['feed_id'])
+        resp = self.app.get(feed_detail_root, headers=self.authHeaders())
+        assert 10 == len(json.loads(resp.data)['data']['entries'])
+
+        resp = self.app.post(feed_detail_root, headers=self.authHeaders(), data={
+            "max_stories_per_period": 2,
+            "schedule_period": 5,
+        })
+        assert 2 == json.loads(resp.data)['data']['max_stories_per_period']
+        feed = Feed.query().get()
+        feed_json = feed.to_json()
+        assert 2 == feed_json['max_stories_per_period']
+
+        resp = self.app.get('%s/unpublished' % (feed_detail_root), headers=self.authHeaders())
+        assert 0 == len(json.loads(resp.data)['data']['entries'])
+
+        resp = self.app.get('%s/latest' % (feed_detail_root), headers=self.authHeaders())
+        assert 10 == len(json.loads(resp.data)['data']['entries'])
+
+        resp = self.app.get('%s/preview' % (feed_detail_root), headers=self.authHeaders())
+        assert 3 == len(json.loads(resp.data)['data'])
+
+        entry = Entry.query().get()
+        entry_json = entry.to_json()
+        resp = self.app.post('%s/entries/%s/publish' % (feed_detail_root, entry_json['id']), headers=self.authHeaders())
+        assert 'ok' == json.loads(resp.data)['status']
+
+        resp = self.app.delete(feed_detail_root, headers=self.authHeaders())
+
+        assert Feed.query().count() == 0
+        assert Entry.query().count() == 0
+
     def testAuth(self):
         resp = self.app.get('/api/feeds/1')
         assert resp.status_code == 401
@@ -407,7 +454,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert 10 == Entry.query(Entry.published == True, Entry.overflow == True).count()
 
         feed_id = json_resp['data']['feed_id']
-        resp = self.app.get('/api/feeds/%s' % feed_id, headers=self.authHeaders())
+        resp = self.app.get('/api/feeds/1/%s' % feed_id, headers=self.authHeaders())
         json_resp = json.loads(resp.data)
         assert len(json_resp['data']['entries']) == 10
         assert json_resp['data']['entries'][0]['guid'] == "http://example.com/buster/test_0"

@@ -19,6 +19,7 @@ import json
 
 
 from flask import url_for
+from forms import FeedUpdate
 from fetcher import fetch_parsed_feed_for_url, fetch_parsed_feed_for_feed, fetch_url
 from constants import (ENTRY_STATE, FEED_STATE, FORMAT_MODE, UPDATE_INTERVAL, PERIOD_SCHEDULE, OVERFLOW_REASON,
                        DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD, FEED_TYPE)
@@ -336,6 +337,9 @@ class InstagramFeed(ndb.Model):
     schedule_period = ndb.IntegerProperty(default=PERIOD_SCHEDULE.MINUTE_5)
     max_stories_per_period = ndb.IntegerProperty(default=1)
 
+    # Class variables
+    update_form = None
+
     @property
     def link(self):
         return 'https://instagram.com/%s' % (self.username)
@@ -412,6 +416,7 @@ class InstagramFeed(ndb.Model):
             'title': self.title,
             'link': self.link,
             'feed_id': self.key.id(),
+            'feed_type': FEED_TYPE.INSTAGRAM,
         }
 
         return feed_info
@@ -461,6 +466,9 @@ class Feed(ndb.Model):
     image_in_content = ndb.BooleanProperty(default=True)
     image_in_meta = ndb.BooleanProperty(default=True)
     image_in_html = ndb.BooleanProperty(default=False)
+
+    # Class variables
+    update_form = FeedUpdate
 
     @property
     def image_strategy_blacklist(self):
@@ -648,6 +656,7 @@ class Feed(ndb.Model):
             'title': self.effective_title,
             'link': self.effective_link,
             'description': self.effective_description,
+            'feed_type': FEED_TYPE.RSS,
         }
 
         if getattr(self, 'preview', None) is None:

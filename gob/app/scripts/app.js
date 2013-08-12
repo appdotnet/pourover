@@ -18,7 +18,7 @@ pourOver.config(['$routeProvider', '$locationProvider', function ($routeProvider
     auth: true
   });
 
-  $routeProvider.when('/feed/:feed_id/', {
+  $routeProvider.when('/feed/:feed_type/:feed_id/', {
     templateUrl: '/views/feed_detail.html',
     controller: 'FeedDetailCtrl',
     auth: true
