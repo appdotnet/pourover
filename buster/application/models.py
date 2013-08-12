@@ -19,7 +19,7 @@ import json
 
 
 from flask import url_for
-from forms import FeedUpdate
+from forms import FeedUpdate, FeedCreate, FeedPreview, InstagramFeedCreate
 from fetcher import fetch_parsed_feed_for_url, fetch_parsed_feed_for_feed, fetch_url
 from constants import (ENTRY_STATE, FEED_STATE, FORMAT_MODE, UPDATE_INTERVAL, PERIOD_SCHEDULE, OVERFLOW_REASON,
                        DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD, FEED_TYPE)
@@ -338,7 +338,9 @@ class InstagramFeed(ndb.Model):
     max_stories_per_period = ndb.IntegerProperty(default=1)
 
     # Class variables
+    create_form = InstagramFeedCreate
     update_form = None
+    preview_form = None
 
     @property
     def link(self):
@@ -469,6 +471,8 @@ class Feed(ndb.Model):
 
     # Class variables
     update_form = FeedUpdate
+    create_form = FeedCreate
+    preview_form = FeedPreview
 
     @property
     def image_strategy_blacklist(self):

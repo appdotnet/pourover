@@ -88,8 +88,8 @@ def feed_create():
     try:
         # Get feed type default to RSS feeds
         feed_type = int(request.form.get('feed_type', FEED_TYPE.RSS))
-        validation_form = FEED_TYPE_TO_FORM[feed_type]
         feed_class = FEED_TYPE_TO_CLASS[feed_type]
+        validation_form = feed_class.create_form
     except:
         return jsonify_error(status='error', message='Invalid feed type')
 
@@ -110,7 +110,8 @@ def feed_create():
 @ndb.synctasklet
 def feed_validate():
     """preview a feed"""
-    form = FeedPreview(request.form)
+    feed_type = int(request.form.get('feed_type', 1))
+    form = FEED_TYPE_TO_CLASS[feed_type].preview_form(request.form)
     if not form.validate():
         raise ndb.Return(jsonify(status='error', form_errors=form.errors))
 

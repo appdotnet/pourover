@@ -368,6 +368,10 @@ class BusterTestCase(MockUrlfetchTest):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=10), status_code=200)
+
+        resp = self.app.post('/api/feeds/validate', headers=self.authHeaders(), data={'feed_url': test_feed_url})
+        assert test_feed_url == json.loads(resp.data)['data']['feed_url']
+
         resp = self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             max_stories_per_period=1,
