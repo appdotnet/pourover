@@ -275,10 +275,7 @@ def tq_feed_poll():
             logger.info("Couldn't find feed for key: %s", ndb_keys[i])
             continue
 
-        if isinstance(feed, InstagramFeed):
-            futures.append((i, InstagramFeed.process_feed(feed, None, None)))
-        else:
-            futures.append((i, Entry.update_for_feed(feed)))
+        futures.append((i, feed.process_feed(None, None)))
 
     for i, future in futures:
         parsed_feed = None

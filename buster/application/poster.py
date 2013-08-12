@@ -535,7 +535,7 @@ def image_annotation_for_entry(entry):
     }
 
 
-def instagram_format_for_adn(entry, feed):
+def instagram_format_for_adn(feed, entry):
     max_chars = MAX_CHARS - len(entry.link) + 1
     post_text = ellipse_text(entry.title, max_chars)
     post_text += ' ' + entry.link
@@ -546,7 +546,7 @@ def instagram_format_for_adn(entry, feed):
     return post
 
 @ndb.tasklet
-def format_for_adn(entry, feed):
+def format_for_adn(feed, entry):
     post_text = entry.title
     links = []
     summary_text = ''

@@ -91,7 +91,7 @@ class Entry(ndb.Model):
 
         feed = feed or self.key.parent().get()
         if format:
-            data['html'] = build_html_from_post(format_for_adn(self, feed).get_result())
+            data['html'] = build_html_from_post(feed.format_entry_for_adn(self).get_result())
             if feed.include_thumb and self.thumbnail_image_url:
                 data['thumbnail_image_url'] = self.thumbnail_image_url
 
@@ -140,10 +140,7 @@ class Entry(ndb.Model):
         user = yield feed.key.parent().get_async()
 
         # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
-        if isinstance(feed, InstagramFeed):
-            post = instagram_format_for_adn(self, feed)
-        else:
-            post = yield format_for_adn(self, feed)
+        post = yield feed.format_entry_for_adn(self)
 
         ctx = ndb.get_context()
         try:
@@ -363,20 +360,19 @@ class InstagramFeed(ndb.Model):
         form.populate_obj(feed)
         feed.key = ndb.Key(cls, unicode(feed.user_id), parent=user.key)
         yield feed.put_async()
-        feed, new_entries = yield cls.process_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
+        feed, new_entries = yield feed.process_feed(overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
         raise ndb.Return(feed)
 
-    @classmethod
     @ndb.tasklet
-    def process_feed(cls, feed, overflow, overflow_reason):
+    def process_feed(self, overflow, overflow_reason):
         # Sync pull down the latest feeds
-        resp = yield fetch_url(feed.feed_url)
+        resp = yield fetch_url(self.feed_url)
         parsed_feed = json.loads(resp.content)
 
         posts = parsed_feed.get('data', [])
         new_entries = 0
         for post in posts:
-            key = ndb.Key(Entry, post.get('id'), parent=feed.key)
+            key = ndb.Key(Entry, post.get('id'), parent=self.key)
             entry = yield key.get_async()
             if not entry:
                 standard_resolution = post.get('images', {}).get('standard_resolution')
@@ -403,7 +399,12 @@ class InstagramFeed(ndb.Model):
                 new_entries += 1
                 yield entry.put_async()
 
-        raise ndb.Return((feed, new_entries))
+        raise ndb.Return((self, new_entries))
+
+    @ndb.tasklet
+    def format_entry_for_adn(self, entry):
+        post = instagram_format_for_adn(self, entry)
+        raise ndb.Return(post)
 
     def to_json(self):
         feed_info = {
@@ -534,6 +535,11 @@ class Feed(ndb.Model):
     def for_interval(cls, interval_id):
         return cls.query(cls.update_interval == interval_id, cls.status == FEED_STATE.ACTIVE)
 
+    @ndb.tasklet
+    def process_feed(self, overflow, overflow_reason):
+        parsed_feed, num_new_items = yield Entry.update_for_feed(self)
+        raise ndb.Return((parsed_feed, num_new_items))
+
     @classmethod
     @ndb.synctasklet
     def reauthorize(cls, user):
@@ -621,6 +627,11 @@ class Feed(ndb.Model):
         yield feed.put_async()
         feed = yield cls.process_new_feed(feed)
         raise ndb.Return(feed)
+
+    @ndb.tasklet
+    def format_entry_for_adn(self, entry):
+        post = yield format_for_adn(self, entry)
+        raise ndb.Return(post)
 
     def to_json(self):
         feed_info = {
