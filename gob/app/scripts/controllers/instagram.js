@@ -1,12 +1,13 @@
 'use strict';
 
 (function () {
-  var InstagramCtrl = function ($http, ApiClient) {
+  var InstagramCtrl = function ($http, $location, Feeds, ApiClient) {
     var access_token = jQuery.url(window.location).fparam('access_token');
-    console.log('Yo');
     if (!access_token) {
       return;
     }
+
+    $scope.access_token = access_token;
 
     $http.jsonp('https://api.instagram.com/v1/users/self/', {
       params: {
@@ -21,15 +22,15 @@
         user_id: resp.data.id
       };
 
-      ApiClient.post({
-        url: 'feeds',
-        data: data
-      }).success(function (resp) {
+      Feeds.createFeed(data).then(function (feed) {
+        $location.path('/feed/' + feed.feed_type + '/' + feed.feed_id);
+      }, function () {
+        window.alert('Something wen\'t wrong while saving your feed');
+      }).always(updateLoader.stop);
 
-      });
     });
   };
 
-  InstagramCtrl.$inject = ['$http', 'ApiClient'];
+  InstagramCtrl.$inject = ['$http', '$location', 'Feeds', 'ApiClient'];
   angular.module('pourOver').controller('InstagramCtrl', InstagramCtrl);
 })();

@@ -36,7 +36,7 @@ pourOver.config(['$routeProvider', '$locationProvider', function ($routeProvider
 
   $routeProvider.when('/login/instagram/', {
     controller: 'InstagramCtrl',
-    templateUrl: '/views/signup.html',
+    templateUrl: '/views/instagram_signup.html',
   });
 
   $routeProvider.when('/login/', {
@@ -56,7 +56,9 @@ pourOver.config(['$routeProvider', '$locationProvider', function ($routeProvider
 pourOver.run(['$rootScope', '$location', 'Auth', function ($rootScope, $location, Auth) {
   // Developers should change this client_id to their own app.
   $rootScope.client_id = '6kmFxf2JrEqmFRQ4WncLfN8WWx7FnUS8';
+  $rootScope.instagram_client_id = 'e13ece0f2a574acc8a8d404e3330a6e4';
   $rootScope.redirect_uri = window.location.origin + '/login/';
+  $rootScope.instagram_redirect_uri = window.location.origin + '/login/instagram';
 
   $rootScope.$on('$routeChangeStart', function (event, next) {
     $rootScope.error = null;
