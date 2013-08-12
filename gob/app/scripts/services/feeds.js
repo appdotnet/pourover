@@ -30,7 +30,7 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
           $rootScope.feed = resp.data[0];
         } else {
           _.each($rootScope.feeds, function (item) {
-            if (item.feed_id === +selected_feed) {
+            if (item.feed_id === selected_feed.feed_id && item.feed_type === selected_feed.feed_type) {
               $rootScope.feed = item;
             }
           });
@@ -52,10 +52,12 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
       });
       return feed;
     },
-    setFeed: function (feed_id) {
-      selected_feed = feed_id;
+    setFeed: function (feed) {
+      selected_feed = feed;
+      console.log(feed);
+      console.log($rootScope.feeds);
       _.each($rootScope.feeds, function (item) {
-        if (item.feed_id === +selected_feed) {
+        if (item.feed_id === selected_feed.feed_id && item.feed_type === selected_feed.feed_type) {
           $rootScope.feed = item;
         }
       });

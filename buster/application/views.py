@@ -78,7 +78,9 @@ def me():
 @app.route('/api/feeds', methods=['GET'])
 def feeds():
     """List all examples"""
-    users_feeds = [feed.to_json() for feed in Feed.for_user(g.user)]
+    users_feeds = []
+    for feed_type in FEED_TYPE_TO_CLASS.values():
+        users_feeds += [feed.to_json() for feed in feed_type.for_user(g.user)]
     return jsonify(status='ok', data=users_feeds)
 
 
@@ -176,12 +178,11 @@ def delete_feed(feed_type, feed_id):
     """Get a feed"""
     feed = FEED_TYPE_TO_CLASS[feed_type].get_by_id(feed_id, parent=g.user.key)
     if not feed:
-        return jsonify_error(message="Can't find that feed")
+        raise ndb.Return(jsonify_error(message="Can't find that feed"))
 
-    Entry.delete_for_feed(feed)
-    feed.key.delete()
-
-    return jsonify(status='ok')
+    yield Entry.delete_for_feed(feed)
+    yield feed.key.delete_async()
+    raise ndb.Return(jsonify(status='ok'))
 
 
 @app.route('/api/feeds/<int:feed_type>/<int:feed_id>/unpublished', methods=['GET'])

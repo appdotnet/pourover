@@ -39,7 +39,10 @@ angular.module('pourOver')
     });
   }, true);
 
-  Feeds.setFeed($routeParams.feed_id);
+  Feeds.setFeed({
+    feed_type: +$routeParams.feed_type,
+    feed_id: +$routeParams.feed_id
+  });
 
   var refreshEntries = function () {
     ApiClient.get({

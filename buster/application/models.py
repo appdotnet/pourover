@@ -19,7 +19,7 @@ import json
 
 
 from flask import url_for
-from forms import FeedUpdate, FeedCreate, FeedPreview, InstagramFeedCreate
+from forms import FeedUpdate, FeedCreate, FeedPreview, InstagramFeedCreate, NoOpForm
 from fetcher import fetch_parsed_feed_for_url, fetch_parsed_feed_for_feed, fetch_url
 from constants import (ENTRY_STATE, FEED_STATE, FORMAT_MODE, UPDATE_INTERVAL, PERIOD_SCHEDULE, OVERFLOW_REASON,
                        DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD, FEED_TYPE)
@@ -339,8 +339,8 @@ class InstagramFeed(ndb.Model):
 
     # Class variables
     create_form = InstagramFeedCreate
-    update_form = None
-    preview_form = None
+    update_form = NoOpForm
+    preview_form = NoOpForm
 
     @property
     def link(self):
@@ -355,6 +355,10 @@ class InstagramFeed(ndb.Model):
         return "https://api.instagram.com/v1/users/self/media/recent/?access_token=%s" % (self.access_token)
 
     @classmethod
+    def for_user(cls, user):
+        return cls.query(ancestor=user.key)
+
+    @classmethod
     def for_user_and_form(cls, user, form):
         user_id = form.data['user_id']
         return cls.query(cls.user_id == user_id, ancestor=user.key)
@@ -364,7 +368,7 @@ class InstagramFeed(ndb.Model):
     def create_feed_from_form(cls, user, form):
         feed = cls()
         form.populate_obj(feed)
-        feed.key = ndb.Key(cls, unicode(feed.user_id), parent=user.key)
+        feed.key = ndb.Key(cls, int(feed.user_id), parent=user.key)
         yield feed.put_async()
         feed, new_entries = yield feed.process_feed(overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
         raise ndb.Return(feed)
@@ -401,6 +405,8 @@ class InstagramFeed(ndb.Model):
                 if overflow:
                     kwargs['overflow'] = overflow
                     kwargs['overflow_reason'] = overflow_reason
+                    kwargs['published'] = True
+
                 entry = Entry(key=key, guid=post.get('id'), **kwargs)
                 new_entries += 1
                 yield entry.put_async()
@@ -417,8 +423,9 @@ class InstagramFeed(ndb.Model):
             'username': self.username,
             'title': self.title,
             'link': self.link,
-            'feed_id': self.key.id(),
+            'feed_id': int(self.key.id()),
             'feed_type': FEED_TYPE.INSTAGRAM,
+            'feed_url': self.link,
         }
 
         return feed_info

@@ -20,6 +20,8 @@ def adn_rss_feed_check(form, field):
     if urlparts.netloc.endswith('alpha-api.app.net'):
         raise ValidationError('App.net RSS feeds are disallowed')
 
+class NoOpForm(Form):
+    pass
 
 class FeedUpdate(Form):
     include_summary = fields.BooleanField(default=False, filters=[boolean_filter])
