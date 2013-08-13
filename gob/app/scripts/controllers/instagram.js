@@ -1,7 +1,7 @@
 'use strict';
 
 (function () {
-  var InstagramCtrl = function ($scope, $rootScope, $http, $location, Feeds, ApiClient) {
+  var InstagramCtrl = function ($scope, $rootScope, $http, $location, Feeds) {
     var access_token = jQuery.url(window.location).fparam('access_token');
     if (!access_token) {
       return;
@@ -32,6 +32,6 @@
     });
   };
 
-  InstagramCtrl.$inject = ['$scope', '$rootScope', '$http', '$location', 'Feeds', 'ApiClient'];
+  InstagramCtrl.$inject = ['$scope', '$rootScope', '$http', '$location', 'Feeds'];
   angular.module('pourOver').controller('InstagramCtrl', InstagramCtrl);
 })();

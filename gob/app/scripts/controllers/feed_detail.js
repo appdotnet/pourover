@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('pourOver')
-.controller('FeedDetailCtrl', ['$rootScope', '$scope', 'ApiClient', '$routeParams', '$location', 'Feeds', 'User',function ($rootScope, $scope, ApiClient, $routeParams, $location, Feeds, User) {
+.controller('FeedDetailCtrl', ['$rootScope', '$scope', 'ApiClient', '$routeParams', '$location', 'Feeds', function ($rootScope, $scope, ApiClient, $routeParams, $location, Feeds) {
 
   $scope.schedule_periods = [
     {label: '1 mins', value: 1},

@@ -1,7 +1,7 @@
 'use strict';
 
 (function () {
-  var MainCtrl = function ($rootScope, $scope, ApiClient, $routeParams, $location, Feeds, User) {
+  var MainCtrl = function ($rootScope, $scope, ApiClient, $routeParams, $location, Feeds) {
     Feeds.setNewFeed();
     $scope.valid_feed = false;
 
@@ -47,6 +47,6 @@
 
   };
 
-  MainCtrl.$inject = ['$rootScope', '$scope', 'ApiClient', '$routeParams', '$location', 'Feeds', 'User'];
+  MainCtrl.$inject = ['$rootScope', '$scope', 'ApiClient', '$routeParams', '$location', 'Feeds'];
   angular.module('pourOver').controller('MainCtrl', MainCtrl);
 })();

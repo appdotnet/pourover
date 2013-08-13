@@ -35,13 +35,10 @@ module.exports = function (grunt) {
         files: ['<%= yeoman.app %>/styles/{,*/}*.{scss,sass}'],
         tasks: ['compass']
       },
-      templates: {
-        files: ['<%= yeoman.app %>/views/**/*.html'],
-        tasks: ['ngtemplates']
-      },
       livereload: {
         files: [
           '<%= yeoman.app %>/{,*/}*.html',
+          '<%= yeoman.app %>/views/**/*.html',
           '{.tmp,<%= yeoman.app %>}/styles/{,*/}*.css',
           '{.tmp,<%= yeoman.app %>}/scripts/{,*/}*.js',
           '<%= yeoman.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
@@ -174,7 +171,7 @@ module.exports = function (grunt) {
       dist: {
         options: {
           base: '.tmp',
-          concat: 'dist',
+          concat: 'dist/scripts/scripts.js',
           module: 'pourOver',
           prepend: '/'
         },

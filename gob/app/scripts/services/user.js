@@ -6,7 +6,7 @@ angular.module('pourOver').factory('User', ['$rootScope', 'ApiClient', function 
 
   ApiClient.get({
     url: 'me'
-  }).success(function (resp, status, headers, config) {
+  }).success(function (resp) {
     $rootScope.current_user = resp.data;
   });
 
