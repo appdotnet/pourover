@@ -1,6 +1,6 @@
 <div ng-include src="'/views/includes/nav.html'"></div>
 <h2>Your Feeds</h2>
-<p ng-show='feeds.length == 0'>You don't have any feeds. To start using PourOver you need to create a feed.</p>
+<p ng-show='feeds.length == 0'>You haven't added any feeds. To start using PourOver you need to add a feed.</p>
 <table class='table table-condensed' ng-show='feeds.length > 0'>
   <thead>
     <tr>
@@ -18,12 +18,12 @@
   </tbody>
 </table>
 
-<p><a data-target="#newFeedModal" role="button" class="btn btn-primary" data-toggle="modal">Create a new feed</a></p>
+<p><a data-target="#newFeedModal" role="button" class="btn btn-primary" data-toggle="modal">Add a feed</a></p>
 
 <div id='newFeedModal' class="modal hide fade">
   <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-    <h4>Create A New Feed</h4>
+    <h4>Add A Feed</h4>
   </div>
   <div class="modal-body">
       <ul class="nav nav-tabs">
@@ -53,11 +53,11 @@
         </div>
         <div class='tab-pane' id='instagram'>
           <p>
-            <a href='https://instagram.com/oauth/authorize/?client_id={{instagram_client_id}}&redirect_uri={{instagram_redirect_uri}}&response_type=token' class="btn btn-primary btn-large">Authorize your Instagram account</a></p>
+            <a href='https://instagram.com/oauth/authorize/?client_id={{instagram_client_id}}&redirect_uri={{instagram_redirect_uri}}&response_type=token' class="btn btn-primary btn-large">Click here to add your Instagram account</a></p>
         </div>
   </div>
   <div class="modal-footer">
     <a href="#" class="btn" data-close data-dismiss="modal">Close</a>
-    <button type="submit" class="btn btn-primary ladda-button" data-save-btn data-style="slide-left" ng-click='createFeed()' ng-disabled='!valid_feed'><span class='ladda-label'>Save Feed</span></button>
+    <button type="submit" class="btn btn-primary ladda-button" data-save-btn data-style="slide-left" ng-click='createFeed()' ng-disabled='!valid_feed'><span class='ladda-label'>Add Feed</span></button>
   </div>
 </div>

@@ -31,6 +31,9 @@ logger = logging.getLogger(__name__)
 # Don't complain about this
 ndb.add_flow_exception(urlfetch.DeadlineExceededError)
 
+def format_date(dt):
+    logger.info('dt: %s', dt)
+    return dt.strftime('%a %b %d %I:%M %p')
 
 class User(ndb.Model):
     access_token = ndb.StringProperty()
@@ -78,17 +81,16 @@ class Entry(ndb.Model):
         for attr in include:
             data[attr] = getattr(self, attr, None)
 
+        for dt in ['published_at', 'added_at']:
+            if data.get(dt):
+                data['%s_in_secs' % (dt)] = time.mktime(data[dt].timetuple())
+                data[dt] = format_date(data[dt])
+
         if self.overflow:
             data['overflow_reason'] = OVERFLOW_REASON.for_display(self.overflow_reason)
 
         if self.key:
             data['id'] = self.key.urlsafe()
-
-        if self.published_at:
-            data['published_at_in_secs'] = time.mktime(self.published_at.timetuple())
-
-        if self.added:
-            data['added_at_in_secs'] = time.mktime(self.added.timetuple())
 
         feed = feed or self.key.parent().get()
         if format:

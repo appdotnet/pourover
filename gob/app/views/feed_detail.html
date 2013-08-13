@@ -11,72 +11,54 @@
   <div class='row'>
     <div class='span12'>
       <ul class="nav nav-tabs">
-        <li class="active"><a data-target="#recent-posts" data-toggle="tab" class="like-link">Recent Posts</a></li>
-        <li><a data-target="#future-posts" data-toggle="tab" class="like-link">Future Posts</a></li>
-        <li><a data-target="#log" data-toggle="tab" class="like-link">Event Log</a></li>
+        <li class="active"><a data-target="#posts" data-toggle="tab" class="like-link">Posts</a></li>
         <li><a data-target="#settings" data-toggle="tab" class="like-link" ng-show="feed.feed_id">Settings</a></li>
       </ul>
       <div class="tab-content">
-        <div class="tab-pane active" id="recent-posts">
-          <table class='table' ng-show='published_entries'>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th colspan='2'>Published</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr ng-repeat="entry in published_entries" ng-show='entry.published_at'>
-                <td ng-bind='entry.title'></td>
-                <td ng-bind='entry.published_at'></td>
-                <td>
-                  <a ng-click='publishEntry(entry)' class='btn btn-mini'>Republish Now</a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <p ng-hide='published_entries'>There are no entries published at this time.</p>
-        </div>
-        <div class="tab-pane" id="future-posts">
-          <table class='table' ng-hide='unpublished_entries.length == 0'>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th colspan='2'>Found At</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr ng-repeat="entry in unpublished_entries">
-                <td ng-bind='entry.title'></td>
-                <td ng-bind='entry.added'></td>
-                <td>
-                  <a ng-click='publishEntry(entry)' class='btn btn-mini'>Publish Now</a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <p ng-show='unpublished_entries.length == 0'>
-            All posts have been published at this time.
-          <p>
-        </div>
-        <div class="tab-pane" id="log">
-          <table class='table'>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th colspan='2'>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr ng-repeat="entry in all_published_entries">
-                <td ng-bind='entry.title'></td>
-                <td ng-bind='entryStatus(entry)'></td>
-                <td>
-                  <a ng-click='publishEntry(entry)' class='btn btn-mini' ng-bind='entryAction(entry)'></a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="tab-pane active" id="posts">
+          <p ng-show='showEmptyMessage()'>Your feed doesn't seem to have any posts. You should check and see if its working.</p>
+          <div ng-show='unpublished_entries'>
+            <h4>Future Posts</h4>
+            <table class='table'>
+              <tbody>
+                <tr ng-repeat="entry in unpublished_entries">
+                  <td ng-bind='entry.title' class='span8'></td>
+                  <td ng-bind='entry.added'></td>
+                  <td>
+                    <a ng-click='publishEntry(entry)' class='btn btn-mini pull-right'>Publish Now</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div ng-show='published_entries'>
+            <h4>Recently Published Posts</h4>
+            <table class='table'>
+              <tbody>
+                <tr ng-repeat="entry in published_entries" ng-show='entry.published_at'>
+                  <td ng-bind='entry.title' class='span8'></td>
+                  <td ng-bind='entry.published_at'></td>
+                  <td class='ta-right'>
+                    <a ng-click='publishEntry(entry)' class='btn btn-mini pull-right'>Republish Now</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div ng-show='overflow_entries'>
+            <h4>Post Backlog <small>These are posts that have not been published for various reasons.</small></h4>
+            <table class='table'>
+              <tbody>
+                <tr ng-repeat="entry in overflow_entries">
+                  <td ng-bind='entry.title' class='span8'></td>
+                  <td ng-bind='entryStatus(entry)'></td>
+                  <td>
+                    <a ng-click='publishEntry(entry)' class='btn btn-mini pull-right' ng-bind='entryAction(entry)'></a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
         <div class="tab-pane" id="settings">
           <h5>Feed Preview</h5>

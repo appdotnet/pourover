@@ -49,11 +49,11 @@ angular.module('pourOver')
       url: 'feeds/' + $rootScope.feed.feed_type + '/' + $rootScope.feed.feed_id + '/latest'
     }).success(function (resp) {
       if (resp.data && resp.data.entries) {
-        var blah = _.groupBy(resp.data.entries, function (x) {
-          return x.overflow_reason;
+        var sorted_posts = _.groupBy(resp.data.entries, function (x) {
+          return (x.overflow_reason) ? 'overflow' : 'published';
         });
-        $scope.all_published_entries = resp.data.entries;
-        $scope.published_entries = blah.undefined;
+        $scope.overflow_entries = sorted_posts.overflow;
+        $scope.published_entries = sorted_posts.published;
       }
     });
 
@@ -141,6 +141,15 @@ angular.module('pourOver')
     }
 
     return status;
+  };
+
+  $scope.showEmptyMessage = function () {
+    var entry_lists = ['unpublished_entries', 'published_entries', 'overflow_entries'];
+    entry_lists = _.filter(entry_lists, function (val) {
+      var is_a_thing = $scope[val] && $scope[val].length;
+      return (typeof(is_a_thing) !== 'undefined' && is_a_thing > 0) ? true : false;
+    });
+    return entry_lists.length === 0;
   };
 
 }]);
