@@ -18,7 +18,7 @@
   </tbody>
 </table>
 
-<p><a data-target="#newFeedModal" role="button" class="btn" data-toggle="modal">Create a new feed</a></p>
+<p><a data-target="#newFeedModal" role="button" class="btn btn-primary" data-toggle="modal">Create a new feed</a></p>
 
 <div id='newFeedModal' class="modal hide fade">
   <div class="modal-header">
@@ -26,24 +26,35 @@
     <h4>Create A New Feed</h4>
   </div>
   <div class="modal-body">
-    <form class="form-vertical">
-      <label class="control-label">Feed URL</label>
-      <div class="controls">
-        <input type="text" placeholder="https://example.com/rss" ng-model='feed.feed_url' class='span5'>
-        <span class='loading-icon' style='display: none;'>
-          <i class="icon-refresh icon-spin"></i>
-        <span>
-      </div>
-      <div ng-show='valid_feed'>
-        <h5>Found a Feed</h5>
-        <div class='ellipses'>
-          <b>Name:</b> <span ng-bind='feed.title'></span>
+      <ul class="nav nav-tabs">
+        <li class="active"><a data-target="#rss" data-toggle="tab" class="like-link">RSS Feed</a></li>
+        <li><a data-target="#instagram" data-toggle="tab" class="like-link">Instagram</a></li>
+      </ul>
+      <div class="tab-content">
+        <div class="tab-pane active" id="rss">
+          <form class="form-vertical">
+            <label class="control-label">Feed URL</label>
+            <div class="controls">
+              <input type="text" placeholder="https://example.com/rss" ng-model='feed.feed_url' class='span5'>
+              <span class='loading-icon' style='display: none;'>
+                <i class="icon-refresh icon-spin"></i>
+              <span>
+            </div>
+            <div ng-show='valid_feed'>
+              <h5>Found a Feed</h5>
+              <div class='ellipses'>
+                <b>Name:</b> <span ng-bind='feed.title'></span>
+              </div>
+              <div class='ellipses'>
+                <b>Feed URL:</b><span ng-bind='feed.feed_url'></span>
+              </div>
+            </div>
+          </form>
         </div>
-        <div class='ellipses'>
-          <b>Feed URL:</b><span ng-bind='feed.feed_url'></span>
+        <div class='tab-pane' id='instagram'>
+          <p>
+            <a href='https://instagram.com/oauth/authorize/?client_id={{instagram_client_id}}&redirect_uri={{instagram_redirect_uri}}&response_type=token' class="btn btn-primary btn-large">Authorize your Instagram account</a></p>
         </div>
-      </div>
-    </form>
   </div>
   <div class="modal-footer">
     <a href="#" class="btn" data-close data-dismiss="modal">Close</a>

@@ -174,7 +174,7 @@ module.exports = function (grunt) {
       dist: {
         options: {
           base: '.tmp',
-          concat: 'dist/scripts/scripts.js',
+          concat: 'dist',
           module: 'pourOver',
           prepend: '/'
         },
