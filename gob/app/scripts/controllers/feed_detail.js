@@ -151,5 +151,9 @@ angular.module('pourOver')
     });
     return entry_lists.length === 0;
   };
+  console.log($location.hash());
+  if ($location.hash() === 'settings') {
+    jQuery('[data-target="#settings"]').tab('show');
+  }
 
 }]);

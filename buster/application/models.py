@@ -338,6 +338,7 @@ class InstagramFeed(ndb.Model):
     manual_control = ndb.BooleanProperty(default=False)
     schedule_period = ndb.IntegerProperty(default=PERIOD_SCHEDULE.MINUTE_5)
     max_stories_per_period = ndb.IntegerProperty(default=1)
+    user_agent = ndb.StringProperty(default=None)
 
     include_thumb = True
     include_video = True
@@ -346,6 +347,8 @@ class InstagramFeed(ndb.Model):
     create_form = InstagramFeedCreate
     update_form = NoOpForm
     preview_form = NoOpForm
+
+    # Custom user_agent
 
     @property
     def link(self):
@@ -381,7 +384,7 @@ class InstagramFeed(ndb.Model):
     @ndb.tasklet
     def process_feed(self, overflow, overflow_reason):
         # Sync pull down the latest feeds
-        resp = yield fetch_url(self.feed_url)
+        resp = yield fetch_url(self.feed_url, user_agent=self.user_agent)
         parsed_feed = json.loads(resp.content)
 
         posts = parsed_feed.get('data', [])
@@ -480,6 +483,8 @@ class Feed(ndb.Model):
     image_in_content = ndb.BooleanProperty(default=True)
     image_in_meta = ndb.BooleanProperty(default=True)
     image_in_html = ndb.BooleanProperty(default=False)
+
+    user_agent = ndb.StringProperty(default=None)
 
     # Class variables
     update_form = FeedUpdate
@@ -604,6 +609,7 @@ class Feed(ndb.Model):
         # Sync pull down the latest feeds
 
         parsed_feed, num_new_entries = yield Entry.update_for_feed(feed, overflow=overflow, overflow_reason=overflow_reason)
+        logger.info('Processinge new feed num_new_entries:%s parsed_feed.entries:%s', num_new_entries, len(parsed_feed.entries))
         updated = False
         try:
             updated = yield feed.update_feed_from_parsed_feed(parsed_feed)

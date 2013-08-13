@@ -24,7 +24,7 @@ ndb.add_flow_exception(FetchException)
 
 
 @ndb.tasklet
-def fetch_url(url, etag=None):
+def fetch_url(url, etag=None, user_agent=None):
     # Handle network issues here, handle other exceptions where this is called from
 
     # GAE's built in urlfetch doesn't expose what HTTP Status caused a request to follow
@@ -42,7 +42,7 @@ def fetch_url(url, etag=None):
             kwargs = {
                 'url': url,
                 'headers': {
-                    'User-Agent': 'ADN PourOver/1.0 +https://adn-pourover.appspot.com/'
+                    'User-Agent': user_agent or 'ADN Pour-Over/1.0 +https://adn-pourover.appspot.com/',
                 },
                 'follow_redirects': True,
                 'deadline': 60
@@ -89,8 +89,8 @@ def fetch_url(url, etag=None):
 
 
 @ndb.tasklet
-def fetch_parsed_feed_for_url(feed_url, etag=None):
-    resp = yield fetch_url(feed_url, etag)
+def fetch_parsed_feed_for_url(feed_url, etag=None, user_agent=None):
+    resp = yield fetch_url(feed_url, etag, user_agent)
 
     # Feed hasn't been updated so there isn't a feed
     if resp.status_code == 304:
@@ -116,7 +116,7 @@ def fetch_parsed_feed_for_feed(feed):
     now = datetime.datetime.now()
 
     try:
-        resp = yield fetch_url(feed.feed_url, feed.etag)
+        resp = yield fetch_url(feed.feed_url, feed.etag, feed.user_agent)
     except FetchException, e:
         # If we haven't been able to fetch this feed in the last 24 hours lets disable it
         # This doesn't do anything right now, just want to make sure we are doing this correctly
