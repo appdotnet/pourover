@@ -25,6 +25,14 @@ indexes:
   ancestor: yes
   properties:
   - name: creating
+  - name: overflow
+  - name: published
+  - name: added
+
+- kind: Entry
+  ancestor: yes
+  properties:
+  - name: creating
   - name: published
   - name: added
 
