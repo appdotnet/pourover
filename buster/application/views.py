@@ -19,7 +19,7 @@ from google.appengine.api.taskqueue import Task, Queue
 from flask_cache import Cache
 
 from application import app
-from constants import UPDATE_INTERVAL, FEED_TYPE
+from constants import UPDATE_INTERVAL, FEED_TYPE, OVERFLOW_REASON
 from models import Entry, Feed, Stat, Configuration, InstagramFeed, FEED_TYPE_TO_CLASS
 from fetcher import FetchException, fetch_parsed_feed_for_feed
 from forms import FeedCreate, FeedUpdate, FeedPreview, FEED_TYPE_TO_FORM
@@ -224,7 +224,7 @@ def save_feed_preview(feed_type, feed_id):
 
     form.populate_obj(feed)
     feed.preview = True
-    preview_entries = Entry.entry_preview(Entry.latest(feed).fetch(3), feed, format=True)
+    preview_entries = Entry.entry_preview(Entry.latest(feed, include_overflow=True, overflow_cats=[OVERFLOW_REASON.BACKLOG, OVERFLOW_REASON.MALFORMED, OVERFLOW_REASON.FEED_OVERFLOW]).fetch(3), feed, format=True)
 
     return jsonify(status='ok', data=preview_entries)
 

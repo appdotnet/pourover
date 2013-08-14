@@ -303,20 +303,25 @@ class Entry(ndb.Model):
         return cls.query(cls.creating == False, ancestor=feed.key)
 
     @classmethod
-    def latest_unpublished(cls, feed):
-        published = False
-        return cls.query(cls.published == published, cls.creating == False, ancestor=feed.key).order(-cls.added)
+    def latest_unpublished(cls, feed,):
+        query = cls.query(cls.published == False, cls.creating == False, ancestor=feed.key).order(-cls.added)
+        return query
 
     @classmethod
-    def latest(cls, feed):
-        published = True
-        q = cls.query(cls.published == published, cls.creating == False, ancestor=feed.key).order(cls.added)
+    def latest(cls, feed, include_overflow=False, overflow_cats=None):
+        q = cls.query(cls.published == True, cls.creating == False, cls.overflow == include_overflow, ancestor=feed.key).order(cls.added)
+
+        if overflow_cats is None:
+            overflow_cats = [OVERFLOW_REASON.MALFORMED, OVERFLOW_REASON.FEED_OVERFLOW]
+
+        if include_overflow:
+            q = q.filter(cls.overflow_reason.IN(overflow_cats))
+
         return q
 
     @classmethod
     def latest_published(cls, feed, since=None):
-        published = True
-        q = cls.query(cls.published == published, cls.creating == False, ancestor=feed.key).order(-cls.published_at).order(-cls.added)
+        q = cls.query(cls.published == True, cls.creating == False, ancestor=feed.key).order(-cls.published_at).order(-cls.added)
         if since:
             q = q.filter(cls.published_at >= since)
 

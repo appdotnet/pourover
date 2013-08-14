@@ -36,7 +36,7 @@
 
       Feeds.createFeed($rootScope.feed).then(function (feed) {
         jQuery('#newFeedModal').modal('hide');
-        $location.path('/feed/' + feed.feed_type + '/' + feed.feed_id + '#settings');
+        $location.path('/feed/' + feed.feed_type + '/' + feed.feed_id + '/').hash('settings');
       }, function () {
         window.alert('Something wen\'t wrong while saving your feed');
       }).always(updateLoader.stop);
