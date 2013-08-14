@@ -8,7 +8,7 @@
  * Designed and built with all the love in the world @twitter by @mdo and @fat.
  */
 
-//@import "compass";
+@import "compass";
 
 @import "compass_twitter_bootstrap/mixins";
 
@@ -17,6 +17,7 @@
 
 // Core variables and mixins
 //@import "compass_twitter_bootstrap/variables"; // Modify this for custom colors, font-sizes, etc
+
 @import "variables";
 
 // Grid system and page structure
@@ -68,72 +69,74 @@
 @import "../components/Ladda/css/ladda.scss";
 //@import "../components/Ladda/css/ladda-theme.scss";
 
-.pourover-heading {
-    margin: 0 auto 20px auto;
-    height: 100px;
-    width: 388px;
-    line-height: 100px;
-    background-size: 100px 100px;
-    background-repeat: no-repeat;
-    background-image: url('/images/pourover-logo.png');
-    @media only screen and (-webkit-min-device-pixel-ratio: 1.5),
-           only screen and (min--moz-device-pixel-ratio: 1.5),
-           only screen and (-o-min-device-pixel-ratio: 3/2),
-           only screen and (min-device-pixel-ratio: 1.5) {
-               background-image: url('/images/pourover-logo@2x.png');
+body {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-size: 16px;
+    line-height: 22px;
+}
+
+.wide-container.sign-up-page {
+    min-width: 1152px;
+}
+
+.wide-container.blue {
+    border-top: none;
+    .main-content-block {
+        padding-bottom: 50px;
     }
     h1 {
-        padding-left: 105px;
-        margin: 0;
-        line-height: 100px;
+        font-size: 85px;
+        color: #fff;
+        margin-bottom: 10px;
+    }
+    h2 {
+        font-size: 22px;
+        color: #fff;
+    }
+    p {
+        margin: 10px auto 0 auto;
+        font-style: italic;
+        color: #ddd;
     }
 }
-.hero-unit.main {
-    padding: 40px;
-    font-weight: 400;
-    color: darken($grayDark, 10%);
-    h1 {
-        color: $blueDark;
-        margin-top: 0;
-        small {
-            color: darken($gray, 10%);
+
+.wide-container.gray {
+    border: none;
+    .step {
+        padding: 20px;
+        font-size: 20px;
+        font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+        &.inset {
+            background-color: #ddd;
+            @include box-shadow(#{inset 0 1px 0 rgba(0, 0, 0, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.05)});
         }
-    }
-    h2.main-h2 {
-        margin-top: 0;
-        font-size: 25px;
-        color: lighten($blueDark, 15%);
+        &:nth-child(2) .step-circle {
+            background-color: #cbc36f;
+        }
+        &:nth-child(3) .step-circle {
+            background-color: #bc7676;
+        }
+        .step-inner {
+            margin: 0 auto 0 auto;
+            max-width: 700px;
+            padding: 20px;
+        }
+        .step-circle {
+            display: inline-block;
+            margin-right: 20px;
+            width: 70px;
+            height: 70px;
+            color: $white;
+            line-height: 70px;
+            font-size: 25px;
+            background-color: #6fa3cb;
+            border: 2px solid $white;
+            @include border-radius(70px);
+        }
     }
     iframe {
         margin-left: 5px;
         vertical-align: middle;
-    }
-}
-
-ul.steps-list {
-    margin: 25px -40px 25px -40px;
-    li {
-        padding: 30px 40px 30px 40px;
-        font-weight: bold;
-        color: $blueDark;
-        line-height: 60px;
-        &:nth-child(odd) {
-            background-color: darken($grayLighter, 5%);
-            //@include box-shadow(#{inset 0 2px 0 rgba(0, 0, 0, 0.05), inset 0 -2px 0 rgba(0, 0, 0, 0.05)});
-        }
-        .step {
-            display: inline-block;
-            margin-right: 20px;
-            width: 60px;
-            height: 60px;
-            color: $white;
-            line-height: 60px;
-            font-size: 25px;
-            font-weight: normal;
-            background-color: $blueDark;
-            border: 2px solid $white;
-            //@include border-radius(60px);
-        }
     }
 }
 
@@ -151,8 +154,8 @@ a.adn-button-large, a.adn-button-large:visited {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 38px;
     text-decoration: none;
-    //@include border-radius(58px);
-    //@include transition(all 0.15s ease-out);
+    @include border-radius(58px);
+    @include transition(all 0.15s ease-out);
 
     &:hover {
         color: $white;
@@ -177,7 +180,7 @@ a.adn-button-large, a.adn-button-large:visited {
         background-repeat: no-repeat;
         background-position: 6px 7px;
         background-image: url('/images/adn-logo.png');
-        //@include border-radius(34px);
+        @include border-radius(34px);
 
         @media only screen and (-webkit-min-device-pixel-ratio: 1.5),
                only screen and (min--moz-device-pixel-ratio: 1.5),
@@ -189,14 +192,20 @@ a.adn-button-large, a.adn-button-large:visited {
 }
 
 .sites-using-pourover {
-    margin-top: 25px;
-    .span4 {
-        border: 2px solid $blueDark;
+    margin: 30px auto 0 auto;
+    width: 960px;
+    a {
+        display: block;
+        margin: 0 auto 0 auto;
+        width: 274px;
         height: 165px;
-        //@include opacity(0.9);
-        //@include border-radius(6px);
+        border: 2px solid #ddd;
+        @include opacity(0.85);
+        @include box-shadow(0 2px 0 rgba(0, 0, 0, 0.05));
+        @include transition(opacity 0.2s linear);
         &:hover {
-            //@include opacity(1.0);
+            @include opacity(1.0);
+            @include transition(opacity 0.15s linear);
         }
         &.sites-pitchfork {
             background-image: url(/images/sites-pitchfork.png);
