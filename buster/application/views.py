@@ -205,7 +205,7 @@ def published_entries_for_feed(feed_type, feed_id):
         return jsonify_error(message="Can't find that feed")
 
     feed_data = feed.to_json()
-    entries = [entry.to_json() for entry in Entry.latest(feed).fetch(20)]
+    entries = [entry.to_json() for entry in Entry.latest(feed, order_by='-published_at').fetch(20)]
     feed_data['entries'] = entries
 
     return jsonify(status='ok', data=feed_data)

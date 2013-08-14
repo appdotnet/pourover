@@ -311,8 +311,13 @@ class Entry(ndb.Model):
         return query
 
     @classmethod
-    def latest(cls, feed, include_overflow=False, overflow_cats=None):
-        q = cls.query(cls.published == True, cls.creating == False, cls.overflow == include_overflow, ancestor=feed.key).order(cls.added)
+    def latest(cls, feed, include_overflow=False, overflow_cats=None, order_by='added'):
+        q = cls.query(cls.published == True, cls.creating == False, cls.overflow == include_overflow, ancestor=feed.key)
+        if order_by == 'added':
+            q = q.order(cls.added)
+
+        if order_by == '-published_at':
+            q = q.order(-cls.published_at)
 
         if overflow_cats is None:
             overflow_cats = [OVERFLOW_REASON.MALFORMED, OVERFLOW_REASON.FEED_OVERFLOW]

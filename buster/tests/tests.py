@@ -400,7 +400,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert 0 == len(json.loads(resp.data)['data']['entries'])
 
         resp = self.app.get('%s/latest' % (feed_detail_root), headers=self.authHeaders())
-        assert 10 == len(json.loads(resp.data)['data']['entries'])
+        assert 0 == len(json.loads(resp.data)['data']['entries'])
 
         resp = self.app.get('%s/preview' % (feed_detail_root), headers=self.authHeaders())
         assert 3 == len(json.loads(resp.data)['data'])
