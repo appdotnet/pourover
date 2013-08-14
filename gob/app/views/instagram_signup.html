@@ -1,8 +1,10 @@
-<div class="hero-unit ta-center" ng-show='!access_token'>
-  <h2>Create an Instagram Feed</h2>
-  <p><a href='https://instagram.com/oauth/authorize/?client_id={{instagram_client_id}}&redirect_uri={{instagram_redirect_uri}}&response_type=token' class="btn btn-large">Authorize your Instagram account</a></p>
-</div>
-<div class="hero-unit ta-center" ng-show='access_token'>
-  <h2>Creating your Instagram Feed</h2>
-  <span><i class='icon-refresh icon-spin'></i>&nbsp;</span>
+<div class='container'>
+    <div class="hero-unit ta-center" ng-show='!access_token'>
+      <h2>Create an Instagram Feed</h2>
+      <p><a href='https://instagram.com/oauth/authorize/?client_id={{instagram_client_id}}&redirect_uri={{instagram_redirect_uri}}&response_type=token' class="btn btn-large">Authorize your Instagram account</a></p>
+    </div>
+    <div class="hero-unit ta-center" ng-show='access_token'>
+      <h2>Creating your Instagram Feed</h2>
+      <span><i class='icon-refresh icon-spin'></i>&nbsp;</span>
+    </div>
 </div>

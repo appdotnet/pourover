@@ -8,62 +8,62 @@
  * Designed and built with all the love in the world @twitter by @mdo and @fat.
  */
 
-@import "compass";
+//@import "compass";
 
 @import "compass_twitter_bootstrap/mixins";
 
 // CSS Reset
-@import "compass_twitter_bootstrap/reset";
+// @import "compass_twitter_bootstrap/reset";
 
 // Core variables and mixins
 //@import "compass_twitter_bootstrap/variables"; // Modify this for custom colors, font-sizes, etc
 @import "variables";
 
 // Grid system and page structure
-@import "compass_twitter_bootstrap/scaffolding";
-@import "compass_twitter_bootstrap/grid";
-@import "compass_twitter_bootstrap/layouts";
+//@import "compass_twitter_bootstrap/scaffolding";
+// @import "compass_twitter_bootstrap/grid";
+//@import "compass_twitter_bootstrap/layouts";
 
 // Base CSS
-@import "compass_twitter_bootstrap/type";
-@import "compass_twitter_bootstrap/code";
-@import "compass_twitter_bootstrap/forms";
-@import "compass_twitter_bootstrap/tables";
+//@import "compass_twitter_bootstrap/type";
+//@import "compass_twitter_bootstrap/code";
+//@import "compass_twitter_bootstrap/forms";
+//@import "compass_twitter_bootstrap/tables";
 
 // Components: common
 // @import "compass_twitter_bootstrap/font-awesome";
-@import "compass_twitter_bootstrap/dropdowns";
-@import "compass_twitter_bootstrap/wells";
-@import "compass_twitter_bootstrap/component-animations";
-@import "compass_twitter_bootstrap/close";
+//@import "compass_twitter_bootstrap/dropdowns";
+//@import "compass_twitter_bootstrap/wells";
+//@import "compass_twitter_bootstrap/component-animations";
+//@import "compass_twitter_bootstrap/close";
 
 // Components: Buttons & Alerts
-@import "compass_twitter_bootstrap/buttons";
-@import "compass_twitter_bootstrap/button-groups";
-@import "compass_twitter_bootstrap/alerts"; // Note: alerts share common CSS with buttons and thus have styles in buttons.less
+//@import "compass_twitter_bootstrap/buttons";
+//@import "compass_twitter_bootstrap/button-groups";
+//@import "compass_twitter_bootstrap/alerts"; // Note: alerts share common CSS with buttons and thus have styles in buttons.less
 
 // Components: Nav
-@import "compass_twitter_bootstrap/navs";
-@import "compass_twitter_bootstrap/navbar";
-@import "compass_twitter_bootstrap/breadcrumbs";
-@import "compass_twitter_bootstrap/pagination";
-@import "compass_twitter_bootstrap/pager";
+//@import "compass_twitter_bootstrap/navs";
+//@import "compass_twitter_bootstrap/navbar";
+//@import "compass_twitter_bootstrap/breadcrumbs";
+//@import "compass_twitter_bootstrap/pagination";
+//@import "compass_twitter_bootstrap/pager";
 
 // Components: Popovers
-@import "compass_twitter_bootstrap/modals";
-@import "compass_twitter_bootstrap/tooltip";
-@import "compass_twitter_bootstrap/popovers";
+//@import "compass_twitter_bootstrap/modals";
+//@import "compass_twitter_bootstrap/tooltip";
+//@import "compass_twitter_bootstrap/popovers";
 
 // Components: Misc
-@import "compass_twitter_bootstrap/thumbnails";
-@import "compass_twitter_bootstrap/media";
-@import "compass_twitter_bootstrap/labels-badges";
-@import "compass_twitter_bootstrap/progress-bars";
-@import "compass_twitter_bootstrap/accordion";
-@import "compass_twitter_bootstrap/carousel";
-@import "compass_twitter_bootstrap/hero-unit";
+//@import "compass_twitter_bootstrap/thumbnails";
+//@import "compass_twitter_bootstrap/media";
+//@import "compass_twitter_bootstrap/labels-badges";
+//@import "compass_twitter_bootstrap/progress-bars";
+//@import "compass_twitter_bootstrap/accordion";
+//@import "compass_twitter_bootstrap/carousel";
+//@import "compass_twitter_bootstrap/hero-unit";
 
-@import "bootswatch";
+//@import "bootswatch";
 
 @import "../components/Ladda/css/ladda.scss";
 //@import "../components/Ladda/css/ladda-theme.scss";
@@ -119,7 +119,7 @@ ul.steps-list {
         line-height: 60px;
         &:nth-child(odd) {
             background-color: darken($grayLighter, 5%);
-            @include box-shadow(#{inset 0 2px 0 rgba(0, 0, 0, 0.05), inset 0 -2px 0 rgba(0, 0, 0, 0.05)});
+            //@include box-shadow(#{inset 0 2px 0 rgba(0, 0, 0, 0.05), inset 0 -2px 0 rgba(0, 0, 0, 0.05)});
         }
         .step {
             display: inline-block;
@@ -132,7 +132,7 @@ ul.steps-list {
             font-weight: normal;
             background-color: $blueDark;
             border: 2px solid $white;
-            @include border-radius(60px);
+            //@include border-radius(60px);
         }
     }
 }
@@ -151,8 +151,8 @@ a.adn-button-large, a.adn-button-large:visited {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 38px;
     text-decoration: none;
-    @include border-radius(58px);
-    @include transition(all 0.15s ease-out);
+    //@include border-radius(58px);
+    //@include transition(all 0.15s ease-out);
 
     &:hover {
         color: $white;
@@ -177,7 +177,7 @@ a.adn-button-large, a.adn-button-large:visited {
         background-repeat: no-repeat;
         background-position: 6px 7px;
         background-image: url('/images/adn-logo.png');
-        @include border-radius(34px);
+        //@include border-radius(34px);
 
         @media only screen and (-webkit-min-device-pixel-ratio: 1.5),
                only screen and (min--moz-device-pixel-ratio: 1.5),
@@ -193,10 +193,10 @@ a.adn-button-large, a.adn-button-large:visited {
     .span4 {
         border: 2px solid $blueDark;
         height: 165px;
-        @include opacity(0.9);
-        @include border-radius(6px);
+        //@include opacity(0.9);
+        //@include border-radius(6px);
         &:hover {
-            @include opacity(1.0);
+            //@include opacity(1.0);
         }
         &.sites-pitchfork {
             background-image: url(/images/sites-pitchfork.png);
@@ -251,4 +251,4 @@ a.adn-button-large, a.adn-button-large:visited {
 }
 
 // Utility classes
-@import "compass_twitter_bootstrap/utilities"; // Has to be last to override when necessary
+//@import "compass_twitter_bootstrap/utilities"; // Has to be last to override when necessary

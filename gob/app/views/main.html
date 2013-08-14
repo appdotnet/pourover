@@ -1,63 +1,65 @@
 <div ng-include src="'/views/includes/nav.html'"></div>
-<h2>Your Feeds</h2>
-<p ng-show='feeds.length == 0'>You haven't added any feeds. To start using PourOver you need to add a feed.</p>
-<table class='table table-condensed' ng-show='feeds.length > 0'>
-  <thead>
-    <tr>
-      <th>Title</th>
-      <th>Link</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr ng-repeat='feed in feeds'>
-      <td>
-        <a ng-href='/feed/{{feed.feed_type}}/{{feed.feed_id}}/' ng-bind='feed.title'></a>
-      </td>
-      <td ng-bind='feed.feed_url'></td></td>
-    </tr>
-  </tbody>
-</table>
+<div class='container'>
+  <h2>Your Feeds</h2>
+  <p ng-show='feeds.length == 0'>You haven't added any feeds. To start using PourOver you need to add a feed.</p>
+  <table class='table table-condensed' ng-show='feeds.length > 0'>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Link</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat='feed in feeds'>
+        <td>
+          <a ng-href='/feed/{{feed.feed_type}}/{{feed.feed_id}}/' ng-bind='feed.title'></a>
+        </td>
+        <td ng-bind='feed.feed_url'></td></td>
+      </tr>
+    </tbody>
+  </table>
 
-<p><a data-target="#newFeedModal" role="button" class="btn btn-primary" data-toggle="modal">Add a feed</a></p>
+  <p><a data-target="#newFeedModal" role="button" class="btn btn-primary" data-toggle="modal">Add a feed</a></p>
 
-<div id='newFeedModal' class="modal hide fade">
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-    <h4>Add A Feed</h4>
-  </div>
-  <div class="modal-body">
-      <ul class="nav nav-tabs">
-        <li class="active"><a data-target="#rss" data-toggle="tab" class="like-link">RSS Feed</a></li>
-        <li><a data-target="#instagram" data-toggle="tab" class="like-link">Instagram</a></li>
-      </ul>
-      <div class="tab-content">
-        <div class="tab-pane active" id="rss">
-          <form class="form-vertical">
-            <label class="control-label">Feed URL</label>
-            <div class="controls">
-              <input type="text" placeholder="https://example.com/rss" ng-model='feed.feed_url' class='span5'>
-              <span class='loading-icon' style='display: none;'>
-                <i class="icon-refresh icon-spin"></i>
-              <span>
-            </div>
-            <div ng-show='valid_feed'>
-              <h5>Found a Feed</h5>
-              <div class='ellipses'>
-                <b>Name:</b> <span ng-bind='feed.title'></span>
+  <div id='newFeedModal' class="modal hide fade">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+      <h4>Add A Feed</h4>
+    </div>
+    <div class="modal-body">
+        <ul class="nav nav-tabs">
+          <li class="active"><a data-target="#rss" data-toggle="tab" class="like-link">RSS Feed</a></li>
+          <li><a data-target="#instagram" data-toggle="tab" class="like-link">Instagram</a></li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="rss">
+            <form class="form-vertical">
+              <label class="control-label">Feed URL</label>
+              <div class="controls">
+                <input type="text" placeholder="https://example.com/rss" ng-model='feed.feed_url' class='span5'>
+                <span class='loading-icon' style='display: none;'>
+                  <i class="icon-refresh icon-spin"></i>
+                <span>
               </div>
-              <div class='ellipses'>
-                <b>Feed URL:</b><span ng-bind='feed.feed_url'></span>
+              <div ng-show='valid_feed'>
+                <h5>Found a Feed</h5>
+                <div class='ellipses'>
+                  <b>Name:</b> <span ng-bind='feed.title'></span>
+                </div>
+                <div class='ellipses'>
+                  <b>Feed URL:</b><span ng-bind='feed.feed_url'></span>
+                </div>
               </div>
-            </div>
-          </form>
-        </div>
-        <div class='tab-pane' id='instagram'>
-          <p>
-            <a href='https://instagram.com/oauth/authorize/?client_id={{instagram_client_id}}&redirect_uri={{instagram_redirect_uri}}&response_type=token' class="btn btn-primary btn-large">Click here to add your Instagram account</a></p>
-        </div>
-  </div>
-  <div class="modal-footer">
-    <a href="#" class="btn" data-close data-dismiss="modal">Close</a>
-    <button type="submit" class="btn btn-primary ladda-button" data-save-btn data-style="slide-left" ng-click='createFeed()' ng-disabled='!valid_feed'><span class='ladda-label'>Add Feed</span></button>
+            </form>
+          </div>
+          <div class='tab-pane' id='instagram'>
+            <p>
+              <a href='https://instagram.com/oauth/authorize/?client_id={{instagram_client_id}}&redirect_uri={{instagram_redirect_uri}}&response_type=token' class="btn btn-primary btn-large">Click here to add your Instagram account</a></p>
+          </div>
+    </div>
+    <div class="modal-footer">
+      <a href="#" class="btn" data-close data-dismiss="modal">Close</a>
+      <button type="submit" class="btn btn-primary ladda-button" data-save-btn data-style="slide-left" ng-click='createFeed()' ng-disabled='!valid_feed'><span class='ladda-label'>Add Feed</span></button>
+    </div>
   </div>
 </div>

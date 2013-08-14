@@ -313,6 +313,7 @@ class Entry(ndb.Model):
     @classmethod
     def latest(cls, feed, include_overflow=False, overflow_cats=None, order_by='added'):
         q = cls.query(cls.published == True, cls.creating == False, cls.overflow == include_overflow, ancestor=feed.key)
+        logger.info('Order by: %s', order_by)
         if order_by == 'added':
             q = q.order(cls.added)
 
