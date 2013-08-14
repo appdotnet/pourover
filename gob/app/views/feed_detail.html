@@ -16,14 +16,13 @@
       </ul>
       <div class="tab-content">
         <div class="tab-pane active" id="posts">
-          <p ng-show='showEmptyMessage()'>Your feed doesn't seem to have any posts. You should check and see if its working.</p>
+          <p ng-show='showEmptyMessage()'>We haven't created any posts from your feed yet.</p>
           <div ng-show='unpublished_entries'>
             <h4>Future Posts</h4>
             <table class='table'>
               <tbody>
                 <tr ng-repeat="entry in unpublished_entries">
                   <td ng-bind='entry.title' class='span8'></td>
-                  <td ng-bind='entry.added'></td>
                   <td>
                     <a ng-click='publishEntry(entry)' class='btn btn-mini pull-right'>Publish Now</a>
                   </td>

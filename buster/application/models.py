@@ -238,6 +238,9 @@ class Entry(ndb.Model):
 
         for entry, future in futures:
             entry_kwargs = yield future
+            if not entry_kwargs:
+                continue
+
             entry_kwargs.pop('parent')
             entry_kwargs['creating'] = False
             entry.populate(**entry_kwargs)

@@ -156,6 +156,13 @@ def get_link_for_item(feed, item):
     feed_link = feed.feed_url
     main_item_link = item.get('link')
 
+    if not main_item_link:
+        links = item.get('links', [])
+        for link in links:
+            href = link.get('href')
+            if href:
+                main_item_link = href
+
     # If the user hasn't turned on linked list mode
     # return the main_item_link
     if not feed.linked_list_mode:
