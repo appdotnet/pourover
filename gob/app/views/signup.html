@@ -1,26 +1,50 @@
-<div class='container'>
-  <div class="hero-unit main ta-center">
-    <div class="pourover-heading"><h1>PourOver</h1></div>
-    <h2 class="main-h2">PourOver makes it easy to publish to App.net via RSS.</h2>
-    <p>Getting started is easy, even if you don't already have an <a href='http://join.app.net'>App.net</a> account.</a></p>
-    <ul class='unstyled steps-list ta-left'>
-      <li>
-          <span class="step ta-center">1</span>
-          Authorize PourOver:
-          <a class="adn-button-large" href="https://account.app.net/oauth/authenticate?client_id={{client_id}}&response_type=token&scope=write_post&redirect_uri={{ redirect_uri }}">
-              <span class='adn-logo'></span>
-              <span class="button-text">Authorize with <b>App.net</b></span>
-          </a>
-      </li>
-      <li><span class="step ta-center">2</span> Paste in your RSS feed, and click "save"</li>
-      <li><span class="step ta-center">3</span> That's it!</li>
-    </ul>
-    <h2 class="main-h2">Who's Using PourOver</h2>
-    <div class="row-fluid sites-using-pourover">
-        <a class="span4 sites-pitchfork" href="https://alpha.app.net/pitchforkmedia"></a>
-        <a class="span4 sites-daring-fireball" href="https://alpha.app.net/daringfireball"></a>
-        <a class="span4 sites-ars-technica" href="https://alpha.app.net/arstechnica"></a>
+<div class='wide-container blue ta-center sign-up-page'>
+    <div class='container'>
+        <div class='main-content-block'>
+            <h1><i class="icon-coffee"></i> PourOver</h1>
+            <h2 class="no-text-transform no-border-bottom">PourOver makes it easy to publish to App.net via RSS.</h2>
+            <p>Getting started is easy, even if you don't already have an <a href='http://join.app.net'>App.net</a> account.</a></p>
+        </div>
     </div>
-  <script>(function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='//d2zh9g63fcvyrq.cloudfront.net/adn.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'adn-button-js'));</script>
-  </div>
 </div>
+<div class='wide-container gray sign-up-page'>
+    <div class="step inset">
+        <div class="step-inner">
+            <span class="step-circle ta-center">1</span>
+              Authorize PourOver:
+              <a class="adn-button-large" href="https://account.app.net/oauth/authenticate?client_id={{client_id}}&response_type=token&scope=write_post&redirect_uri={{ redirect_uri }}">
+                  <span class='adn-logo'></span>
+                  <span class="button-text">Authorize with <b>App.net</b></span>
+              </a>
+        </div>
+    </div>
+    <div class="step">
+        <div class="step-inner">
+            <span class="step-circle ta-center">2</span> Paste in your RSS feed, and click "save"
+        </div>
+    </div>
+    <div class="step inset">
+        <div class="step-inner">
+            <span class="step-circle ta-center">3</span> That's it!
+        </div>
+    </div>
+</div>
+<div class='wide-container ta-center sign-up-page'>
+    <div class='container'>
+        <div class='main-content-block'>
+            <h1 class="heading-with-hr dark"><span>Who's Using PourOver</span><hr></h1>
+            <div class="yui3-g sites-using-pourover">
+                <div class="yui3-u-1-3">
+                    <a class="sites-pitchfork" href="https://alpha.app.net/pitchforkmedia"></a>
+                </div>
+                <div class="yui3-u-1-3">
+                    <a class="sites-daring-fireball" href="https://alpha.app.net/daringfireball"></a>
+                </div>
+                <div class="yui3-u-1-3">
+                    <a class="sites-ars-technica" href="https://alpha.app.net/arstechnica"></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>(function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='//d2zh9g63fcvyrq.cloudfront.net/adn.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'adn-button-js'));</script>
