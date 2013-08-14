@@ -69,7 +69,7 @@
 @import "../components/Ladda/css/ladda.scss";
 //@import "../components/Ladda/css/ladda-theme.scss";
 
-body {
+body .sign-up-page {
     font-family: Georgia, "Times New Roman", Times, serif;
     font-size: 16px;
     line-height: 22px;
@@ -222,7 +222,7 @@ a.adn-button-large, a.adn-button-large:visited {
 .input-super-mini { width: 22px; }
 .like-link {
     cursor: pointer;
-    color: #1abc9c;
+    color: #d87a68;
     text-decoration: none;
 }
 .schedule {
@@ -289,6 +289,10 @@ a.adn-button-large, a.adn-button-large:visited {
     margin-top: 16px;
     font-weight: bold;
     width: 250px;
+}
+
+body form label input[type="checkbox"] {
+    margin-top: 3px;
 }
 
 // Utility classes

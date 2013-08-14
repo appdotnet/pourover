@@ -24,7 +24,7 @@ from fetcher import fetch_parsed_feed_for_url, fetch_parsed_feed_for_feed, fetch
 from constants import (ENTRY_STATE, FEED_STATE, FORMAT_MODE, UPDATE_INTERVAL, PERIOD_SCHEDULE, OVERFLOW_REASON,
                        DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD, FEED_TYPE)
 from poster import build_html_from_post, format_for_adn, prepare_entry_from_item, instagram_format_for_adn
-from utils import get_language, guid_for_item, find_feed_url 
+from utils import get_language, guid_for_item, find_feed_url, fit_to_box
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +95,22 @@ class Entry(ndb.Model):
         feed = feed or self.key.parent().get()
         if format:
             data['html'] = build_html_from_post(feed.format_entry_for_adn(self).get_result())
+            width = None
+            height = None
             if feed.include_thumb and self.thumbnail_image_url:
                 data['thumbnail_image_url'] = self.thumbnail_image_url
+                width = self.thumbnail_image_width
+                height = self.thumbnail_image_height
 
             if feed.include_video and self.video_oembed:
                 data['thumbnail_image_url'] = self.video_oembed['thumbnail_url']
+                width = self.video_oembed['thumbnail_width']
+                height = self.video_oembed['thumbnail_height']
+
+            if width and height:
+                width, height = fit_to_box(width, height, 100, 100)
+                data['thumbnail_image_width'] = width
+                data['thumbnail_image_height'] = height
 
         return data
 
