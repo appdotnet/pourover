@@ -259,5 +259,37 @@ a.adn-button-large, a.adn-button-large:visited {
     position: relative;
 }
 
+.nav-header a, .tooltip {
+    text-transform: none;
+}
+
+.popover {
+    max-width: 300px;
+}
+
+.post-container .body {
+    white-space: normal;
+}
+
+.post-container .body .post-text {
+    white-space: pre;
+    white-space: pre-wrap;
+    white-space: pre-line;
+    white-space: -pre-wrap;
+    white-space: -o-pre-wrap;
+    white-space: -moz-pre-wrap;
+    white-space: -hp-pre-wrap;
+}
+
+.nav.header .logo {
+    background-image: none;
+    font-size: 35px;
+    line-height: normal;
+    color: #4a484c;
+    margin-top: 16px;
+    font-weight: bold;
+    width: 250px;
+}
+
 // Utility classes
 //@import "compass_twitter_bootstrap/utilities"; // Has to be last to override when necessary

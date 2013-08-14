@@ -19,49 +19,49 @@
           <div class="tab-pane active" id="posts">
             <p ng-show='showEmptyMessage()'>We haven't created any posts from your feed yet.</p>
             <div ng-show='unpublished_entries'>
-              <h4>Future Posts</h4>
+              <h4 class='no-border-bottom'>Future Posts</h4>
               <table class='table'>
                 <tbody>
                   <tr ng-repeat="entry in unpublished_entries">
                     <td ng-bind='entry.title' class='span8'></td>
                     <td>
-                      <a ng-click='publishEntry(entry)' class='btn btn-mini pull-right'>Publish Now</a>
+                      <a ng-click='publishEntry(entry)' class='like-link pull-right'>Publish Now</a>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <div ng-show='published_entries'>
-              <h4>Recently Published Posts</h4>
+              <h4 class='no-border-bottom'>Recently Published Posts</h4>
               <table class='table'>
                 <tbody>
                   <tr ng-repeat="entry in published_entries" ng-show='entry.published_at'>
                     <td ng-bind='entry.title' class='span8'></td>
                     <td ng-bind='entry.published_at'></td>
                     <td class='ta-right'>
-                      <a ng-click='publishEntry(entry)' class='btn btn-mini pull-right'>Republish Now</a>
+                      <a ng-click='publishEntry(entry)' class='like-link pull-right'>Republish Now</a>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <div ng-show='overflow_entries'>
-              <h4>Post Backlog <small>These are posts that have not been published for various reasons.</small></h4>
+              <h4 class='no-border-bottom'>Post Backlog <small>These are posts that have not been published for various reasons.</small></h4>
               <table class='table'>
                 <tbody>
                   <tr ng-repeat="entry in overflow_entries">
                     <td ng-bind='entry.title' class='span8'></td>
                     <td ng-bind='entryStatus(entry)'></td>
                     <td>
-                      <a ng-click='publishEntry(entry)' class='btn btn-mini pull-right' ng-bind='entryAction(entry)'></a>
+                      <a ng-click='publishEntry(entry)' class='like-link pull-right' ng-bind='entryAction(entry)'>Try Post Now</a>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
+            <p><a class="btn btn-large pull-right" ng-click="deleteFeed()">Delete Feed</a></p>
           </div>
           <div class="tab-pane" id="settings">
-            <h5>Feed Preview</h5>
             <div class='yui3-g'>
               <div class='yui3-u-1-4'>
                 <div ng-include="" src="'/views/includes/settings/' + feed.feed_type + '_form.html'" class='yui3-u-11-12'></div>
@@ -69,43 +69,25 @@
               <div class='main-column yui3-u-3-4'>
                 <div class='well-elevated'>
                   <div class='stream-container'>
-                    <div class='yui3-u-11-12'>
+                    <div>
                       <div class="subpixel h-entry post-container" ng-repeat="post in posts">
                         <div class="content">
                           <div class="media">
-                            <a href="#" class="avatar" style="background-image:url({{ current_user.avatar_image.url }}?h=114&amp;w=114);"></a>
+                            <a class="avatar" style="background-image:url({{ current_user.avatar_image.url }}?h=114&amp;w=114);"></a>
                           </div>
                           <div class="post-header">
-                            <span class="username p-author h-card"><a href="#" class="u-url p-nickname" ng-bind="current_user.username"></a></span>
-                            <ul class="unstyled ul-horizontal yui3-u fixed-right ta-right">
-                              <li class="yui3-u"><a href="#star" data-starred="0" data-star-button="1" data-post-id="9039984"><i aria-label="star" class="icon-star-empty"></i></a></li>
-                              <li class="yui3-u repost"><a href="#repost" title="repost" data-repost-button="1" data-reposted="0" data-post-id="9039984"><i aria-label="repost" class="icon-repost"></i></a></li>
-                            </ul>
+                            <span class="username p-author h-card"><a class="u-url p-nickname" ng-bind="current_user.username"></a></span>
                           </div>
                           <div class="body" ng-class='{"has-media": post.thumbnail_image_url}'>
                             <div class="content">
                               <div class="media" ng-show='post.thumbnail_image_url'>
                                 <div class="post-media">
                                   <a href="https://photos.app.net/9039984/1" class="shadow-overlay"><i class="icon-zoom-in"></i></a>
-                                  <div class="inner-shadow-overlay">
-                                  </div>
-                                  <img ng-src='{{post.thumbnail_image_url}}' width='100px' height='100px' style='max-width: 100px'>
+                                  <div class="inner-shadow-overlay"></div><img ng-src='{{post.thumbnail_image_url}}' width='100px' height='100px' style='max-width: 100px'>
                                 </div>
                               </div>
                               <div class="post-text"><span class="post-content e-content" ng-bind-html-unsafe="post.html"></span></div>
                             </div>
-                          </div>
-                          <div class="post-footer">
-                            <ul class="unstyled ul-horizontal footer-top">
-                            </ul>
-                            <ul class="unstyled ul-horizontal footer-bottom">
-                              <li><a href="/wickedgood/post/9039984" title="06:17 PM - 13 Aug 2013" class="u-url timestamp"><time datetime="06:17 PM - 13 Aug 2013" class="dt-published"><i class="yui3-u icon-time"></i> m</time></a></li>
-                              <li class="yui3-u in-reply-to"><a href="/wickedgood/post/9039984" title="In Reply To..."><i aria-label="In Reply To..." class="icon-comments"></i></a></li>
-                              <li class="yui3-u show-on-hover"><a href="#" data-reply-to=""><i class="icon-share-alt"></i> Reply</a></li>
-                              <li class="yui3-u show-on-hover post-source"><a href="https://adn-pourover.appspost.com" target="_blank"><i class="icon-share"></i> via PourOver</a></li>
-                              <li class="yui3-u show-on-hover last pull-right"><a href="#report" data-post-report=""><i class="icon-flag"></i><span class="m-yui3-u-none t-yui3-u-none"> Report</span></a></li>
-                              <li class="yui3-u show-on-hover pull-right"><a href="#mute-user" data-post-mute-user=""><i class="icon-minus-sign"></i><span class="m-yui3-u-none t-yui3-u-none"> Mute user</span></a></li>
-                            </ul>
                           </div>
                         </div>
                       </div>

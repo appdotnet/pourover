@@ -151,9 +151,14 @@ angular.module('pourOver')
     });
     return entry_lists.length === 0;
   };
-  console.log($location.hash());
+
   if ($location.hash() === 'settings') {
     jQuery('[data-target="#settings"]').tab('show');
   }
+  jQuery('body').popover({
+    selector: '[data-toggle="popover"]',
+    trigger: 'hover'
+  });
+  //jQuery('[data-toggle="tooltip"]').tooltip();
 
 }]);
