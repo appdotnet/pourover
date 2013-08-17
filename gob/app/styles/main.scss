@@ -75,22 +75,29 @@ body .sign-up-page {
     line-height: 22px;
 }
 
-.wide-container.sign-up-page {
-    min-width: 1152px;
+.main-content-block {
+    padding-top: 50px;
+    padding-bottom: 50px;
 }
 
-.wide-container.blue {
+.container.top {
     border-top: none;
-    .main-content-block {
-        padding-bottom: 50px;
-    }
-    h1 {
-        font-size: 85px;
-        color: #fff;
-        margin-bottom: 10px;
+    .pourover-logo-large {
+        display: block;
+        margin: 0 auto 25px auto;
+        width: 394px;
+        height: 64px;
+        background-size: 394px 64px;
+        background-repeat: no-repeat;
+        background-image: url(/images/pourover-logo-large.png);
+        @include transition(opacity 0.2s linear);
+        &:hover {
+            @include opacity(0.7);
+            @include transition(opacity 0.15s linear);
+        }
     }
     h2 {
-        font-size: 22px;
+        font-size: 20px;
         color: #fff;
     }
     p {
@@ -101,26 +108,21 @@ body .sign-up-page {
 }
 
 .wide-container.gray {
+    min-width: 1152px;
     border: none;
-    .step {
-        padding: 20px;
+    @include box-shadow(#{inset 0 5px 0 rgba(0, 0, 0, 0.1),
+                        inset 0 -5px 0 rgba(0, 0, 0, 0.1)});
+    .step-outer {
+        min-width: 1152px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .step-inner {
+        margin: 0 auto 0 auto;
+        padding: 30px;
+        width: 700px;
         font-size: 20px;
         font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-        &.inset {
-            background-color: #ddd;
-            @include box-shadow(#{inset 0 1px 0 rgba(0, 0, 0, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.05)});
-        }
-        &:nth-child(2) .step-circle {
-            background-color: #cbc36f;
-        }
-        &:nth-child(3) .step-circle {
-            background-color: #bc7676;
-        }
-        .step-inner {
-            margin: 0 auto 0 auto;
-            max-width: 700px;
-            padding: 20px;
-        }
         .step-circle {
             display: inline-block;
             margin-right: 20px;
@@ -129,7 +131,7 @@ body .sign-up-page {
             color: $white;
             line-height: 70px;
             font-size: 25px;
-            background-color: #6fa3cb;
+            background-color: #d36854;
             border: 2px solid $white;
             @include border-radius(70px);
         }
@@ -181,40 +183,42 @@ a.adn-button-large, a.adn-button-large:visited {
         background-position: 6px 7px;
         background-image: url('/images/adn-logo.png');
         @include border-radius(34px);
+    }
+}
 
-        @media only screen and (-webkit-min-device-pixel-ratio: 1.5),
-               only screen and (min--moz-device-pixel-ratio: 1.5),
-               only screen and (-o-min-device-pixel-ratio: 3/2),
-               only screen and (min-device-pixel-ratio: 1.5) {
-                   background-image: url('/images/adn-logo@2x.png');
-        }
+.heading-with-hr.light {
+    span {
+        color: #ededed;
     }
 }
 
 .sites-using-pourover {
-    margin: 30px auto 0 auto;
-    width: 960px;
-    a {
-        display: block;
-        margin: 0 auto 0 auto;
-        width: 274px;
-        height: 165px;
-        border: 2px solid #ddd;
-        @include opacity(0.85);
-        @include box-shadow(0 2px 0 rgba(0, 0, 0, 0.05));
-        @include transition(opacity 0.2s linear);
-        &:hover {
-            @include opacity(1.0);
-            @include transition(opacity 0.15s linear);
-        }
-        &.sites-pitchfork {
-            background-image: url(/images/sites-pitchfork.png);
-        }
-        &.sites-daring-fireball {
-            background-image: url(/images/sites-daring-fireball.png);
-        }
-        &.sites-ars-technica {
-            background-image: url(/images/sites-ars-technica.png);
+    border: 0;
+    .sites-using-pourover-inner {
+        margin: 30px auto 0 auto;
+        width: 960px;
+        a {
+            display: block;
+            margin: 0 auto 0 auto;
+            width: 274px;
+            height: 165px;
+            border: 2px solid #898d90;
+            @include opacity(0.85);
+            @include box-shadow(0 2px 0 rgba(0, 0, 0, 0.8));
+            @include transition(opacity 0.2s linear);
+            &:hover {
+                @include opacity(1.0);
+                @include transition(opacity 0.15s linear);
+            }
+            &.sites-pitchfork {
+                background-image: url(/images/sites-pitchfork.png);
+            }
+            &.sites-daring-fireball {
+                background-image: url(/images/sites-daring-fireball.png);
+            }
+            &.sites-ars-technica {
+                background-image: url(/images/sites-ars-technica.png);
+            }
         }
     }
 }
@@ -282,17 +286,32 @@ a.adn-button-large, a.adn-button-large:visited {
 }
 
 .nav.header .logo {
-    background-image: none;
-    font-size: 35px;
-    line-height: normal;
-    color: #4a484c;
-    margin-top: 16px;
-    font-weight: bold;
-    width: 250px;
+    margin-top: 22px;
+    width: 202px;
+    height: 32px;
+    background-size: 202px 32px;
+    background-image: url('/images/pourover-logo.png');
 }
 
 body form label input[type="checkbox"] {
     margin-top: 3px;
+}
+
+@media only screen and (-webkit-min-device-pixel-ratio: 1.5),
+       only screen and (min--moz-device-pixel-ratio: 1.5),
+       only screen and (-o-min-device-pixel-ratio: 3/2),
+       only screen and (min-device-pixel-ratio: 1.5) {
+           a.adn-button-large, a.adn-button-large:visited {
+               .adn-logo {
+                   background-image: url('/images/adn-logo@2x.png');
+               }
+           }
+           .pourover-logo-large {
+               background-image: url('/images/pourover-logo-large@2x.png');
+           }
+           .nav.header .logo {
+               background-image: url('/images/pourover-logo@2x.png');
+           }
 }
 
 // Utility classes

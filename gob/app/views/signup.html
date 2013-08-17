@@ -1,39 +1,39 @@
-<div class='wide-container blue ta-center sign-up-page'>
-    <div class='container'>
+<div class="sign-up-page">
+    <div class='container top ta-center'>
         <div class='main-content-block'>
-            <h1><i class="icon-coffee"></i> PourOver</h1>
+            <a href="/" class="pourover-logo-large"></a>
             <h2 class="no-text-transform no-border-bottom">PourOver makes it easy to publish to App.net via RSS.</h2>
             <p>Getting started is easy, even if you don't already have an <a href='http://join.app.net'>App.net</a> account.</a></p>
         </div>
     </div>
-</div>
-<div class='wide-container gray sign-up-page'>
-    <div class="step inset">
-        <div class="step-inner">
-            <span class="step-circle ta-center">1</span>
-              Authorize PourOver:
-              <a class="adn-button-large" href="https://account.app.net/oauth/authenticate?client_id={{client_id}}&response_type=token&scope=write_post&redirect_uri={{ redirect_uri }}">
-                  <span class='adn-logo'></span>
-                  <span class="button-text">Authorize with <b>App.net</b></span>
-              </a>
+
+    <div class='wide-container gray'>
+        <div class="step-outer">
+            <div class="step-inner">
+                <span class="step-circle ta-center">1</span>
+                  Authorize PourOver:
+                  <a class="adn-button-large" href="https://account.app.net/oauth/authenticate?client_id={{client_id}}&response_type=token&scope=write_post&redirect_uri={{ redirect_uri }}">
+                      <span class='adn-logo'></span>
+                      <span class="button-text">Authorize with <b>App.net</b></span>
+                  </a>
+            </div>
+        </div>
+        <div class="step-outer">
+            <div class="step-inner">
+                <span class="step-circle ta-center">2</span> Paste in your RSS feed, and click "save"
+            </div>
+        </div>
+        <div class="step-outer">
+            <div class="step-inner">
+                <span class="step-circle ta-center">3</span> That's it!
+            </div>
         </div>
     </div>
-    <div class="step">
-        <div class="step-inner">
-            <span class="step-circle ta-center">2</span> Paste in your RSS feed, and click "save"
-        </div>
-    </div>
-    <div class="step inset">
-        <div class="step-inner">
-            <span class="step-circle ta-center">3</span> That's it!
-        </div>
-    </div>
-</div>
-<div class='wide-container ta-center sign-up-page'>
-    <div class='container'>
+
+    <div class='container ta-center sites-using-pourover'>
         <div class='main-content-block'>
-            <h1 class="heading-with-hr dark"><span>Who's Using PourOver</span><hr></h1>
-            <div class="yui3-g sites-using-pourover">
+            <h1 class="heading-with-hr light"><span>Who's Using PourOver</span><hr></h1>
+            <div class="yui3-g sites-using-pourover-inner">
                 <div class="yui3-u-1-3">
                     <a class="sites-pitchfork" href="https://alpha.app.net/pitchforkmedia"></a>
                 </div>
@@ -47,4 +47,5 @@
         </div>
     </div>
 </div>
+<style type='text/css'> body { background-color: #212a31; } </style>
 <script>(function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='//d2zh9g63fcvyrq.cloudfront.net/adn.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'adn-button-js'));</script>
