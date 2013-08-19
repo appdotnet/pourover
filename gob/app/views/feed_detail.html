@@ -3,9 +3,9 @@
   <div class="authenticated-app">
     <div class="row">
       <div class="span12">
-        <h3>
+        <h3 class="no-text-transform feed-title">
           <span ng-bind='feed.title'></span>
-          <small class='muted'><a ng-href="{{feed.feed_url}}" class='muted' target='_blank'><i class='icon-external-link'></i></a></small>
+          <small class='muted'><a ng-href="{{feed.feed_url}}" class='muted' target='_blank'>&nbsp;<i class='icon-external-link'></i></a></small>
         </h3>
       </div>
     </div>
@@ -59,7 +59,7 @@
                 </tbody>
               </table>
             </div>
-            <p><a class="btn btn-large pull-right" ng-click="deleteFeed()">Delete Feed</a></p>
+            <p><a class="btn pull-right" ng-click="deleteFeed()">Delete Feed</a></p>
           </div>
           <div class="tab-pane" id="settings">
             <div class='yui3-g'>
