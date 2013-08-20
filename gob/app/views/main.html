@@ -1,7 +1,7 @@
 <div ng-include src="'/views/includes/nav.html'"></div>
 <div class='container'>
   <h2>Your Feeds</h2>
-  <p ng-show='feeds.length == 0'>You haven't added any feeds. To start using PourOver you need to add a feed.</p>
+  <p class="note-style no-feeds dark" ng-show='feeds.length == 0'>You haven't added any feeds. To start using PourOver, you need to add a feed.</p>
   <table class='table table-condensed' ng-show='feeds.length > 0'>
     <thead>
       <tr>
@@ -23,8 +23,8 @@
 
   <div id='newFeedModal' class="modal hide fade">
     <div class="modal-header">
-      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-      <strong>Add A Feed</stron>
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>
+      Add a Feed
     </div>
     <div class="modal-body">
       <ul class="nav nav-tabs">
@@ -41,26 +41,24 @@
                 <i class="icon-refresh icon-spin"></i>
               <span>
             </div>
-            <div ng-show='valid_feed'>
-              <h5>Found a Feed</h5>
+            <div class="valid-feed" ng-show='valid_feed'>
+              <h5 class="no-text-transform">Found a Feed</h5>
               <div class='ellipses'>
-                <b>Name:</b> <span ng-bind='feed.title'></span>
+                <span class="valid-label">Name:</span> <span class="note-style" ng-bind='feed.title'></span>
               </div>
               <div class='ellipses'>
-                <b>Feed URL:</b><span ng-bind='feed.feed_url'></span>
+                <span class="valid-label">Feed URL:</span> <span class="note-style" ng-bind='feed.feed_url'></span>
               </div>
             </div>
           </form>
         </div>
         <div class='tab-pane' id='instagram'>
-          <p>
-            <a href='https://instagram.com/oauth/authorize/?client_id={{instagram_client_id}}&redirect_uri={{instagram_redirect_uri}}&response_type=token' class="">Click here to add your Instagram account</a></p>
+            <a href='https://instagram.com/oauth/authorize/?client_id={{instagram_client_id}}&redirect_uri={{instagram_redirect_uri}}&response_type=token' class="">Click here to add your Instagram account</a>
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <a href="#" class="btn btn-small" data-close data-dismiss="modal">Close</a>
-      <button type="submit" class="btn btn-primary btn-small ladda-button" data-save-btn data-style="slide-left" ng-click='createFeed()' ng-disabled='!valid_feed'><span class='ladda-label'>Add Feed</span></button>
+      <button type="submit" class="btn btn-primary btn-small" data-save-btn data-style="slide-left" ng-click='createFeed()' ng-disabled='!valid_feed'><span class='ladda-label'>Add Feed</span></button>
     </div>
   </div>
 </div>

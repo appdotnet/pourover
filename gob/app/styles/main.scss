@@ -69,10 +69,27 @@
 @import "../components/Ladda/css/ladda.scss";
 //@import "../components/Ladda/css/ladda-theme.scss";
 
-body .sign-up-page {
+body {
     font-family: Georgia, "Times New Roman", Times, serif;
     font-size: 16px;
     line-height: 22px;
+}
+
+.hero-unit {
+    margin-top: 60px
+}
+.ellipses {
+    white-space: nowrap;
+    display: block;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.ta-right {text-align: right;}
+.ta-center {text-align: center;}
+.ta-left {text-align: left;}
+
+.tab-content > .active, .pill-content > .active {
+    padding-left: 2px;
 }
 
 .main-content-block {
@@ -239,29 +256,6 @@ a.adn-button-large, a.adn-button-large:visited {
         width: 85px;
     }
 }
-.hero-unit {
-    margin-top: 60px
-}
-.ellipses {
-    white-space: nowrap;
-    display: block;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-.ta-right {text-align: right;}
-.ta-center {text-align: center;}
-.ta-left {text-align: left;}
-
-.tab-content > .active, .pill-content > .active {
-    padding-left: 2px;
-}
-
-.loading-icon {
-    padding: 5px;
-    display: inline-block;
-    top: -3px;
-    position: relative;
-}
 
 .nav-header a, .tooltip {
     text-transform: none;
@@ -269,6 +263,105 @@ a.adn-button-large, a.adn-button-large:visited {
 
 .popover {
     max-width: 300px;
+}
+
+.nav.nav-tabs {
+    font-weight: normal;
+    font-size: 16px;
+    font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+    li {
+        a {
+            color: #898d90;
+            margin-right: 0;
+            @include border-radius(0);
+        }
+        &.active a {
+            color: #4a484c;
+            background-color: #f9f9f9;
+        }
+    }
+}
+
+.modal {
+    .close,
+    .icon-refresh {
+        color: #898d90;
+    }
+    form {
+        margin-bottom: 0;
+    }
+    .modal-header {
+        font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+    }
+    .close {
+        margin-right: -15px;
+        margin-top: -9px;
+        height: 41px;
+        width: 41px;
+        border-left: 1px solid #eee;
+        line-height: 41px;
+        @include opacity(1.0);
+        @include transition(color 0.2s linear);
+        &:hover {
+            color: #6f747c;
+            @include opacity(1.0);
+            @include transition(color 0.15s linear);
+        }
+    }
+    .loading-icon {
+        display: inline-block;
+        position: relative;
+        padding-left: 10px;
+        top: 2px;
+        .icon-refresh {
+            font-size: 22px;
+        }
+    }
+    .nav.nav-tabs {
+        font-size: 12px;
+        margin: -15px -15px 15px -15px;
+        background-color: #ededed;
+        @include box-shadow(inset 0 -2px 0 rgba(0, 0, 0, 0.03));
+        li {
+            a {
+                border-top: none;
+                &:hover {
+                    border-top: none;
+                }
+            }
+            &.active a {
+                background-color: #fff;
+            }
+            &:first-child a {
+                border-left: none;
+            }
+        }
+    }
+    label, .valid-label {
+        font-size: 12px;
+        font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+    }
+    .valid-feed {
+        font-weight: normal;
+        margin-top: 15px;
+        h5 {
+            color: #4a484c;
+            margin-bottom: 5px;
+        }
+    }
+}
+
+.no-feeds {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.btn[disabled] {
+    color: #575a5c;
+    background-color: #ddd;
+    &:hover {
+        background-color: #ddd;
+    }
 }
 
 .post-container .body {
@@ -295,6 +388,10 @@ a.adn-button-large, a.adn-button-large:visited {
 
 body form label input[type="checkbox"] {
     margin-top: 3px;
+}
+
+.feed-title {
+    margin-bottom: 20px;
 }
 
 @media only screen and (-webkit-min-device-pixel-ratio: 1.5),
