@@ -375,7 +375,7 @@ class BroadcastFeed(ndb.Model):
 
     @property
     def alpha_api_path(self):
-        return 'channels/%s' % (self.channel_id)
+        return 'channels/%s/messages' % (self.channel_id)
 
     @property
     def link(self):
