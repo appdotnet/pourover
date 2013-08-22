@@ -79,7 +79,7 @@ def feeds():
     """List all examples"""
     users_feeds = []
     for feed_type in FEED_TYPE_TO_CLASS.values():
-        users_feeds += [feed.to_json() for feed in feed_type.for_user(g.user)]
+        users_feeds += [feed.to_json() for feed in feed_type.for_user(g.user) if feed.visible]
     return jsonify(status='ok', data=users_feeds)
 
 
@@ -204,7 +204,7 @@ def published_entries_for_feed(feed_type, feed_id):
         return jsonify_error(message="Can't find that feed")
 
     feed_data = feed.to_json()
-    entries = [entry.to_json() for entry in Entry.latest(feed, order_by='-published_at').fetch(20)]
+    entries = [entry.to_json() for entry in Entry.latest(feed, order_by='-published_at', include_overflow=True).fetch(20)]
     feed_data['entries'] = entries
 
     return jsonify(status='ok', data=feed_data)
@@ -408,6 +408,8 @@ def feed_push_update(feed_key):
         raise ndb.Return(("No feed", 404))
 
     data = request.stream.read()
+    logger.info('Got PuSH body: %s', data)
+    logger.info('Got PuSH headers: %s', request.headers)
 
     if feed.hub_secret:
         server_signature = request.headers.get('X-Hub-Signature', None)
@@ -418,9 +420,6 @@ def feed_push_update(feed_key):
                         server_signature, signature)
 
             raise ndb.Return('')
-
-    logger.info('Got PuSH body: %s', data)
-    logger.info('Got PuSH headers: %s', request.headers)
 
     parsed_feed = feedparser.parse(data)
     new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)

@@ -555,7 +555,7 @@ def instagram_format_for_adn(feed, entry):
 def broadcast_format_for_adn(feed, entry):
     # max_chars = MAX_CHARS - len(entry.link) + 1
     max_chars = MAX_CHARS
-    post_text = ellipse_text(entry.summary, max_chars)
+    post_text = ellipse_text(entry.title + ' ' + entry.summary, max_chars)
     # post_text += ' ' + entry.link
     post = {
         'text': post_text,

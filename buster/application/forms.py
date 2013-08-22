@@ -33,7 +33,7 @@ class FeedUpdate(Form):
     format_mode = fields.IntegerField(default=FORMAT_MODE.LINKED_TITLE, validators=[validators.AnyOf(FORMAT_MODE)])
     bitly_login = fields.TextField(validators=[validators.Length(min=-1, max=40)])
     bitly_api_key = fields.TextField(validators=[validators.Length(min=-1, max=40)])
-
+    channel_id = fields.IntegerField()
 
 class FeedPreview(FeedUpdate):
     feed_url = fields.TextField(validators=[validators.DataRequired(), validators.URL(), adn_rss_feed_check])

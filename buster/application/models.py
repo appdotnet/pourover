@@ -374,6 +374,10 @@ class BroadcastFeed(ndb.Model):
     preview_form = NoOpForm
 
     @property
+    def visible(self):
+        return bool(self.feed)
+
+    @property
     def alpha_api_path(self):
         return 'channels/%s/messages' % (self.channel_id)
 
@@ -465,7 +469,7 @@ class BroadcastFeed(ndb.Model):
                 break
         # Hash the message content, and hour so we won't have the same message within the hour
         guid = hashlib.sha256(msg + datetime.now().strftime('%Y%m%d%H')).hexdigest()
-        entry = Entry(summary=msg, guid=guid, parent=self.key)
+        entry = Entry(title=mail_message.subject, summary=msg, guid=guid, parent=self.key)
 
         yield entry.put_async()
 
@@ -512,7 +516,7 @@ class InstagramFeed(ndb.Model):
     update_form = NoOpForm
     preview_form = NoOpForm
     alpha_api_path = 'posts'
-
+    visible = True
     # Custom user_agent
 
     @property
@@ -650,13 +654,29 @@ class Feed(ndb.Model):
     image_in_html = ndb.BooleanProperty(default=False)
 
     user_agent = ndb.StringProperty(default=None)
+    channel_id = ndb.IntegerProperty()
+    email = ndb.StringProperty()
+
+    @property
+    def broadcast_channel(self):
+        if not self.channel_id:
+            return None
+        return BroadcastFeed.query(BroadcastFeed.channel_id == channel_id).get()
+
 
     # Class variables
     update_form = FeedUpdate
     create_form = FeedCreate
     preview_form = FeedPreview
     alpha_api_path = 'posts'
+    visible = True
 
+    @property
+    def alpha_api_path(self):
+        if self.channel_id:
+            return 'channels/%s/messages' % (self.channel_id)
+        else:
+            return 'posts'
 
     @property
     def image_strategy_blacklist(self):
@@ -813,7 +833,7 @@ class Feed(ndb.Model):
 
         # This triggers special first time behavior when fetching the feed
         feed.first_time = True
-
+        feed.email = uuid.uuid4().hex
         feed = yield cls.process_new_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG)
         raise ndb.Return(feed)
 
@@ -829,6 +849,28 @@ class Feed(ndb.Model):
     def format_entry_for_adn(self, entry):
         post = yield format_for_adn(self, entry)
         raise ndb.Return(post)
+
+    @property
+    def inbound_email(self):
+        return '%s_%s_%s@adn-pourover.appspotmail.com' % (self.email, FEED_TYPE.BROADCAST, INBOUND_EMAIL_VERSION)
+
+    @ndb.tasklet
+    def create_entry_from_mail(self, mail_message):
+        plaintext_bodies = mail_message.bodies('text/plain')
+        html_bodies = mail_message.bodies('text/html')
+
+        msg = None
+        for content_type, body in itertools.chain(plaintext_bodies, html_bodies):
+            msg = body.decode()
+            if msg:
+                break
+        # Hash the message content, and hour so we won't have the same message within the hour
+        guid = hashlib.sha256(msg + datetime.now().strftime('%Y%m%d%H')).hexdigest()
+        entry = Entry(title=mail_message.subject, summary=msg, guid=guid, parent=self.key)
+
+        yield entry.put_async()
+
+        raise ndb.Return(entry)
 
     def to_json(self):
         feed_info = {
@@ -850,6 +892,9 @@ class Feed(ndb.Model):
 
         if getattr(self, 'preview', None) is None:
             feed_info['feed_id'] = self.key.id()
+
+        if self.channel_id:
+            feed_info['channel_id'] = channel_id
 
         return feed_info
 
