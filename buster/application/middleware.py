@@ -81,10 +81,12 @@ class ADNTokenAuthMiddleware(object):
 
         view_func = self.app.view_functions.get(request.endpoint)
         login_required = getattr(view_func, 'login_required', True)
+        # logger.info('Login Required: %s', login_required)
         if login_required and not adn_user:
             abort(401)
 
         app_token_required = getattr(view_func, 'app_token_required', False)
+        # logger.info('app_token_required: %s', app_token_required)
         if app_token_required and not is_app_token:
             abort(401)
 

@@ -7,6 +7,8 @@ App Engine datastore models
 import logging
 import uuid
 from datetime import datetime, timedelta
+import hashlib
+import itertools
 import time
 
 from bs4 import BeautifulSoup
@@ -18,12 +20,13 @@ from urlparse import urlparse, parse_qs
 import json
 
 
-from flask import url_for
-from forms import FeedUpdate, FeedCreate, FeedPreview, InstagramFeedCreate, NoOpForm
+from flask import url_for, g
+from forms import FeedUpdate, FeedCreate, FeedPreview, InstagramFeedCreate, NoOpForm, BroadcastFeedCreate
 from fetcher import fetch_parsed_feed_for_url, fetch_parsed_feed_for_feed, fetch_url
 from constants import (ENTRY_STATE, FEED_STATE, FORMAT_MODE, UPDATE_INTERVAL, PERIOD_SCHEDULE, OVERFLOW_REASON,
-                       DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD, FEED_TYPE)
-from poster import build_html_from_post, format_for_adn, prepare_entry_from_item, instagram_format_for_adn
+                       DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD, FEED_TYPE, INBOUND_EMAIL_VERSION)
+from poster import (build_html_from_post, format_for_adn, prepare_entry_from_item, instagram_format_for_adn,
+                    broadcast_format_for_adn)
 from utils import get_language, guid_for_item, find_feed_url, fit_to_box
 
 logger = logging.getLogger(__name__)
@@ -41,7 +44,6 @@ class User(ndb.Model):
     @classmethod
     def key_from_adn_user(cls, adn_user):
         return 'adn_user_id=%d' % int(adn_user.id)
-
 
 class Entry(ndb.Model):
     guid = ndb.StringProperty(required=True)
@@ -158,7 +160,7 @@ class Entry(ndb.Model):
 
         ctx = ndb.get_context()
         try:
-            resp = yield ctx.urlfetch('https://alpha-api.app.net/stream/0/posts', payload=json.dumps(post), deadline=30,
+            resp = yield ctx.urlfetch('https://alpha-api.app.net/stream/0/%s' % (feed.alpha_api_path), payload=json.dumps(post), deadline=30,
                                       method='POST', headers={
                                           'Authorization': 'Bearer %s' % (user.access_token, ),
                                           'Content-Type': 'application/json',
@@ -347,6 +349,140 @@ class Entry(ndb.Model):
 
         return q
 
+
+class BroadcastFeed(ndb.Model):
+    channel_id = ndb.IntegerProperty()
+    email = ndb.StringProperty()
+    title = ndb.StringProperty()
+    description = ndb.StringProperty()
+    any_user = ndb.BooleanProperty(default=True)
+    public = ndb.BooleanProperty(default=True)
+    added = ndb.DateTimeProperty(auto_now_add=True)
+
+    # Posting Schedule By Default will be auto controlled
+    manual_control = ndb.BooleanProperty(default=False)
+    schedule_period = ndb.IntegerProperty(default=PERIOD_SCHEDULE.MINUTE_60)
+    max_stories_per_period = ndb.IntegerProperty(default=1)
+    user_agent = ndb.StringProperty(default=None)
+
+    include_thumb = True
+    include_video = True
+
+    # Class variables
+    create_form = BroadcastFeedCreate
+    update_form = NoOpForm
+    preview_form = NoOpForm
+
+    @property
+    def alpha_api_path(self):
+        return 'channels/%s' % (self.channel_id)
+
+    @property
+    def link(self):
+        return 'https://adn-coldbrew.appspot.com/channels/%s' % (self.channel_id)
+
+    @property
+    def feed_url(self):
+        return None
+
+    @classmethod
+    def for_user(cls, user):
+        return cls.query(ancestor=user.key)
+
+    @classmethod
+    def for_email(cls, email):
+        return cls.query(cls.email==email).get()
+
+    @classmethod
+    def for_user_and_form(cls, user, form):
+        return cls.query(cls.channel_id == -1, ancestor=user.key)
+
+    @classmethod
+    @ndb.tasklet
+    def create_feed_from_form(cls, user, form):
+        feed = cls()
+        form.populate_obj(feed)
+        ctx = ndb.get_context()
+        data = json.dumps({
+            'type': 'net.app.core.broadcast',
+            'writers': {
+                'any_user': False,
+                'public': False,
+                'user_ids': [g.adn_user.id],
+            },
+            'readers': {
+                'any_user': feed.any_user,
+                'public': feed.public,
+                'user_ids': [],
+            },
+            'annotations': [{
+                'type': 'net.app.core.broadcast.metadata',
+                'value': {
+                    'title': feed.title,
+                    'description': feed.description,
+                }
+            }]
+        })
+        try:
+            resp = yield ctx.urlfetch('https://alpha-api.app.net/stream/0/channels', payload=data, method='POST', headers={
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer %s' % (user.access_token),
+            }, deadline=60)
+        except Exception, e:
+            logger.exception(e)
+
+        if resp.status_code != 200:
+            raise Exception('Error creating channel: %s', data)
+
+        channel = json.loads(resp.content)['data']
+        feed.channel_id = int(channel['id'])
+        feed.key = ndb.Key(cls, int(feed.channel_id), parent=user.key)
+        feed.email = uuid.uuid4().hex
+        yield feed.put_async()
+        raise ndb.Return(feed)
+
+    @ndb.tasklet
+    def format_entry_for_adn(self, entry):
+        post = broadcast_format_for_adn(self, entry)
+        raise ndb.Return(post)
+
+    @property
+    def inbound_email(self):
+        return '%s_%s_%s@adn-pourover.appspotmail.com' % (self.email, FEED_TYPE.BROADCAST, INBOUND_EMAIL_VERSION)
+
+    @ndb.tasklet
+    def create_entry_from_mail(self, mail_message):
+        plaintext_bodies = mail_message.bodies('text/plain')
+        html_bodies = mail_message.bodies('text/html')
+
+        msg = None
+        for content_type, body in itertools.chain(plaintext_bodies, html_bodies):
+            msg = body.decode()
+            if msg:
+                break
+        # Hash the message content, and hour so we won't have the same message within the hour
+        guid = hashlib.sha256(msg + datetime.now().strftime('%Y%m%d%H')).hexdigest()
+        entry = Entry(summary=msg, guid=guid, parent=self.key)
+
+        yield entry.put_async()
+
+        raise ndb.Return(entry)
+
+    def to_json(self):
+        feed_info = {
+            'channel_id': self.channel_id,
+            'title': self.title,
+            'link': self.link,
+            'feed_id': int(self.key.id()),
+            'feed_type': FEED_TYPE.BROADCAST,
+            'feed_url': self.link,
+            'description': self.description,
+            'inbound_email': self.inbound_email,
+        }
+
+        return feed_info
+
+
 class InstagramFeed(ndb.Model):
     """
     Feed URL can just be the API call that we make
@@ -372,6 +508,7 @@ class InstagramFeed(ndb.Model):
     create_form = InstagramFeedCreate
     update_form = NoOpForm
     preview_form = NoOpForm
+    alpha_api_path = 'posts'
 
     # Custom user_agent
 
@@ -515,6 +652,8 @@ class Feed(ndb.Model):
     update_form = FeedUpdate
     create_form = FeedCreate
     preview_form = FeedPreview
+    alpha_api_path = 'posts'
+
 
     @property
     def image_strategy_blacklist(self):
@@ -715,6 +854,7 @@ class Feed(ndb.Model):
 FEED_TYPE_TO_CLASS = {
     FEED_TYPE.RSS: Feed,
     FEED_TYPE.INSTAGRAM: InstagramFeed,
+    FEED_TYPE.BROADCAST: BroadcastFeed,
 }
 
 

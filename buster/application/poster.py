@@ -552,6 +552,16 @@ def instagram_format_for_adn(feed, entry):
     }
     return post
 
+def broadcast_format_for_adn(feed, entry):
+    # max_chars = MAX_CHARS - len(entry.link) + 1
+    max_chars = MAX_CHARS
+    post_text = ellipse_text(entry.summary, max_chars)
+    # post_text += ' ' + entry.link
+    post = {
+        'text': post_text,
+    }
+    return post
+
 @ndb.tasklet
 def format_for_adn(feed, entry):
     post_text = entry.title

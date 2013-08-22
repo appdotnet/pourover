@@ -22,6 +22,7 @@ libraries:
 
 inbound_services:
 - warmup
+- mail
 
 handlers:
 - url: /favicon.ico

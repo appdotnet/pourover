@@ -42,6 +42,7 @@ UPDATE_INTERVAL = DjangoEnum(
     (2, 'MINUTE_15', '15 mins'),
     (3, 'MINUTE_30', '30 mins'),
     (4, 'MINUTE_60', '60 mins'),
+    (99, 'NO_UPDATE', 'No Updates'),
 )
 
 
@@ -63,9 +64,11 @@ OVERFLOW_REASON = DjangoEnum(
 FEED_TYPE = DjangoEnum(
     (1, 'RSS', 'RSS Feed'),
     (2, 'INSTAGRAM', 'Instagram Feed'),
+    (3, 'BROADCAST', 'App.net Broadcast Channel'),
 )
 
 
 VALID_STATUS = (200, 304)
 DEFAULT_PERIOD_SCHEDULE = PERIOD_SCHEDULE.MINUTE_15
 MAX_STORIES_PER_PERIOD = 2
+INBOUND_EMAIL_VERSION = 1

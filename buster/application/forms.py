@@ -49,7 +49,8 @@ class InstagramFeedCreate(Form):
     user_id = fields.IntegerField()
 
 
-FEED_TYPE_TO_FORM = {
-    FEED_TYPE.RSS: FeedCreate,
-    FEED_TYPE.INSTAGRAM: InstagramFeedCreate,
-}
+class BroadcastFeedCreate(Form):
+    title = fields.TextField()
+    description = fields.TextField()
+    any_user = fields.BooleanField(default=True)
+    public = fields.BooleanField(default=True)

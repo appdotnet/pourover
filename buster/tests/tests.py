@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 from collections import defaultdict
+from email.mime.text import MIMEText
 import logging
 import hmac
 import hashlib
@@ -1212,6 +1213,63 @@ class BusterTestCase(MockUrlfetchTest):
         assert 1 == Entry.query().count()
         entry = Entry.query().get()
         assert entry.published == True
+
+
+    def testBroadcastChannel(self):
+        self.setMockUser()
+        mock_channel_response = '{"data": {"id": "23"}}'
+        self.set_response('https://alpha-api.app.net/stream/0/channels', method='POST', content=mock_channel_response)
+        mock_message_create_message = json.dumps({
+            "data": {
+                "channel_id": "23",
+                "created_at": "2012-12-11T00:31:49Z",
+                "entities": {
+                    "hashtags": [],
+                    "links": [],
+                    "mentions": []
+                },
+                "html": "<span itemscope=\"https://app.net/schemas/Post\">Testing</span>",
+                "id": "103",
+                "machine_only": False,
+                "num_replies": 0,
+                "source": {
+                    "client_id": "UxUWrSdVLyCaShN62xZR5tknGvAxK93P",
+                    "link": "https://app.net",
+                    "name": "Test app"
+                },
+                "text": "Testing",
+                "thread_id": "103",
+                "user": {}
+            },
+            "meta": {
+                "code": 200,
+            }
+        })
+        self.set_response('https://alpha-api.app.net/stream/0/channels/23/messages', method='POST', content=mock_message_create_message)
+
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_type=FEED_TYPE.BROADCAST,
+            title='GBC',
+            description='This is a great broadcast channel',
+        ), headers=self.authHeaders())
+
+        parsed_resp = json.loads(resp.data)
+        assert parsed_resp['data']['title'] == 'GBC'
+        assert parsed_resp['data']['link'] == 'https://adn-coldbrew.appspot.com/channels/23'
+        to, _ = parsed_resp['data']['inbound_email'].split('@', 1)
+        unique, feed_type, version = to.split('_', 2)
+        assert int(feed_type) == FEED_TYPE.BROADCAST
+        assert int(version) == 1
+
+        msg = MIMEText('Testing')
+        msg['Subject'] = 'Testing'
+        msg['From'] = 'testing@example.com'
+        msg['To'] = parsed_resp['data']['inbound_email']
+
+        resp = self.app.post('/_ah/mail/%s' % (parsed_resp['data']['inbound_email']), data=msg.as_string())
+        assert Entry.query().count() == 1
+        assert json.loads(resp.data)['status'] == 'ok'
+
 
 if __name__ == '__main__':
     unittest.main()

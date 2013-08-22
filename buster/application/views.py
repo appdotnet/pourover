@@ -11,18 +11,17 @@ import logging
 import uuid
 
 from google.appengine.ext import ndb
-from google.appengine.api import memcache
 
 import feedparser
 from flask import request, render_template, g, Response, url_for
 from google.appengine.api.taskqueue import Task, Queue
+from google.appengine.api import mail
 from flask_cache import Cache
 
 from application import app
 from constants import UPDATE_INTERVAL, FEED_TYPE, OVERFLOW_REASON
 from models import Entry, Feed, Stat, Configuration, InstagramFeed, FEED_TYPE_TO_CLASS
 from fetcher import FetchException, fetch_parsed_feed_for_feed
-from forms import FeedCreate, FeedUpdate, FeedPreview, FEED_TYPE_TO_FORM
 from utils import write_epoch_to_stat, get_epoch_from_stat
 
 logger = logging.getLogger(__name__)
@@ -248,6 +247,27 @@ def feed_entry_publish(feed_type, feed_id, entry_id):
     entry.put()
 
     return jsonify(status='ok')
+
+@app.route('/_ah/mail/<string:email>', methods=['POST'])
+@ndb.synctasklet
+def email_to_feed(email):
+    logger.info('Email: %s', email)
+    account, _ = email.split('@', 1)
+    logger.info('Account: %s', account)
+    unique_key, feed_type, version = account.split('_')
+    feed_type, version = map(int, (feed_type, version))
+    logger.info('unique_key: %s feed_type:%s version:%s', unique_key, feed_type, version)
+    feed = FEED_TYPE_TO_CLASS[feed_type].for_email(unique_key)
+
+    logger.info('Found feed: %s', feed)
+    mail_message = mail.InboundEmailMessage(request.stream.read())
+    entry = yield feed.create_entry_from_mail(mail_message)
+    yield entry.publish_entry(feed)
+
+    raise ndb.Return(jsonify(status='ok'))
+
+
+email_to_feed.login_required = False
 
 
 @app.route('/api/feeds/poll', methods=['POST'])
