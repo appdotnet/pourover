@@ -420,6 +420,7 @@ class BroadcastFeed(ndb.Model):
                 'value': {
                     'title': feed.title,
                     'description': feed.description,
+                    'fallback_url': 'https://app.net',
                 }
             }]
         })
@@ -431,7 +432,9 @@ class BroadcastFeed(ndb.Model):
         except Exception, e:
             logger.exception(e)
 
+
         if resp.status_code != 200:
+            logger.info('Failed to create channel: %s', resp.content)
             raise Exception('Error creating channel: %s', data)
 
         channel = json.loads(resp.content)['data']
