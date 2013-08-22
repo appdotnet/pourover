@@ -751,6 +751,10 @@ class Feed(ndb.Model):
     def for_interval(cls, interval_id):
         return cls.query(cls.update_interval == interval_id, cls.status == FEED_STATE.ACTIVE)
 
+    @classmethod
+    def for_email(cls, email):
+        return cls.query(cls.email==email).get()
+
     @ndb.tasklet
     def process_feed(self, overflow, overflow_reason):
         parsed_feed, num_new_items = yield Entry.update_for_feed(self)

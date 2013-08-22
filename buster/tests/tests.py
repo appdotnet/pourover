@@ -200,7 +200,7 @@ FAKE_LARGE_IMAGE = get_file_from_data('/data/large_image.jpg')
 FAKE_ACCESS_TOKEN = 'theres_always_posts_in_the_banana_stand'
 
 logger = logging.getLogger()
-logger.setLevel(logging.CRITICAL)
+logger.setLevel(logging.ERROR)
 
 
 class BusterTestCase(MockUrlfetchTest):
@@ -228,6 +228,7 @@ class BusterTestCase(MockUrlfetchTest):
                 self.set_response('http://example.com/buster/%s' % (unique_key2), content=HTML_PAGE_TEMPLATE_WITH_META % ({'unique_key': unique_key2}))
 
     def tearDown(self):
+        logger.setLevel(logging.ERROR)
         self.testbed.deactivate()
 
     def buildRSS(self, unique_key, items=1, **kw):
@@ -1038,6 +1039,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert Entry.query().count() == 2
 
     def testBadFeedRemoval(self):
+        logger.setLevel(logging.CRITICAL)
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
@@ -1270,6 +1272,29 @@ class BusterTestCase(MockUrlfetchTest):
         assert Entry.query().count() == 1
         assert json.loads(resp.data)['status'] == 'ok'
 
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        feed = Feed(
+            feed_url=test_feed_url,
+            include_summary=False,
+            channel_id=23,
+            email='123',
+            parent=self.user.key
+        )
+
+        feed.put()
+
+        msg = MIMEText('Testing')
+        msg['Subject'] = 'Testing'
+        msg['From'] = 'testing@example.com'
+        msg['To'] = parsed_resp['data']['inbound_email']
+
+        resp = self.app.post('/_ah/mail/123_%s_1@adn-pourover.appspotmail.com' % (FEED_TYPE.RSS), data=msg.as_string())
+        assert Entry.query().count() == 2
+        assert json.loads(resp.data)['status'] == 'ok'
+
+        self.pollUpdate()
+        assert Entry.query().count() == 3
 
 if __name__ == '__main__':
     unittest.main()

@@ -258,10 +258,10 @@ def email_to_feed(email):
     feed_type, version = map(int, (feed_type, version))
     logger.info('unique_key: %s feed_type:%s version:%s', unique_key, feed_type, version)
     feed = FEED_TYPE_TO_CLASS[feed_type].for_email(unique_key)
-
     logger.info('Found feed: %s', feed)
     mail_message = mail.InboundEmailMessage(request.stream.read())
     entry = yield feed.create_entry_from_mail(mail_message)
+    print 'Found entry: %s' % (entry)
     yield entry.publish_entry(feed)
 
     raise ndb.Return(jsonify(status='ok'))

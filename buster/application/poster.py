@@ -588,8 +588,9 @@ def format_for_adn(feed, entry):
     else:
         link = entry.link
 
-    link = iri_to_uri(link)
-    link = append_query_string(link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
+    if link:
+        link = iri_to_uri(link)
+        link = append_query_string(link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
 
     # If viewing feed from preview don't shorten urls
     preview = getattr(feed, 'preview', False)
