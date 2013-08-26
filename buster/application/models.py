@@ -337,7 +337,7 @@ class Entry(ndb.Model):
             overflow_cats = [OVERFLOW_REASON.MALFORMED, OVERFLOW_REASON.FEED_OVERFLOW]
 
         if include_overflow:
-            q = q.filter(cls.overflow_reason.IN(overflow_cats))
+            q = q.filter(ndb.OR(cls.overflow_reason.IN(overflow_cats), cls.overflow == False))
 
         return q
 

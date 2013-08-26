@@ -261,7 +261,6 @@ def email_to_feed(email):
     logger.info('Found feed: %s', feed)
     mail_message = mail.InboundEmailMessage(request.stream.read())
     entry = yield feed.create_entry_from_mail(mail_message)
-    print 'Found entry: %s' % (entry)
     yield entry.publish_entry(feed)
 
     raise ndb.Return(jsonify(status='ok'))
