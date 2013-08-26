@@ -325,7 +325,7 @@ class Entry(ndb.Model):
 
     @classmethod
     def latest(cls, feed, include_overflow=False, overflow_cats=None, order_by='added'):
-        q = cls.query(cls.published == True, cls.creating == False, cls.overflow == include_overflow, ancestor=feed.key)
+        q = cls.query(cls.published == True, cls.creating == False, ancestor=feed.key)
         logger.info('Order by: %s', order_by)
         if order_by == 'added':
             q = q.order(cls.added)
@@ -337,7 +337,11 @@ class Entry(ndb.Model):
             overflow_cats = [OVERFLOW_REASON.MALFORMED, OVERFLOW_REASON.FEED_OVERFLOW]
 
         if include_overflow:
-            q = q.filter(ndb.OR(cls.overflow_reason.IN(overflow_cats), cls.overflow == False))
+            overflow_and_in_cat = ndb.AND(cls.overflow_reason.IN(overflow_cats), cls.overflow == True)
+            not_overflow_or_overflow_in_cat = ndb.OR(cls.overflow == False, overflow_and_in_cat)
+            q = q.filter(not_overflow_or_overflow_in_cat)
+        else:
+            q = q.filter(cls.overflow == False)
 
         return q
 
@@ -372,10 +376,7 @@ class BroadcastFeed(ndb.Model):
     create_form = BroadcastFeedCreate
     update_form = NoOpForm
     preview_form = NoOpForm
-
-    @property
-    def visible(self):
-        return bool(self.feed)
+    visible = True
 
     @property
     def alpha_api_path(self):
