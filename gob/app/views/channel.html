@@ -1,0 +1,43 @@
+<div ng-include src="'/views/includes/nav.html'"></div>
+<div class='container'>
+  <div class='yui3-g'>
+    <div class='yui3-u-1-4'>
+      <h1>{{channelMetadata.title}}</h1>
+      <markdown ng-model="channelMetadata.description"></markdown>
+      <button class="btn btn-primary btn-small" ng-show="currentChannel && currentChannel.you_subscribed" ng-click="unsubscribeFrom(currentChannel)">Unsubscribe</button>
+      <button class="btn btn-primary btn-small" ng-show="currentChannel && !currentChannel.you_subscribed" ng-click="subscribeTo(currentChannel)">Subscribe</button>
+    </div>
+    <div class='main-column yui3-u-3-4'>
+      <div class="span4" ng-show="currentChannel.writers.you">
+        My broadcast message: <div adn-text button-text="Publish" on-button-click="sendText()" text-data="message" max-chars=256></div>
+      </div>
+      <div class='well-elevated' ng-show='messages.length'>
+        <div class='stream-container'>
+          <div>
+            <div class="subpixel h-entry post-container" ng-repeat="message in messages">
+              <div class="content">
+                <div class="media">
+                  <a class="avatar" style="background-image:url({{ message.user.avatar_image.url }}?h=114&amp;w=114);"></a>
+                </div>
+                <div class="post-header">
+                  <span class="username p-author h-card"><a class="u-url p-nickname" ng-bind="message.user.username"></a></span>
+                </div>
+                <div class="body" ng-class="{'has-media': message.oembed() }">
+                  <div class="content">
+                    <div class="media" ng-show='message.oembed()'>
+                      <div class="post-media">
+                        <a href="https://photos.app.net/9039984/1" class="shadow-overlay"><i class="icon-zoom-in"></i></a>
+                        <div class="inner-shadow-overlay"></div><img ng-src='{{message.oembed().thumbnail_url}}' width='{{message.oembed().thumbnail_width}}px' height='{{message.oembed().thumbnail_height}}px' style='max-width: 200px'>
+                      </div>
+                    </div>
+                    <div class="post-text"><span class="post-content e-content" ng-bind-html-unsafe="message.html"></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

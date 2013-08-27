@@ -1,0 +1,18 @@
+<div class="row">
+  <div>
+    <!-- make these mutually exclusive -->
+    <div ng-show="allowUserIds">
+      <div user-search label="label" selected_users="users"></div>
+    </div>
+    <div class="checkbox" ng-show="allowAnyUser">
+      <label>
+        <input type="checkbox" ng-model="acl.any_user"> Any App.net user
+      </label>
+    </div>
+    <div class="checkbox" ng-show="allowPublic">
+      <label>
+        <input type="checkbox" ng-model="acl.public"> Public
+      </label>
+    </div>
+  </div>
+</div>

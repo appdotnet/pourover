@@ -1,0 +1,19 @@
+<div ng-include src="'/views/includes/nav.html'"></div>
+<div class='container'>
+  <h2>Broadcast Channels</h2>
+  <table class='table table-condensed'>
+    <thead>
+      <tr>
+        <th>Title</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="channel in channels">
+        <td>
+          <a ng-href="/channels/{{channel.id}}/">{{ getChannelTitle(channel) }}</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <p><a ng-href="/channels/new/">Create a new broadcast channel</a></p>
+</div>
