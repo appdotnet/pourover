@@ -56,6 +56,8 @@ def jsonify_error(message='There was an error', code=404):
 @app.route('/login/', endpoint='login')
 @app.route('/login/instagram/', endpoint='login_instagram')
 @app.route('/logout/', endpoint='logout')
+@app.route('/channels/', endpoint='channels')
+@app.route('/channels/new/', endpoint='channels')
 def index():
     return render_template('index.html')
 
@@ -66,6 +68,12 @@ def feed_point(feed_type, feed_id=None):
     return render_template('index.html')
 
 feed_point.login_required = False
+
+@app.route('/channels/<channel_id>/', endpoint='channel_detail')
+def channel_detail(feed_type, feed_id=None):
+    return render_template('index.html')
+
+channel_detail.login_required = False
 
 
 @app.route('/api/me', methods=['GET'])
