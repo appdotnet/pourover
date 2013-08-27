@@ -70,7 +70,7 @@ def feed_point(feed_type, feed_id=None):
 feed_point.login_required = False
 
 @app.route('/channels/<channel_id>/', endpoint='channel_detail')
-def channel_detail(feed_type, feed_id=None):
+def channel_detail(channel_id=None):
     return render_template('index.html')
 
 channel_detail.login_required = False
