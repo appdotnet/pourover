@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  angular.module('pourOver').controller('ChannelCtrl', function (ApiClient, $scope, $rootScope, $routeParams, $location) {
+  angular.module('pourOver').controller('ChannelCtrl', function (ApiClient, Channels, $scope, $rootScope, $routeParams, $location) {
     $scope.messages = [];
     $scope.message = {};
     $scope.channelMetadata = {title: '', description: ''};
@@ -12,7 +12,11 @@
     });
 
     if (! $scope.currentChannel) {
-      ApiClient.getChannel($scope.currentChannelId).success(function (data) {
+      ApiClient.getChannel($scope.currentChannelId, {
+        params: {
+          include_annotations: 1
+        }
+      }).success(function (data) {
         var channel = data.data;
         if (channel.type === 'net.app.core.broadcast') {
           $scope.currentChannel = channel;
@@ -58,7 +62,7 @@
           'thumbnail_height': dimensions[1]
         };
       }
-      return embed && angular.extend({}, embed.value, dimensions);
+      return embed && angular.extend(embed.value, dimensions);
     };
 
     $scope.$watch('currentChannel', function () {
