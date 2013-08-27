@@ -899,7 +899,7 @@ class Feed(ndb.Model):
             feed_info['feed_id'] = self.key.id()
 
         if self.channel_id:
-            feed_info['channel_id'] = channel_id
+            feed_info['channel_id'] = self.channel_id
 
         return feed_info
 

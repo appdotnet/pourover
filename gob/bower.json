@@ -7,7 +7,10 @@
     "purl": "~2.3.1",
     "bootstrap": "~2.3.2",
     "Ladda": "git://github.com/hakimel/Ladda.git#~0.6.0",
-    "underscore": "~1.5.1"
+    "underscore": "~1.5.1",
+    "angular-adn": "~0.0.10",
+    "angular-ui": "~0.4.0",
+    "angular-markdown": "~0.0.1"
   },
   "devDependencies": {
     "angular-mocks": "~1.0.5",

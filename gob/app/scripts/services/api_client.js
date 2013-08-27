@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('pourOver').factory('ApiClient', ['$rootScope', '$http', function ($rootScope, $http) {
+angular.module('pourOver').factory('LocalApiClient', ['$rootScope', '$http', function ($rootScope, $http) {
 
   var methods = ['get', 'head', 'post', 'put', 'delete', 'jsonp'];
 
@@ -8,7 +8,7 @@ angular.module('pourOver').factory('ApiClient', ['$rootScope', '$http', function
     return function (conf) {
       conf.headers = conf.headers || {};
       conf.headers.Authorization = 'Bearer ' + $rootScope.local.accessToken;
-      conf.url = window.location.origin + '/api/' + conf.url;
+      conf.url = window.location.origin + '/api' + conf.url;
       conf.method = method;
       if (method === 'post' && conf.data) {
         conf.data = jQuery.param(conf.data);

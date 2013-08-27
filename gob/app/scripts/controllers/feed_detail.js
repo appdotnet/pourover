@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('pourOver')
-.controller('FeedDetailCtrl', ['$rootScope', '$scope', 'ApiClient', '$routeParams', '$location', 'Feeds', function ($rootScope, $scope, ApiClient, $routeParams, $location, Feeds) {
+.controller('FeedDetailCtrl', ['$rootScope', '$scope', 'LocalApiClient', '$routeParams', '$location', 'Feeds', function ($rootScope, $scope, ApiClient, $routeParams, $location, Feeds) {
 
   $scope.schedule_periods = [
     {label: '1 mins', value: 1},
@@ -13,9 +13,9 @@ angular.module('pourOver')
 
   $scope.feed_error = undefined;
   $scope.$watch('feed', function () {
-    var preview_url = 'feed/preview';
+    var preview_url = '/feed/preview';
     if($rootScope.feed.feed_id) {
-      preview_url = 'feeds/' + $rootScope.feed.feed_type + '/' + $rootScope.feed.feed_id + '/preview';
+      preview_url = '/feeds/' + $rootScope.feed.feed_type + '/' + $rootScope.feed.feed_id + '/preview';
     }
 
     if (!$rootScope.feed.feed_url) {
@@ -46,7 +46,7 @@ angular.module('pourOver')
 
   var refreshEntries = function () {
     ApiClient.get({
-      url: 'feeds/' + $rootScope.feed.feed_type + '/' + $rootScope.feed.feed_id + '/latest'
+      url: '/feeds/' + $rootScope.feed.feed_type + '/' + $rootScope.feed.feed_id + '/latest'
     }).success(function (resp) {
       if (resp.data && resp.data.entries) {
         var sorted_posts = _.groupBy(resp.data.entries, function (x) {
@@ -58,7 +58,7 @@ angular.module('pourOver')
     });
 
     ApiClient.get({
-      url: 'feeds/' + $rootScope.feed.feed_type + '/' + $rootScope.feed.feed_id + '/unpublished'
+      url: '/feeds/' + $rootScope.feed.feed_type + '/' + $rootScope.feed.feed_id + '/unpublished'
     }).success(function (resp) {
       if (resp.data && resp.data.entries) {
         $scope.unpublished_entries = resp.data.entries;
@@ -68,7 +68,7 @@ angular.module('pourOver')
 
   $scope.publishEntry = function (entry) {
     ApiClient.post({
-      url: 'feeds/' + $rootScope.feed.feed_type + '/' + $rootScope.feed.feed_id + '/entries/' + entry.id + '/publish'
+      url: '/feeds/' + $rootScope.feed.feed_type + '/' + $rootScope.feed.feed_id + '/entries/' + entry.id + '/publish'
     }).success(function () {
       refreshEntries();
     });

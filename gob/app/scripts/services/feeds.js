@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', function ($q, $rootScope, ApiClient) {
+angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'LocalApiClient', function ($q, $rootScope, ApiClient) {
 
   var DEFAULT_FEED_OBJ = {
     feed_type: 1,
@@ -18,7 +18,7 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
 
   var updateFeeds = function () {
     ApiClient.get({
-      url: 'feeds'
+      url: '/feeds'
     }).success(function (resp) {
       if (resp.data && resp.data.length) {
         $rootScope.feeds = resp.data;
@@ -68,7 +68,7 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
       var deferred = $q.defer();
       var _this = this;
       ApiClient.post({
-        url: 'feeds/validate',
+        url: '/feeds/validate',
         data: _this.serialize_feed(feed)
       }).success(function (resp) {
         if (resp.status === 'ok') {
@@ -84,7 +84,7 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
       var deferred = $q.defer();
       var _this = this;
       ApiClient.post({
-        url: 'feeds',
+        url: '/feeds',
         data: _this.serialize_feed(feed)
       }).success(function (resp) {
         if (resp.data && resp.data.feed_id) {
@@ -102,7 +102,7 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
       var deferred = $q.defer();
       var _this = this;
       ApiClient.post({
-        url: 'feeds/' + feed.feed_type + '/' + feed.feed_id,
+        url: '/feeds/' + feed.feed_type + '/' + feed.feed_id,
         data: _this.serialize_feed(feed)
       }).success(function (resp) {
         if (resp.data && resp.data.feed_id) {
@@ -120,7 +120,7 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'ApiClient', fu
       var deferred = $q.defer();
 
       ApiClient.delete({
-        url: 'feeds/' + feed_type + '/' + feed_id
+        url: '/feeds/' + feed_type + '/' + feed_id
       }).success(function () {
         $rootScope.feeds = _.filter($rootScope.feeds, function (item) {
           return item.feed_id !== feed_id;

@@ -1,11 +1,11 @@
 'use strict';
 
-angular.module('pourOver').factory('User', ['$rootScope', 'ApiClient', function ($rootScope, ApiClient) {
+angular.module('pourOver').factory('LocalUser', ['$rootScope', 'LocalApiClient', function ($rootScope, ApiClient) {
 
   $rootScope.current_user = {};
 
   ApiClient.get({
-    url: 'me'
+    url: '/me'
   }).success(function (resp) {
     $rootScope.current_user = resp.data;
   });

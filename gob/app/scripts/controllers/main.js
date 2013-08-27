@@ -47,6 +47,6 @@
 
   };
 
-  MainCtrl.$inject = ['$rootScope', '$scope', 'ApiClient', '$routeParams', '$location', 'Feeds'];
+  MainCtrl.$inject = ['$rootScope', '$scope', 'LocalApiClient', '$routeParams', '$location', 'Feeds'];
   angular.module('pourOver').controller('MainCtrl', MainCtrl);
 })();

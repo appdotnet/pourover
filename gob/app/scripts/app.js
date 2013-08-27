@@ -1,5 +1,5 @@
 'use strict';
-var pourOver = angular.module('pourOver', []);
+var pourOver = angular.module('pourOver', ['adn', 'angular-markdown', 'ui']);
 
 pourOver.controller('LogoutCtrl', ['$scope', '$location', 'Auth', function ($scope, $location, Auth) {
   Auth.logout();
@@ -11,7 +11,7 @@ pourOver.controller('LoginCtrl', ['$scope', '$location', 'Auth', function ($scop
   $location.path('/');
 }]);
 
-pourOver.config(['$routeProvider', '$locationProvider', function ($routeProvider, $locationProvider) {
+pourOver.config(['$routeProvider', '$locationProvider', 'ADNConfigProvider', function ($routeProvider, $locationProvider, ADNConfigProvider) {
   $routeProvider.when('/', {
     templateUrl: '/views/main.html',
     controller: 'MainCtrl',
@@ -24,6 +24,22 @@ pourOver.config(['$routeProvider', '$locationProvider', function ($routeProvider
     auth: true
   });
 
+  $routeProvider.when('/channels/', {
+    templateUrl: '/views/channel_list.html',
+    controller: 'BroadcastChannelListCtrl',
+    auth: true
+  });
+
+  $routeProvider.when('/channels/new/', {
+    templateUrl: '/views/new-channel.html',
+    controller: 'NewChannelCtrl',
+    auth: true
+  });
+
+  $routeProvider.when('/channels/:channel_id/', {
+    templateUrl: '/views/channel.html',
+    controller: 'ChannelCtrl'
+  });
 
   $routeProvider.when('/signup/', {
     templateUrl: '/views/signup.html',
@@ -51,9 +67,10 @@ pourOver.config(['$routeProvider', '$locationProvider', function ($routeProvider
   $locationProvider.hashPrefix('#');
   $locationProvider.html5Mode(true);
 
+
 }]);
 
-pourOver.run(['$rootScope', '$location', 'Auth', function ($rootScope, $location, Auth) {
+pourOver.run(['$rootScope', '$location', 'Auth', 'LocalUser', function ($rootScope, $location, Auth, LocalUser) {
   // Developers should change this client_id to their own app.
   $rootScope.client_id = '6kmFxf2JrEqmFRQ4WncLfN8WWx7FnUS8';
   $rootScope.instagram_client_id = 'e13ece0f2a574acc8a8d404e3330a6e4';
