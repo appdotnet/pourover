@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  angular.module('pourOver').controller('ChannelCtrl', function (ApiClient, Channels, $scope, $rootScope, $routeParams, $location) {
+  angular.module('pourOver').controller('ChannelCtrl', function (ApiClient, Channels, Auth, $scope, $rootScope, $routeParams, $location) {
     $scope.messages = [];
     $scope.message = {};
     $scope.channelMetadata = {title: '', description: ''};
@@ -11,6 +11,10 @@
       return channel.id === $scope.currentChannelId;
     });
 
+    $scope.redirect_uri = window.location.origin + $location.path();
+    if (!Auth.isLoggedIn()) {
+      Auth.login();
+    }
     if (! $scope.currentChannel) {
       ApiClient.getChannel($scope.currentChannelId, {
         params: {
@@ -80,13 +84,21 @@
     });
 
     $scope.unsubscribeFrom = function (channel) {
-      ApiClient.unsubscribeFromChannel(channel).success(function (data) {
+      ApiClient.unsubscribeFromChannel(channel, {
+        params: {
+          include_annotations: 1
+        }
+      }).success(function (data) {
         $scope.currentChannel = data.data;
       });
     };
 
     $scope.subscribeTo = function (channel) {
-      ApiClient.subscribeToChannel(channel).success(function (data) {
+      ApiClient.subscribeToChannel(channel, {
+        params: {
+          include_annotations: 1
+        }
+      }).success(function (data) {
         $scope.currentChannel = data.data;
       });
     };
@@ -124,8 +136,8 @@
 
   angular.module('pourOver').controller('NewChannelCtrl', function (ApiClient, $scope) {
     $scope.readers = {
-      any_user: false,
-      public: false,
+      any_user: true,
+      public: true,
       user_ids: []
     };
     $scope.writers = {
@@ -144,7 +156,7 @@
         type: 'net.app.core.broadcast.metadata',
         value: {
           title: $scope.title,
-          description: $scope.description,
+          description: $scope.description
         }
       }];
 

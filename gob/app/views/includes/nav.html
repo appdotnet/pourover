@@ -5,12 +5,12 @@
             <div class="navbar pull-right">
               <ul class="nav">
                 <li class="open-caret logged-in-block dropdown" ng-show='current_user.username'>
-                  <a href="#" role="menu" class="dropdown-toggle fake-link" data-toggle="dropdown">
+                  <span href="#" role="menu" class="dropdown-toggle fake-link like-link" data-toggle="dropdown">
                     <span class="logged-in-as">Logged in as</span><hr>
                     <span class="logged-in-username">
                       <span class="inner" ng-bind="current_user.username"></span><i class="icon-chevron-down"></i>
                     </span>
-                  </a>
+                  </span>
                   <ul class="dropdown-menu unstyled">
                     <li>
                       <a href="http://app.net/{{current_user.username}}" target='blank'>

@@ -10,6 +10,11 @@
   </div>
   <!-- Not sure how to make these allow_* params optional -->
   <div channel-acl acl="writers" allow-user-ids="true" allow-any-user="false" allow-public="false" label="Who can write to this broadcast channel?"></div>
-  <div channel-acl acl="readers" allow-user-ids="true" allow-any-user="true" allow-public="true" label="Who can read this broadcast channel?"></div>
-  <button class="btn btn-primary btn-small" ng-click="create()">Create Channel</button>
+  <div style='display: none; margin-bottom:10px;'>
+    <div channel-acl acl="readers" allow-user-ids="true" allow-any-user="true" allow-public="true" label="Who can read this broadcast channel?"></div>
+  </div>
+  <br>
+  <p>
+    <button class="btn btn-primary btn-small" ng-click="create()">Create Channel</button>
+  </p>
 </div>
