@@ -150,7 +150,7 @@
 
       ApiClient.createChannel(channel).success(function (data) {
         var channel = data.data;
-        var full_url = window.location.origin + "/channels/" + channel.id;
+        var full_url = window.location.origin + "/channels/" + channel.id + '/';
 
         annotations[0].value.fallback_url = full_url;
         ApiClient.updateChannel(channel, {annotations: annotations}).success(function () {
