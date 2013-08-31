@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('pourOver')
-.controller('FeedDetailCtrl', ['$rootScope', '$scope', 'LocalApiClient', '$routeParams', '$location', 'Feeds', 'LocalUser', function ($rootScope, $scope, ApiClient, $routeParams, $location, Feeds, LocalUser) {
+.controller('FeedDetailCtrl', ['$rootScope', '$scope', 'LocalApiClient', '$routeParams', '$location', 'Feeds', 'LocalUser', 'Channels', 'ApiClient', function ($rootScope, $scope, ApiClient, $routeParams, $location, Feeds, LocalUser, Channels, RemoteApi) {
 
   $scope.schedule_periods = [
     {label: '1 mins', value: 1},
@@ -64,6 +64,10 @@ angular.module('pourOver')
         $scope.unpublished_entries = resp.data.entries;
       }
     });
+  };
+
+  $scope.getChannelTitle = function (channel) {
+    return RemoteApi.getChannelMetadata(channel).title;
   };
 
   $scope.publishEntry = function (entry) {

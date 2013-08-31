@@ -69,6 +69,18 @@
       </div>
     </div>
   </div>
+  <div class="nav nav-list" ng-show='writeable_channels'>
+    <div class='nav-header'>Publish to Channel</div>
+    <div class='nav-pane' id='channels'>
+      <div class="control-group format-mode">
+        <p><small>If you choose a channel your feed will stop publishing to your account</small></p>
+        <select name='channel_id' ng-model='feed.channel_id'>
+          <option value=''>No Channel</option>
+          <option ng-repeat='channel in writeable_channels' value='{{channel.id}}' ng-selected='channel.id == feed.channel_id'>{{ getChannelTitle(channel) }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
 </form>
 <p>
   <button type="submit" class="btn btn-primary ladda-button" data-dismiss="modal" data-save-btn="" data-style="slide-left" ng-click="createOrUpdateFeed()"><span class="ladda-label">Update Feed</span></button>

@@ -50,6 +50,9 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'LocalApiClient
           delete feed[el];
         }
       });
+      if (!feed.channel_id) {
+        delete feed.channel_id;
+      }
       return feed;
     },
     setFeed: function (feed) {
