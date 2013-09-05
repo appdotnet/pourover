@@ -24,14 +24,13 @@
       throttled_updates();
     });
 
-    var button = jQuery('[data-save-btn]');
     $scope.createFeed = function () {
+      var button = jQuery('[data-save-btn]');
       var updateLoader = button.data('updateLoader');
       if (!updateLoader) {
         updateLoader = Ladda.create(button.get(0));
         button.data('updateLoader', updateLoader);
       }
-
       updateLoader.start();
 
       Feeds.createFeed($rootScope.feed).then(function (feed) {
