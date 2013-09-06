@@ -1,6 +1,6 @@
 <div ng-include src="'/views/includes/nav.html'"></div>
 <div class='container'>
-  <h2>Broadcast Channels</h2>
+  <h2>Alerts</h2>
   <table class='table table-condensed'>
     <thead>
       <tr>
@@ -8,12 +8,12 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="channel in channels">
+      <tr ng-repeat="channel in writeable_channels">
         <td>
-          <a ng-href="/channels/{{channel.id}}/">{{ getChannelTitle(channel) }}</a>
+          <a ng-href="/alerts/{{channel.id}}/">{{ getChannelTitle(channel) }}</a>
         </td>
       </tr>
     </tbody>
   </table>
-  <p><a ng-href="/channels/new/">Create a new broadcast channel</a></p>
+  <p><a ng-href="/alerts/new/">Create a new alert channel</a></p>
 </div>

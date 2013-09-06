@@ -56,8 +56,8 @@ def jsonify_error(message='There was an error', code=404):
 @app.route('/login/', endpoint='login')
 @app.route('/login/instagram/', endpoint='login_instagram')
 @app.route('/logout/', endpoint='logout')
-@app.route('/channels/', endpoint='channels')
-@app.route('/channels/new/', endpoint='channels')
+@app.route('/alerts/', endpoint='channels')
+@app.route('/alerts/new/', endpoint='channels')
 def index():
     return render_template('index.html')
 

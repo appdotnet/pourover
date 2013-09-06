@@ -93,6 +93,18 @@ HTML_PAGE_TEMPLATE = """
 </html>
 """
 
+HTML_PAGE_TEMPLATE_RELATIVE = """
+<!DOCTYPE html>
+<html>
+<head>
+        <link rel="alternate" type="application/rss+xml" title="TechCrunch &raquo; Feed" href="/feed/" />
+        <link rel="alternate" type="application/rss+xml" title="TechCrunch &raquo; Comments Feed" href="http://techcrunch.com/comments/feed/" />
+</head>
+<body>
+</body>
+</html>
+"""
+
 HTML_PAGE_TEMPLATE_WITH_META = """
 <!DOCTYPE html>
 <html>
@@ -670,6 +682,19 @@ class BusterTestCase(MockUrlfetchTest):
 
         feed = Feed.query().get()
         assert feed.feed_url == 'http://techcrunch.com/feed/'
+        feed.key.delete()
+
+        self.set_response('http://techcrunch.com', content=HTML_PAGE_TEMPLATE_RELATIVE, status_code=200, headers={'Content-Type': 'text/html'})
+
+        self.app.post('/api/feeds', data=dict(
+            feed_url='http://techcrunch.com',
+            max_stories_per_period=1,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+        assert feed.feed_url == 'http://techcrunch.com/feed/'
+
 
     def testLinkedListMode(self):
         self.setMockUser()

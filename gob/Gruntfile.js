@@ -67,7 +67,7 @@ module.exports = function (grunt) {
                 '^/(login|logout|signup|feed)/$ /index.html [L]',
                 '^/login/instagram/$ /index.html [L]',
                 '^/feed/.*$ /index.html [L]',
-                '^/channels/.*$ /index.html [L]'
+                '^/alerts/.*$ /index.html [L]'
               ]),
               lrSnippet,
               proxySnippet,

@@ -24,19 +24,19 @@ pourOver.config(['$routeProvider', '$locationProvider', 'ADNConfigProvider', fun
     auth: true
   });
 
-  $routeProvider.when('/channels/', {
+  $routeProvider.when('/alerts/', {
     templateUrl: '/views/channel_list.html',
     controller: 'BroadcastChannelListCtrl',
     auth: true
   });
 
-  $routeProvider.when('/channels/new/', {
+  $routeProvider.when('/alerts/new/', {
     templateUrl: '/views/new-channel.html',
     controller: 'NewChannelCtrl',
     auth: true
   });
 
-  $routeProvider.when('/channels/:channel_id/', {
+  $routeProvider.when('/alerts/:channel_id/', {
     templateUrl: '/views/channel.html',
     controller: 'ChannelCtrl'
   });

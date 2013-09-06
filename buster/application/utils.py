@@ -1,5 +1,6 @@
 import logging
 import urllib
+from urlparse import urljoin
 import time
 
 from google.appengine.ext import ndb
@@ -78,7 +79,7 @@ def get_language(lang=None):
     return None
 
 
-def find_feed_url(resp):
+def find_feed_url(resp, feed_url):
     content_type = resp.headers.get('Content-Type')
     if content_type and content_type.startswith('text/html'):
         logger.info('Feed sent back content type html content_type:%s', content_type)
@@ -88,6 +89,7 @@ def find_feed_url(resp):
         links += [x.get('href') for x in soup.findAll('link', type='application/atom+xml')]
         shortest_link = None
         for link in links:
+            link = urljoin(feed_url, link)
             if shortest_link is None:
                 shortest_link = link
             elif len(link) < len(shortest_link):

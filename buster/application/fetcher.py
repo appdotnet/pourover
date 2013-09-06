@@ -129,18 +129,6 @@ def fetch_parsed_feed_for_feed(feed):
         raise e
 
     feed_preview = getattr(feed, 'preview', None)
-    parsed_feed = None
-    # Need to update something in the database
-    if not feed.link and feed_preview is None:
-        parsed_feed = feedparser.parse(resp.content)
-        updated = False
-        try:
-            updated = yield feed.update_feed_from_parsed_feed(parsed_feed)
-        except Exception, e:
-            logger.exception(e)
-
-        if updated:
-            yield feed.put_async()
 
     feed.last_successful_fetch = now
     if feed_preview is None:
@@ -160,9 +148,9 @@ def fetch_parsed_feed_for_feed(feed):
     feed.last_fetched_content_hash = content_hash
 
     # parsed_feed, resp = yield fetch_parsed_feed_for_url(feed.feed_url, feed.etag)
-    if getattr(feed, 'first_time', None):
+    if getattr(feed, 'first_time', None) or feed_preview:
         # Try and fix bad feed_urls on the fly
-        new_feed_url = find_feed_url(resp)
+        new_feed_url = find_feed_url(resp, feed.feed_url)
         if new_feed_url:
             resp = yield fetch_url(new_feed_url)
             feed.feed_url = new_feed_url
@@ -170,6 +158,6 @@ def fetch_parsed_feed_for_feed(feed):
     if feed_preview is None:
         yield feed.put_async()
 
-    parsed_feed = parsed_feed or feedparser.parse(resp.content)
+    parsed_feed = feedparser.parse(resp.content)
 
     raise ndb.Return((parsed_feed, resp))
