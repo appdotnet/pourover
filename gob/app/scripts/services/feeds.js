@@ -97,7 +97,7 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'LocalApiClient
         } else {
           deferred.reject();
         }
-      }, deferred.reject);
+      }).error(deferred.reject);
 
       return deferred.promise;
     },

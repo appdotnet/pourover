@@ -26,19 +26,17 @@
 
     $scope.createFeed = function () {
       var button = jQuery('[data-save-btn]');
-      var updateLoader = button.data('updateLoader');
-      if (!updateLoader) {
-        updateLoader = Ladda.create(button.get(0));
-        button.data('updateLoader', updateLoader);
-      }
-      updateLoader.start();
-
+      button.attr("disabled", "disabled");
+      button.html('<i class="icon-refresh icon-spin"></i>');
       Feeds.createFeed($rootScope.feed).then(function (feed) {
         jQuery('#newFeedModal').modal('hide');
         $location.path('/feed/' + feed.feed_type + '/' + feed.feed_id + '/').hash('settings');
       }, function () {
         window.alert('Something wen\'t wrong while saving your feed');
-      }).always(updateLoader.stop);
+      }).always(function () {
+        button.attr("disabled", null);
+        button.html('Add Feed');
+      });
 
       return false;
     };
