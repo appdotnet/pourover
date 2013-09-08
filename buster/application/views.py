@@ -69,11 +69,11 @@ def feed_point(feed_type, feed_id=None):
 
 feed_point.login_required = False
 
-@app.route('/channels/<channel_id>/', endpoint='channel_detail')
-def channel_detail(channel_id=None):
+@app.route('/alerts/<alert_id>/', endpoint='alerts_detail')
+def alerts_detail(alert_id=None):
     return render_template('index.html')
 
-channel_detail.login_required = False
+alerts_detail.login_required = False
 
 
 @app.route('/api/me', methods=['GET'])
