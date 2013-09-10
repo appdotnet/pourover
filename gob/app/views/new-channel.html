@@ -9,12 +9,12 @@
     <textarea ng-model="description" ng-trim="false" required max="1000"></textarea>
   </div>
   <!-- Not sure how to make these allow_* params optional -->
-  <div channel-acl acl="writers" allow-user-ids="true" allow-any-user="false" allow-public="false" label="Who can write to this broadcast channel?"></div>
+  <div channel-acl acl="writers" allow-user-ids="true" allow-any-user="false" allow-public="false" label="Who can write to this alert channel?"></div>
   <div style='display: none; margin-bottom:10px;'>
-    <div channel-acl acl="readers" allow-user-ids="true" allow-any-user="true" allow-public="true" label="Who can read this broadcast channel?"></div>
+    <div channel-acl acl="readers" allow-user-ids="true" allow-any-user="true" allow-public="true" label="Who can read this alert channel?"></div>
   </div>
   <br>
   <p>
-    <button class="btn btn-primary btn-small" ng-click="create()">Create Channel</button>
+    <button class="btn btn-primary btn-small" ng-click="create()">Create Alert Channel</button>
   </p>
 </div>

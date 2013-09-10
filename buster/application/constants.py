@@ -64,7 +64,7 @@ OVERFLOW_REASON = DjangoEnum(
 FEED_TYPE = DjangoEnum(
     (1, 'RSS', 'RSS Feed'),
     (2, 'INSTAGRAM', 'Instagram Feed'),
-    (3, 'BROADCAST', 'App.net Broadcast Channel'),
+    (3, 'BROADCAST', 'App.net Alerts Channel'),
 )
 
 

@@ -9,13 +9,13 @@
         <button class="btn btn-primary btn-small" ng-show="currentChannel && !currentChannel.you_subscribed" ng-click="subscribeTo(currentChannel)">Subscribe</button>
       </div>
       <div ng-hide='current_user.username'>
-        <p>To subscribe to this channel you must first signup, or login:</p>
+        <p>To subscribe to this alert you must first signup, or login:</p>
         <a class="btn btn-primary btn-small" href="https://account.app.net/oauth/authenticate?client_id={{client_id}}&response_type=token&scope=write_post+messages+public_messages&redirect_uri={{ redirect_uri }}">Authorize App.net</a>
       </div>
     </div>
     <div class='main-column yui3-u-3-4'>
       <div class="span4" ng-show="currentChannel.writers.you">
-        My broadcast message: <div adn-text button-text="Publish" on-button-click="sendText()" text-data="message" max-chars=256></div>
+        Send an Alert: <div adn-text button-text="Publish" on-button-click="sendText()" text-data="message" max-chars=256></div>
       </div>
       <div class='well-elevated' ng-show='messages.length'>
         <div class='stream-container'>
