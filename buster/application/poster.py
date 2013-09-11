@@ -503,9 +503,13 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
         kwargs['author'] = item.author
 
     if feed.include_video:
-        embed = yield find_video_oembed(item)
-        if embed:
-            kwargs['video_oembed'] = embed
+        try:
+            embed = yield find_video_oembed(item)
+            if embed:
+                kwargs['video_oembed'] = embed
+        except Exception, e:
+            logger.exception(e)
+            logger.error('Finding an oebmed')
 
     kwargs['feed_item'] = item
 
