@@ -228,6 +228,10 @@ def get_link_for_item(feed, item):
 def get_image_from_url(url):
     # logger.info('Downloading image %s', url)
     ctx = ndb.get_context()
+
+    if url and url.startswith('//'):
+        url = 'http:' + url
+
     try:
         resp = yield ctx.urlfetch(url, deadline=60)
         image = Image(image_data=resp.content)
