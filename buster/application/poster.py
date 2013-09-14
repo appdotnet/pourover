@@ -221,6 +221,14 @@ def get_link_for_item(feed, item):
         if href:
             return href
 
+    # one other custom method
+    permalink = soup.find('a', {'rel': 'bookmark'})
+    if permalink:
+        href = permalink.get('href')
+        if href:
+            return href
+
+
     return main_item_link
 
 
