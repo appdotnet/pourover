@@ -3,6 +3,7 @@ views.py
 
 URL route handlers
 """
+import base64
 import datetime
 import hmac
 import hashlib
@@ -451,6 +452,24 @@ def feed_push_update_app(feed_key):
     parsed_feed = feedparser.parse(request.stream.read())
     new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)
     yield Entry.publish_for_feed(feed, skip_queue=False)
+
+    etag = request.args.get('etag')
+    if etag:
+        try:
+            etag = base64.b64decode(etag)
+            feed.etag = etag
+        except TypeError:
+            logger.info('Got an invalid etag: %s for feed: %s', etag, feed_key)
+    else:
+        logger.info('Missing an updated etag for feed: %s', feed_key)
+
+    last_hash = request.args.get('last_hash')
+    if last_hash:
+        feed.last_fetched_content_hash = last_hash
+    else:
+        logger.info('Missing an updated hash for feed: %s', feed_key)
+
+    yield feed.put_async()
 
     raise ndb.Return(jsonify(status='ok'))
 

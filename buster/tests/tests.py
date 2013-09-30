@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
+import base64
 from collections import defaultdict
 from email.mime.text import MIMEText
 import logging
@@ -595,12 +596,21 @@ class BusterTestCase(MockUrlfetchTest):
             'Content-Type': 'application/xml',
         })
 
-        resp = self.app.post('/api/feeds/%s/subscribe/app' % (feed.key.urlsafe(), ), data=self.buildRSS('test', items=2), headers=headers)
+        query_string = {
+            'etag': base64.b64encode('test_etag'),
+            'last_hash': 'abc'
+        }
+
+        resp = self.app.post('/api/feeds/%s/subscribe/app?%s' % (feed.key.urlsafe(), urllib.urlencode(query_string)), data=self.buildRSS('test', items=2), headers=headers)
 
         assert 2 == Entry.query().count()
 
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
 
+        feed = Feed.query().get()
+
+        assert 'test_etag' == feed.etag
+        assert 'abc' == feed.last_fetched_content_hash
 
     def testUrlUpdate(self):
         self.setMockUser()
