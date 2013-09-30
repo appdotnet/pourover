@@ -19,7 +19,7 @@ from google.appengine.api import mail
 from flask_cache import Cache
 
 from application import app
-from constants import UPDATE_INTERVAL, FEED_TYPE, OVERFLOW_REASON
+from constants import UPDATE_INTERVAL, FEED_TYPE, OVERFLOW_REASON, UPDATE_INTERVAL_TO_MINUTES
 from models import Entry, Feed, Stat, Configuration, InstagramFeed, FEED_TYPE_TO_CLASS
 from fetcher import FetchException, fetch_parsed_feed_for_feed
 from utils import write_epoch_to_stat, get_epoch_from_stat
@@ -557,6 +557,7 @@ def all_feeds():
             'feed_url': feed.feed_url,
             'etag': feed.etag,
             'last_hash': feed.last_fetched_content_hash,
+            'update_interval': UPDATE_INTERVAL_TO_MINUTES.get(feed.update_interval)
         }
 
     qit = Feed.query().iter()

@@ -170,6 +170,7 @@ class Entry(ndb.Model):
             return
 
         if resp.status_code == 401:
+            print "Disabling feed authorization has been pulled: %s", feed.key.urlsafe()
             logger.info("Disabling feed authorization has been pulled: %s", feed.key.urlsafe())
             feed.status = FEED_STATE.NEEDS_REAUTH
             yield feed.put_async()

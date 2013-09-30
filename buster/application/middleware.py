@@ -95,7 +95,6 @@ class ADNTokenAuthMiddleware(object):
             if user.access_token != access_token:
                 user.access_token = access_token
                 user.put()
-
                 Feed.reauthorize(user)
 
             g.adn_user = adn_user

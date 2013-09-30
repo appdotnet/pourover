@@ -42,7 +42,7 @@ from agar.test import MockUrlfetchTest
 # from rss_to_adn import Feed
 from application import app
 from application.models import Entry, User, Feed, Configuration, InstagramFeed
-from application.constants import FEED_STATE, OVERFLOW_REASON, FEED_TYPE
+from application.constants import FEED_STATE, OVERFLOW_REASON, FEED_TYPE, UPDATE_INTERVAL
 from application.utils import append_query_string
 from application.fetcher import hash_content
 from application import settings
@@ -211,13 +211,17 @@ FAKE_LARGE_IMAGE = get_file_from_data('/data/large_image.jpg')
 
 FAKE_ACCESS_TOKEN = 'theres_always_posts_in_the_banana_stand'
 
-logger = logging.getLogger()
-logger.setLevel(logging.ERROR)
-logging.basicConfig( stream=sys.stderr )
+root = logging.getLogger()
+
 
 class BusterTestCase(MockUrlfetchTest):
     def setUp(self):
         super(BusterTestCase, self).setUp()
+        self.ch = logging.StreamHandler(sys.stdout)
+        self.ch.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(u'%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        self.ch.setFormatter(formatter)
+        root.addHandler(self.ch)
         # Flask apps testing. See: http://flask.pocoo.org/docs/testing/
         app.config['TESTING'] = True
         app.config['CSRF_ENABLED'] = False
@@ -240,7 +244,7 @@ class BusterTestCase(MockUrlfetchTest):
                 self.set_response('http://example.com/buster/%s' % (unique_key2), content=HTML_PAGE_TEMPLATE_WITH_META % ({'unique_key': unique_key2}))
 
     def tearDown(self):
-        logger.setLevel(logging.ERROR)
+        root.removeHandler(self.ch)
         self.testbed.deactivate()
 
     def buildRSS(self, unique_key, items=1, **kw):
@@ -1082,17 +1086,18 @@ class BusterTestCase(MockUrlfetchTest):
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1), status_code=200)
         self.pollUpdate()
         feed = Feed.query().get()
-
         assert feed.status == FEED_STATE.NEEDS_REAUTH
+
+        another_fake_access_token = 'another_banana_stand'
+        self.setMockUser(access_token=another_fake_access_token, username='voidfiles', id=3)
 
         resp = self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             max_stories_per_period=1,
             schedule_period=5,
-        ), headers={'Authorization': 'Bearer NEW_ACCESS_TOKEN'})
+        ), headers={'Authorization': 'Bearer %s' % (another_fake_access_token)})
 
         feed = Feed.query().get()
-
         assert feed.status == FEED_STATE.ACTIVE
 
     def testFeedMetaDataUpdate(self):
@@ -1302,6 +1307,34 @@ class BusterTestCase(MockUrlfetchTest):
 
         self.pollUpdate()
         assert Entry.query().count() == 3
+
+    def testBulkFeedFetch(self):
+        self.setMockUser(access_token='NEW_FAKE_ACCESS_TOKEN_FOR_USER')
+        user_key = self.user.key
+        self.setMockAppToken()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        feed = Feed(
+            feed_url=test_feed_url,
+            parent=user_key
+        )
+        feed.put()
+
+        resp = self.app.get('/api/feeds/all', headers=self.authHeaders())
+        resp = json.loads(resp.data)
+        assert 1 == len(resp['data']['feeds'])
+
+        feed = Feed(
+            feed_url=test_feed_url + "?new_1=1",
+            update_interval=UPDATE_INTERVAL.MINUTE_15,
+            parent=user_key
+        )
+        feed.put()
+
+        resp = self.app.get('/api/feeds/all', headers=self.authHeaders())
+        resp = json.loads(resp.data)
+        assert 2 == len(resp['data']['feeds'])
+        assert 15 == resp['data']['feeds'][1]['update_interval']
 
 if __name__ == '__main__':
     unittest.main()
