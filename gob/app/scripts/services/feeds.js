@@ -78,8 +78,15 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'LocalApiClient
           deferred.resolve(resp.data);
           return;
         }
-        deferred.reject();
-      }).error(deferred.reject);
+        if (resp.form_errors && resp.form_errors.feed_url) {
+          deferred.reject(resp.form_errors.feed_url[0]);
+        }
+        if (resp.message) {
+          deferred.reject(resp.message);
+        }
+      }).error(function () {
+        deferred.reject('There was error verifying that feed url, please wait a moment and try again.')
+      });
 
       return deferred.promise;
     },

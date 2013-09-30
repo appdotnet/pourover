@@ -120,29 +120,30 @@ def fetch_parsed_feed_for_feed(feed):
     except FetchException, e:
         # If we haven't been able to fetch this feed in the last 24 hours lets disable it
         # This doesn't do anything right now, just want to make sure we are doing this correctly
-        logger.info('Failed fetch url: %s Last last_successful_fetch: %s', feed.feed_url, feed.last_successful_fetch)
-        if feed.last_successful_fetch and feed.last_successful_fetch < now - datetime.timedelta(days=1):
-            feed.feed_disabled = True
-            logging.warning('Would have deleted feed:%s', feed.key.urlsafe())
-            yield feed.put_async()
+        # logger.info('Failed fetch url: %s Last last_successful_fetch: %s', feed.feed_url, feed.last_successful_fetch)
+        # if feed.last_successful_fetch and feed.last_successful_fetch < now - datetime.timedelta(days=1):
+        #     feed.feed_disabled = True
+        #     logging.warning('Would have deleted feed:%s', feed.key.urlsafe())
+        #     yield feed.put_async()
 
         raise e
 
     feed_preview = getattr(feed, 'preview', None)
 
-    feed.last_successful_fetch = now
-    if feed_preview is None:
-        yield feed.put_async()
+    # Trying to reduce the number of writes per fetch
+    # feed.last_successful_fetch = now
+    # if feed_preview is None:
+    #    yield feed.put_async()
 
     if resp.status_code == 304:
-        raise ndb.Return((None, resp))
+        raise ndb.Return((None, resp, feed))
 
     content_hash = hash_content(resp.content)
 
     if feed.last_fetched_content_hash == content_hash:
         # Trigger 304 path
         resp.status_code = 304
-        raise ndb.Return((None, resp))
+        raise ndb.Return((None, resp, feed))
 
     # No mater what happens after this point we are going to save the feed obj
     feed.last_fetched_content_hash = content_hash
@@ -151,6 +152,7 @@ def fetch_parsed_feed_for_feed(feed):
     if getattr(feed, 'first_time', None) or feed_preview:
         # Try and fix bad feed_urls on the fly
         new_feed_url = find_feed_url(resp, feed.feed_url)
+        logger.info('New feed trying to fetch the correct url old url: %s new_url: %s', feed.feed_url, new_feed_url)
         if new_feed_url:
             resp = yield fetch_url(new_feed_url)
             feed.feed_url = new_feed_url
@@ -160,4 +162,4 @@ def fetch_parsed_feed_for_feed(feed):
 
     parsed_feed = feedparser.parse(resp.content)
 
-    raise ndb.Return((parsed_feed, resp))
+    raise ndb.Return((parsed_feed, resp, feed))

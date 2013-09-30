@@ -213,7 +213,7 @@ FAKE_ACCESS_TOKEN = 'theres_always_posts_in_the_banana_stand'
 
 logger = logging.getLogger()
 logger.setLevel(logging.ERROR)
-
+logging.basicConfig( stream=sys.stderr )
 
 class BusterTestCase(MockUrlfetchTest):
     def setUp(self):
@@ -948,6 +948,7 @@ class BusterTestCase(MockUrlfetchTest):
                 feed_url=test_feed_url,
                 include_thumb=True
             )
+            print 'Feed First time in test 1: %s' % (getattr(feed, 'first_time', None))
             Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG).get_result()
             entry = Entry.query().get().to_json(format=True)
             if should_work:
@@ -960,16 +961,18 @@ class BusterTestCase(MockUrlfetchTest):
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1'), status_code=200)
         self.set_response('http://example.com/buster/test1_0', content=HTML_PAGE_TEMPLATE_WITH_IMAGES, method='GET')
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
         ), headers=self.authHeaders())
 
         feed = Feed.query().get()
         feed.image_in_html = True
+        print 'Feed First time in test 2: %s' % (getattr(feed, 'first_time', None))
         feed.put()
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test2'), status_code=200)
         self.set_response('http://example.com/buster/test2_0', content=HTML_PAGE_TEMPLATE_WITH_IMAGES, method='GET')
+        print 'Yo dawg'
         self.pollUpdate()
         assert Entry.query().fetch(2)[1].thumbnail_image_url == "http://example.com/good.jpg"
 
@@ -1063,28 +1066,6 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert Entry.query().count() == 2
 
-    def testBadFeedRemoval(self):
-        logger.setLevel(logging.CRITICAL)
-        self.setMockUser()
-        test_feed_url = 'http://example.com/rss'
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
-        self.app.post('/api/feeds', data=dict(
-            feed_url=test_feed_url,
-            include_summary=True,
-            max_stories_per_period=2,
-            schedule_period=5,
-        ), headers=self.authHeaders())
-
-        feed = Feed.query().get()
-
-        feed.last_successful_fetch = datetime.now() - timedelta(days=2)
-        feed.put()
-
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1), status_code=500)
-        self.pollUpdate()
-
-        assert feed.feed_disabled is True
-
     def testFeedReauthoirzation(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
@@ -1130,6 +1111,7 @@ class BusterTestCase(MockUrlfetchTest):
         assert feed.description == 'Hi, my name is Buster. This is the second sentence.'
 
     def testImageBlacklist(self):
+        print "Test image Blacklist"
         self.setMockUser()
         self.set_response('http://example.com/right.jpg', content=FAKE_RIGHT_IMAGE)
         test_feed_url = 'http://example.com/rss'

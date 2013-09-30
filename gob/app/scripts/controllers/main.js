@@ -1,25 +1,29 @@
 'use strict';
 
 (function () {
-  var MainCtrl = function ($rootScope, $scope, ApiClient, $routeParams, $location, Feeds) {
+  var MainCtrl = function ($rootScope, $scope, ApiClient, $routeParams, $location, Feeds, debounce) {
     Feeds.setNewFeed();
     $scope.valid_feed = false;
-
-    var throttled_updates = _.throttle(function () {
+    $scope.feed_error = false;
+    var throttled_updates = debounce(function () {
       Feeds.validateFeed($scope.feed).then(function (feed) {
-        $scope.valid_feed = true;
-        feed.feed_url = $rootScope.feed.feed_url;
+        $scope.valid_feed = !!feed.feed_url;
+        //feed.feed_url = $rootScope.feed.feed_url;
         $rootScope.feed = feed;
+      }, function (error) {
+        $scope.feed_error = error;
       }).always(function () {
         jQuery('.loading-icon').hide();
       });
-    }, 100);
+    }, 200);
 
     $scope.$watch('feed.feed_url', function () {
       $scope.valid_feed = false;
+      $scope.feed_error = false;
       if (!$scope.feed || !$scope.feed.feed_url) {
         return;
       }
+
       jQuery('.loading-icon').show();
       throttled_updates();
     });
@@ -44,6 +48,6 @@
 
   };
 
-  MainCtrl.$inject = ['$rootScope', '$scope', 'LocalApiClient', '$routeParams', '$location', 'Feeds'];
+  MainCtrl.$inject = ['$rootScope', '$scope', 'LocalApiClient', '$routeParams', '$location', 'Feeds', 'debounce'];
   angular.module('pourOver').controller('MainCtrl', MainCtrl);
 })();

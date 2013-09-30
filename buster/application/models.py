@@ -240,14 +240,29 @@ class Entry(ndb.Model):
         new_entries_by_guid = {x: cls(key=keys_by_guid.get(x), guid=x, creating=True) for x in new_guids}
         new_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
 
+        parsed_entries = parsed_feed.entries
+        # If we process first time feeds backwards the entries will be in the right added order
+        parsed_entries = reversed(parsed_entries)
+
         published = overflow
         futures = []
-        for item in parsed_feed.entries:
+        counter = 0
+        first_time = getattr(feed, 'first_time', False)
+        for item in parsed_entries:
             entry = new_entries_by_guid.get(guid_for_item(item))
             if not entry:
                 continue
 
-            futures.append((entry, prepare_entry_from_item(parsed_feed, item, feed, overflow, overflow_reason, published)))
+            # We only need the first three items to be fully fleshed out on the first fetch because that is all
+            # The user can see in the preview area.
+            # Otherwise always fetch remote data
+            remote_fetch = True
+            if first_time and counter > 2:
+                remote_fetch = False
+
+            added = datetime.now()
+            futures.append((entry, prepare_entry_from_item(parsed_feed, item, feed, overflow, overflow_reason, published, added, remote_fetch)))
+            counter += 1
 
         for entry, future in futures:
             entry_kwargs = yield future
@@ -265,7 +280,7 @@ class Entry(ndb.Model):
     @classmethod
     @ndb.tasklet
     def update_for_feed(cls, feed, publish=False, skip_queue=False, overflow=False, overflow_reason=OVERFLOW_REASON.BACKLOG):
-        parsed_feed, resp = yield fetch_parsed_feed_for_feed(feed)
+        parsed_feed, resp, feed = yield fetch_parsed_feed_for_feed(feed)
         num_new_items = 0
         drain_queue = False
         # There should be no data in here anyway
@@ -317,6 +332,12 @@ class Entry(ndb.Model):
     @classmethod
     def latest_for_feed(cls, feed):
         return cls.query(cls.creating == False, ancestor=feed.key)
+
+
+    @classmethod
+    def latest_for_feed_by_added(cls, feed):
+        return cls.query(cls.creating == False, ancestor=feed.key).order(-cls.added)
+
 
     @classmethod
     def latest_unpublished(cls, feed,):
@@ -808,6 +829,7 @@ class Feed(ndb.Model):
         except Exception, e:
             logger.exception(e)
 
+        delattr(feed, "first_time")
         if updated:
             yield feed.put_async()
 

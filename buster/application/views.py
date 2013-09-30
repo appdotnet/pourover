@@ -128,15 +128,20 @@ def feed_validate():
     form.populate_obj(feed)
     feed.preview = True
     error = None
+    parsed_feed = None
 
     try:
-        parsed_feed, resp = yield fetch_parsed_feed_for_feed(feed)
+        parsed_feed, resp, feed = yield fetch_parsed_feed_for_feed(feed)
         feed.update_feed_from_parsed_feed(parsed_feed)
+        if len(parsed_feed.entries) == 0:
+            error = 'The url you entred is not a valid feed.'
     except FetchException, e:
         error = unicode(e)
     except:
         error = 'Something went wrong while fetching your URL.'
         logger.exception('Feed Preview: Failed to update feed:%s' % (feed.feed_url, ))
+    logger.info('Parsed feed: %s', parsed_feed)
+
 
     if error:
         raise ndb.Return(jsonify(status='error', message=error))
@@ -231,7 +236,7 @@ def save_feed_preview(feed_type, feed_id):
 
     form.populate_obj(feed)
     feed.preview = True
-    preview_entries = Entry.entry_preview(Entry.latest(feed, include_overflow=True, overflow_cats=[OVERFLOW_REASON.BACKLOG, OVERFLOW_REASON.MALFORMED, OVERFLOW_REASON.FEED_OVERFLOW]).fetch(3), feed, format=True)
+    preview_entries = Entry.entry_preview(Entry.latest_for_feed_by_added(feed).fetch(3), feed, format=True)
 
     return jsonify(status='ok', data=preview_entries)
 
@@ -303,7 +308,6 @@ def tq_feed_poll():
             errors += 1
             logger.info("Couldn't find feed for key: %s", ndb_keys[i])
             continue
-
         futures.append((i, feed.process_feed(None, None)))
 
     for i, future in futures:

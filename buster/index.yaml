@@ -35,6 +35,19 @@ indexes:
   ancestor: yes
   properties:
   - name: creating
+  - name: added
+
+- kind: Entry
+  ancestor: yes
+  properties:
+  - name: creating
+  - name: added
+    direction: desc
+
+- kind: Entry
+  ancestor: yes
+  properties:
+  - name: creating
   - name: overflow
   - name: overflow_reason
   - name: published

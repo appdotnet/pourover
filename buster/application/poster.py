@@ -1,5 +1,6 @@
 from collections import defaultdict
 import logging
+from datetime import datetime
 from lxml import html
 from lxml.cssselect import CSSSelector
 import json
@@ -267,7 +268,7 @@ def image_dict(url, w, h):
 
 
 @ndb.tasklet
-def find_thumbnail(item, meta_tags, image_strategy_blacklist=None):
+def find_thumbnail(item, meta_tags, image_strategy_blacklist=None, remote_fetch=True):
     image_strategy_blacklist = image_strategy_blacklist or set()
 
     if 'rss' not in image_strategy_blacklist:
@@ -276,7 +277,7 @@ def find_thumbnail(item, meta_tags, image_strategy_blacklist=None):
         for thumb in media_thumbnails:
             w = int(thumb.get('width', 0))
             h = int(thumb.get('height', 0))
-            if not (w and h):
+            if not (w and h) and remote_fetch:
                 image = yield get_image_from_url(thumb['url'])
                 if image:
                     w = image.width
@@ -312,7 +313,7 @@ def find_thumbnail(item, meta_tags, image_strategy_blacklist=None):
 
         # If we are still here lets grab the first image, and try and download it.
         first_image = soup.find('img')
-        if first_image:
+        if first_image and remote_fetch:
             image_url = first_image.get('src')
             image = yield get_image_from_url(image_url)
             if image and image_fits(image.width, image.height):
@@ -326,7 +327,7 @@ def find_thumbnail(item, meta_tags, image_strategy_blacklist=None):
         if meta_tags_image_url and isinstance(meta_tags_image_url, dict):
             raise ndb.Return(image_dict(meta_tags_image_url['url'], meta_tags_image_url['width'],
                              meta_tags_image_url['height']))
-        elif meta_tags_image_url:
+        elif meta_tags_image_url and remote_fetch:
             image = yield get_image_from_url(meta_tags_image_url)
             if image and image_fits(image.width, image.height):
                 raise ndb.Return(image_dict(meta_tags_image_url, image.width, image.height))
@@ -450,7 +451,7 @@ def get_short_url(entry, link, feed):
 # And then be a bunch of functions that parse through that meta data in various manners to get the good stuff
 # out of it.
 @ndb.tasklet
-def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reason=None, published=False):
+def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reason=None, published=False, added=None, remote_fetch=True):
     title_detail = item.get('title_detail')
     title = item.get('title', 'No Title')
 
@@ -488,12 +489,13 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
     if feed:
         kwargs['parent'] = feed.key
 
-    page_data = yield get_meta_data_for_url(link)
-    kwargs.update(page_data)
+    if remote_fetch:
+        page_data = yield get_meta_data_for_url(link)
+        kwargs.update(page_data)
 
     thumbnail = None
     try:
-        thumbnail = yield find_thumbnail(item, kwargs.get('meta_tags', {}), feed.image_strategy_blacklist)
+        thumbnail = yield find_thumbnail(item, kwargs.get('meta_tags', {}), feed.image_strategy_blacklist, remote_fetch)
         if thumbnail:
             kwargs.update(thumbnail)
     except Exception, e:
@@ -502,7 +504,7 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
 
     # If we still don't have a thumbnail and we haven't blacklisted looking for images on the webpage
     # Lets take the first image on the page
-    if 'html' not in feed.image_strategy_blacklist and not thumbnail and kwargs['images_in_html']:
+    if 'html' not in feed.image_strategy_blacklist and not thumbnail and kwargs.get('images_in_html'):
         kwargs.update(kwargs['images_in_html'][0])
 
     if feed.language:
@@ -524,6 +526,9 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
             logger.error('Finding an oebmed')
 
     kwargs['feed_item'] = item
+
+    if added:
+        kwargs['added'] = added
 
     raise ndb.Return(kwargs)
 
