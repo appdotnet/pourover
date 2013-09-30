@@ -11,7 +11,7 @@ import unittest
 import json
 import base64
 from datetime import datetime, timedelta
-
+import urllib
 import inspect
 
 from google.appengine.api import memcache
@@ -537,7 +537,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         self.pollUpdate(2, n=0)
         assert 2 == Entry.query().count()
-
+ 
         self.pollUpdate()
 
         assert 3 == Entry.query().count()
@@ -564,7 +564,8 @@ class BusterTestCase(MockUrlfetchTest):
         })
 
         assert resp.data == 'testing'
-        data = get_file_from_data('/data/df_feed.xml')
+        # data = get_file_from_data('/data/df_feed.xml')
+        data = self.buildRSS('test', push_hub=True, items=2)
         resp = self.app.post('/api/feeds/%s/subscribe' % (feed.key.urlsafe(), ), data=data, headers={
             'Content-Type': 'application/xml',
         })
@@ -576,6 +577,68 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.post('/api/feeds/%s/subscribe' % (feed.key.urlsafe(), ))
 
         assert 2 == Entry.query(Entry.published == True).count()
+
+    def testPushPoller(self):
+        self.setMockUser()
+
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test'), status_code=200)
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+
+        self.setMockAppToken()
+        headers = self.authHeaders(access_token='NEW_TOKEN')
+        headers.update({
+            'Content-Type': 'application/xml',
+        })
+
+        resp = self.app.post('/api/feeds/%s/subscribe/app' % (feed.key.urlsafe(), ), data=self.buildRSS('test', items=2), headers=headers)
+
+        assert 2 == Entry.query().count()
+
+        assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
+
+
+    def testUrlUpdate(self):
+        self.setMockUser()
+
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test'), status_code=200)
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+
+        self.setMockAppToken()
+        headers = self.authHeaders(access_token='NEW_TOKEN')
+        new_feed_url = "http://example.com/rss2"
+        resp = self.app.post('/api/feeds/%s/update/feed_url' % (feed.key.urlsafe(), ), data={'feed_url': new_feed_url}, headers=headers)
+        feed = Feed.query().get()
+
+        assert new_feed_url == feed.feed_url
+
+    def testReportFeedError(self):
+        self.setMockUser()
+
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test'), status_code=200)
+        resp = self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+
+        self.setMockAppToken()
+        headers = self.authHeaders(access_token='NEW_TOKEN')
+
+        resp = self.app.post('/api/feeds/%s/error' % (feed.key.urlsafe(), ), headers=headers)
+        feed = Feed.query().get()
+
+        assert feed.status == FEED_STATE.INACTIVE
 
     def testSchedule(self):
         self.setMockUser()

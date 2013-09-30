@@ -19,7 +19,7 @@ from google.appengine.api import mail
 from flask_cache import Cache
 
 from application import app
-from constants import UPDATE_INTERVAL, FEED_TYPE, OVERFLOW_REASON, UPDATE_INTERVAL_TO_MINUTES
+from constants import UPDATE_INTERVAL, FEED_TYPE, OVERFLOW_REASON, UPDATE_INTERVAL_TO_MINUTES, FEED_STATE
 from models import Entry, Feed, Stat, Configuration, InstagramFeed, FEED_TYPE_TO_CLASS
 from fetcher import FetchException, fetch_parsed_feed_for_feed
 from utils import write_epoch_to_stat, get_epoch_from_stat
@@ -439,6 +439,60 @@ def feed_push_update(feed_key):
     raise ndb.Return('')
 
 feed_push_update.login_required = False
+
+
+@app.route('/api/feeds/<feed_key>/subscribe/app', methods=['POST'])
+@ndb.synctasklet
+def feed_push_update_app(feed_key):
+    feed = ndb.Key(urlsafe=feed_key).get()
+    if not feed:
+        raise ndb.Return(jsonify_error('Unknown feed'))
+
+    parsed_feed = feedparser.parse(request.stream.read())
+    new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)
+    yield Entry.publish_for_feed(feed, skip_queue=False)
+
+    raise ndb.Return(jsonify(status='ok'))
+
+feed_push_update_app.app_token_required = True
+feed_push_update_app.login_required = False
+
+
+@app.route('/api/feeds/<feed_key>/update/feed_url', methods=['POST'])
+@ndb.synctasklet
+def update_feed_url(feed_key):
+    feed = ndb.Key(urlsafe=feed_key).get()
+    if not feed:
+        raise ndb.Return(jsonify_error('Unknown feed'))
+
+    logger.info("Updating feed: %s old feed url: %s new feed url: %s", feed_key, feed.feed_url, request.form.get('feed_url'))
+    feed.feed_url = request.form.get('feed_url')
+
+    yield feed.put_async()
+
+    raise ndb.Return(jsonify(status='ok'))
+
+update_feed_url.app_token_required = True
+update_feed_url.login_required = False
+
+
+@app.route('/api/feeds/<feed_key>/error', methods=['POST'])
+@ndb.synctasklet
+def update_feed_for_error(feed_key):
+    feed = ndb.Key(urlsafe=feed_key).get()
+    if not feed:
+        raise ndb.Return(jsonify_error('Unknown feed'))
+
+    logger.info("Updating feed: %s as inactive because of an error")
+    feed.status = FEED_STATE.INACTIVE
+
+    yield feed.put_async()
+
+    raise ndb.Return(jsonify(status='ok'))
+
+update_feed_for_error.app_token_required = True
+update_feed_for_error.login_required = False
+
 
 
 @app.route('/api/feeds/all/update/<int:interval_id>')
