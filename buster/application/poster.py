@@ -2,6 +2,7 @@ from collections import defaultdict
 import logging
 from datetime import datetime
 from lxml import html
+from lxml.html.clean import Cleaner
 from lxml.cssselect import CSSSelector
 import json
 import StringIO
@@ -22,6 +23,9 @@ from utils import (append_query_string, strip_html_tags, ellipse_text, get_langu
 logger = logging.getLogger(__name__)
 
 MAX_CHARS = 256
+
+cleaner = Cleaner(allow_tags=['a', 'p', 'ul', 'li', 'ol', 'span', 'b', 'strong'], add_nofollow=True, remove_unknown_tags=False)
+clean_html = cleaner.clean_html
 
 
 def parse_style_tag(text):
@@ -562,6 +566,45 @@ def image_annotation_for_entry(entry):
         }
     }
 
+def metadata_annotation(entry):
+    subject = ellipse_text(entry.title, 128)
+    return {
+        "type": 'net.app.core.broadcast.message.metadata',
+        "value": {
+            "subject": subject
+        }
+    }
+
+
+def common_annotations(entry):
+    annotations = []
+    lang = get_language(entry.language)
+    if lang:
+        annotations.append({
+            "type": "net.app.core.language",
+            "value": {
+                "language": lang,
+            }
+        })
+
+    if entry.author:
+        annotations.append({
+            "type": "net.app.pourover.item.author",
+            "value": {
+                "author": entry.author,
+            }
+        })
+
+    if entry.tags:
+        annotations.append({
+            "type": "net.app.pourover.item.tags",
+            "value": {
+                "tags": entry.tags,
+            }
+        })
+
+    return annotations
+
 
 def instagram_format_for_adn(feed, entry):
     max_chars = MAX_CHARS - len(entry.link) + 1
@@ -573,15 +616,24 @@ def instagram_format_for_adn(feed, entry):
     }
     return post
 
+
 def broadcast_format_for_adn(feed, entry):
-    # max_chars = MAX_CHARS - len(entry.link) + 1
-    max_chars = MAX_CHARS
-    post_text = ellipse_text(entry.title + ' ' + entry.summary, max_chars)
-    # post_text += ' ' + entry.link
+
+    summary = clean_html(entry.summary)
+    # Easy path for now, leave some space at the end for cleaning up of broken HTML
+    summary = ellipse_text(summary, 2000)
+    # This will try and fix broken html
+    summary = html.tostring(html.fromstring(summary))
+
     post = {
-        'text': post_text,
+        'text': summary,
+        'annotations': [metadata_annotation(entry), image_annotation_for_entry(entry)]
     }
+
+    post['annotations'] += common_annotations(entry)
+
     return post
+
 
 @ndb.tasklet
 def format_for_adn(feed, entry):
@@ -682,29 +734,6 @@ def format_for_adn(feed, entry):
             "value": oembed
         })
 
-    lang = get_language(entry.language)
-    if lang:
-        post['annotations'].append({
-            "type": "net.app.core.language",
-            "value": {
-                "language": lang,
-            }
-        })
-
-    if entry.author:
-        post['annotations'].append({
-            "type": "net.app.pourover.item.author",
-            "value": {
-                "author": entry.author,
-            }
-        })
-
-    if entry.tags:
-        post['annotations'].append({
-            "type": "net.app.pourover.item.tags",
-            "value": {
-                "tags": entry.tags,
-            }
-        })
+    post['annotations'] += common_annotations(entry)
 
     raise ndb.Return(post)
