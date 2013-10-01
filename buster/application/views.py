@@ -465,6 +465,9 @@ def feed_push_update_app(feed_key):
     else:
         logger.info('Missing an updated hash for feed: %s', feed_key)
 
+    if feed.error_count > 0:
+        feed.error_count = 0
+
     yield feed.put_async()
 
     raise ndb.Return(jsonify(status='ok'))
