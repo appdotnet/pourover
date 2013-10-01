@@ -648,6 +648,19 @@ class BusterTestCase(MockUrlfetchTest):
         feed = Feed.query().get()
 
         assert feed.error_count == 1
+        headers = self.authHeaders(access_token='NEW_TOKEN')
+        headers.update({
+            'Content-Type': 'application/xml',
+        })
+
+        query_string = {
+            'etag': 'test_etag',
+            'last_hash': 'abc'
+        }
+
+        resp = self.app.post('/api/feeds/%s/subscribe/app?%s' % (feed.key.urlsafe(), urllib.urlencode(query_string)), data=self.buildRSS('test', items=2), headers=headers)
+
+        assert feed.error_count == 0
 
     def testSchedule(self):
         self.setMockUser()
