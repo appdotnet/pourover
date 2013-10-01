@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # encoding: utf-8
-import base64
 from collections import defaultdict
 from email.mime.text import MIMEText
 import logging
@@ -597,7 +596,7 @@ class BusterTestCase(MockUrlfetchTest):
         })
 
         query_string = {
-            'etag': base64.b64encode('test_etag'),
+            'etag': 'test_etag',
             'last_hash': 'abc'
         }
 
@@ -648,7 +647,7 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.post('/api/feeds/%s/error' % (feed.key.urlsafe(), ), headers=headers)
         feed = Feed.query().get()
 
-        assert feed.status == FEED_STATE.INACTIVE
+        assert feed.error_count == 1
 
     def testSchedule(self):
         self.setMockUser()

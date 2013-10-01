@@ -679,6 +679,7 @@ class Feed(ndb.Model):
     user_agent = ndb.StringProperty(default=None)
     channel_id = ndb.IntegerProperty()
     email = ndb.StringProperty()
+    error_count = ndb.IntegerProperty(default=0)
 
     @property
     def broadcast_channel(self):

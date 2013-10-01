@@ -455,11 +455,7 @@ def feed_push_update_app(feed_key):
 
     etag = request.args.get('etag')
     if etag:
-        try:
-            etag = base64.b64decode(etag)
-            feed.etag = etag
-        except TypeError:
-            logger.info('Got an invalid etag: %s for feed: %s', etag, feed_key)
+        feed.etag = etag
     else:
         logger.info('Missing an updated etag for feed: %s', feed_key)
 
@@ -502,8 +498,8 @@ def update_feed_for_error(feed_key):
     if not feed:
         raise ndb.Return(jsonify_error('Unknown feed'))
 
-    logger.info("Updating feed: %s as inactive because of an error")
-    feed.status = FEED_STATE.INACTIVE
+    logger.info("Incrementing error count for feed: %s errors: %s", feed_key, feed.error_count)
+    feed.error_count += 1
 
     yield feed.put_async()
 
