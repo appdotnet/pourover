@@ -20,6 +20,11 @@ def adn_rss_feed_check(form, field):
     if urlparts.netloc.endswith('alpha-api.app.net'):
         raise ValidationError('App.net RSS feeds are disallowed')
 
+def url_filter(value):
+    if not (value.startswith('http://') or value.startswith('https://')):
+        value = u'http://%s' % (value)
+    return value
+
 class NoOpForm(Form):
     pass
 
@@ -36,11 +41,11 @@ class FeedUpdate(Form):
     channel_id = fields.IntegerField()
 
 class FeedPreview(FeedUpdate):
-    feed_url = fields.TextField(validators=[validators.DataRequired(), validators.URL(), adn_rss_feed_check])
+    feed_url = fields.TextField(filters=[url_filter], validators=[validators.DataRequired(), validators.URL(), adn_rss_feed_check])
 
 
 class FeedCreate(FeedUpdate):
-    feed_url = fields.TextField(validators=[validators.DataRequired(), validators.URL(), adn_rss_feed_check])
+    feed_url = fields.TextField(filters=[url_filter], validators=[validators.DataRequired(), validators.URL(), adn_rss_feed_check])
 
 
 class InstagramFeedCreate(Form):
