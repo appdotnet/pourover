@@ -422,7 +422,7 @@ def get_meta_data_for_url(url):
         'meta_tags': parse_meta_data(doc),
         'images_in_html': parse_images(doc),
     }
-
+    logger.info('Fetched meta tags: %s', data['meta_tags'])
     raise ndb.Return(data)
 
 
@@ -616,20 +616,45 @@ def instagram_format_for_adn(feed, entry):
     return post
 
 
+def format_link_for_entry(feed, entry):
+    if entry.feed_item:
+        link = get_link_for_item(feed, entry.feed_item)
+    else:
+        link = entry.link
+
+    if link:
+        link = iri_to_uri(link)
+        link = append_query_string(link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
+
+    return link
+
+
 def broadcast_format_for_adn(feed, entry):
 
-    summary = clean_html(entry.summary)
+    #summary = clean_html(entry.summary)
     # Easy path for now, leave some space at the end for cleaning up of broken HTML
-    summary = ellipse_text(summary, 2000)
+    #summary = ellipse_text(summary, 2000)
     # This will try and fix broken html
-    summary = html.tostring(html.fromstring(summary))
+    #summary = html.tostring(html.fromstring(summary))
+
+    link = format_link_for_entry(feed, entry)
 
     post = {
-        'text': summary,
-        'annotations': [metadata_annotation(entry), image_annotation_for_entry(entry)]
+        'annotations': [metadata_annotation(entry), cross_post_annotation(link), image_annotation_for_entry(entry)]
     }
 
     post['annotations'] += common_annotations(entry)
+
+    description = None
+    if entry.meta_tags:
+        og_description = entry.meta_tags.get('og', {}).get('description')
+        twitter_description = entry.meta_tags.get('twitter', {}).get('description')
+        description = og_description or twitter_description
+
+    if description:
+        post['text'] = description
+    else:
+        post['machine_only'] = True
 
     return post
 
@@ -655,15 +680,7 @@ def format_for_adn(feed, entry):
 
         summary_text = ellipse_text(summary_text, 200)
 
-    if entry.feed_item:
-        link = get_link_for_item(feed, entry.feed_item)
-    else:
-        link = entry.link
-
-    if link:
-        link = iri_to_uri(link)
-        link = append_query_string(link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
-
+    link = format_link_for_entry(feed, entry)
     # If viewing feed from preview don't shorten urls
     preview = getattr(feed, 'preview', False)
     has_own_bitly_creds = feed.bitly_login and feed.bitly_api_key

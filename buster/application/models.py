@@ -876,7 +876,10 @@ class Feed(ndb.Model):
 
     @ndb.tasklet
     def format_entry_for_adn(self, entry):
-        post = yield format_for_adn(self, entry)
+        if self.channel_id:
+            post = broadcast_format_for_adn(self, entry)
+        else:
+            post = yield format_for_adn(self, entry)
         raise ndb.Return(post)
 
     @property
