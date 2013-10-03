@@ -208,17 +208,6 @@ def get_link_for_item(feed, item):
     if not links:
         return main_item_link
 
-    # Right now lets just try this on the last link
-    last_link = links[-1]
-    # logger.info('Last link: %s', last_link)
-    href = last_link.get('href')
-    parsed_link = urlparse(href)
-    # logger.info('Last link parsed: %s %s %s', parsed_link.netloc, parsed_feed_link.netloc, parsed_link)
-    # If the domains match lets use this as the URL
-    if parsed_link.netloc == parsed_feed_link.netloc:
-        return href
-
-    # Finally lets try a last ditch custom method
     # we can just ask the user to change up their content so we can find something in it
     permalink = soup.find('a', {'rel': 'permalink'})
     if permalink:
@@ -233,6 +222,16 @@ def get_link_for_item(feed, item):
         if href:
             return href
 
+    # Finally lets try a last ditch custom method
+    # Right now lets just try this on the last link
+    last_link = links[-1]
+    # logger.info('Last link: %s', last_link)
+    href = last_link.get('href')
+    parsed_link = urlparse(href)
+    # logger.info('Last link parsed: %s %s %s', parsed_link.netloc, parsed_feed_link.netloc, parsed_link)
+    # If the domains match lets use this as the URL
+    if parsed_link.netloc == parsed_feed_link.netloc:
+        return href
 
     return main_item_link
 
