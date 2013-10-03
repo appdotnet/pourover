@@ -640,10 +640,13 @@ def broadcast_format_for_adn(feed, entry):
     link = format_link_for_entry(feed, entry)
 
     post = {
-        'annotations': [metadata_annotation(entry), cross_post_annotation(link), image_annotation_for_entry(entry)]
+        'annotations': [metadata_annotation(entry), cross_post_annotation(link)]
     }
 
     post['annotations'] += common_annotations(entry)
+
+    if feed.include_thumb and entry.thumbnail_image_url:
+        post['annotations'].append(image_annotation_for_entry(entry))
 
     description = None
     if entry.meta_tags:
