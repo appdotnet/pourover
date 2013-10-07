@@ -80,8 +80,6 @@ alerts_detail.login_required = False
 @app.route('/api/me', methods=['GET'])
 def me():
     """return current user"""
-    from google.appengine.api import users
-    logger.info('The current user is an admin: %s', users.is_current_user_admin())
     return jsonify(status='ok', data=g.adn_user)
 
 
