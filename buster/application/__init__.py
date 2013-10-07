@@ -3,6 +3,8 @@ Initialize Flask app
 
 """
 from flask import Flask
+from flaskext.gae_mini_profiler import GAEMiniProfiler
+
 import re
 
 # from flask_debugtoolbar import DebugToolbarExtension
@@ -13,6 +15,7 @@ from flask_cors import CrossOriginResourceSharing
 
 from google.appengine.ext import ndb
 from google.appengine.ext.appstats import recording
+import gae_mini_profiler.profiler
 
 app = Flask('application')
 app.config.from_object('application.settings')
@@ -20,6 +23,7 @@ app.config.from_object('application.settings')
 # Enable jinja2 loop controls extension
 app.jinja_env.add_extension('jinja2.ext.loopcontrols')
 
+recording.appstats_wsgi_middleware(app)
 
 # Pull in URL dispatch routes
 import urls
@@ -30,6 +34,7 @@ allowed = (
 
 cors = CrossOriginResourceSharing(app)
 cors.set_allowed_origins(*allowed)
+# GAEMiniProfiler(app)
 
 # Flask-DebugToolbar (only enabled when DEBUG=True)
 # toolbar = DebugToolbarExtension(app)
@@ -47,5 +52,8 @@ else:
     #requests_log = logging.getLogger("requests")
     #requests_log.setLevel(logging.WARNING)
     #email_logger.register_logger(app.config['ADMIN_EMAIL'])
+
+
+app = recording.appstats_wsgi_middleware(app)
 
 app.__call__ = ndb.toplevel(app.__call__)

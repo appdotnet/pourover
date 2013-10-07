@@ -40,6 +40,12 @@ handlers:
   upload: static/(.*\.(css|png|html|js))
   secure: always
 
+- url: /gae_mini_profiler/static
+  static_dir: gae_mini_profiler/static
+
+- url: /gae_mini_profiler/.*
+  script: gae_mini_profiler.main.application
+
 - url: .*
   script: run.application.app
   secure: always
