@@ -1,0 +1,19 @@
+handlers:
+- url: /favicon.ico
+  static_files: static/favicon.ico
+  upload: static/favicon.ico
+  secure: always
+
+- url: /robots.txt
+  static_files: static/robots.txt
+  upload: static/robots.txt
+  secure: always
+
+- url: /(.*\.(css|png|html|js))
+  static_files: static/\1
+  upload: static/(.*\.(css|png|html|js))
+  secure: always
+
+- url: .*
+  script: run.application.app
+  secure: always

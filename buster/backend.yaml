@@ -1,5 +1,5 @@
 application: adn-pourover
-module: default
+module: backend
 version: duo
 runtime: python27
 api_version: 1

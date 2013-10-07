@@ -1,0 +1,36 @@
+application: adn-pourover
+
+dispatch:
+- url: '*/api/feeds/poll'
+  module: backend
+
+- url: '*/api/feeds/instagram/subscribe'
+  module: backend
+
+- url: '*/api/feeds/*/subscribe'
+  module: backend
+
+- url: '*/api/feeds/*/subscribe/app'
+  module: backend
+
+- url: '*/api/feeds/*/update/feed_url'
+  module: backend
+
+- url: '*/api/feeds/*/error'
+  module: backend
+
+- url: '*/api/feeds/all/update/*'
+  module: backend
+
+- url: '*/api/feeds/all/post'
+  module: backend
+
+- url: '*/api/feeds/all/try/subscribe'
+  module: backend
+
+- url: '*/api/feeds/all'
+  module: backend
+
+# Default module serves the typical web resources and all static resources.
+- url: '*/*'
+  module: default

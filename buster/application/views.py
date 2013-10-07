@@ -166,7 +166,7 @@ def feed(feed_type, feed_id):
 
 @app.route('/api/feeds/<int:feed_type>/<int:feed_id>', methods=['POST'])
 def feed_change(feed_type, feed_id):
-    """Get a feed"""
+    """Change a feed"""
     form = FEED_TYPE_TO_CLASS[feed_type].update_form(request.form)
     if not form.validate():
         return jsonify_error(message="Invalid update data")
@@ -188,7 +188,7 @@ def feed_change(feed_type, feed_id):
 @app.route('/api/feeds/<int:feed_type>/<int:feed_id>', methods=['DELETE'])
 @ndb.synctasklet
 def delete_feed(feed_type, feed_id):
-    """Get a feed"""
+    """Delete a feed"""
     feed = FEED_TYPE_TO_CLASS[feed_type].get_by_id(feed_id, parent=g.user.key)
     if not feed:
         raise ndb.Return(jsonify_error(message="Can't find that feed"))
