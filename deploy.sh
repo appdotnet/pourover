@@ -12,5 +12,4 @@ cp "$root_dir/gob/dist/"*.html "$root_dir/buster/application/templates"
 
 cd "$root_dir"
 python "$GAE_PATH/appcfg.py" --oauth2 --noauth_local_webserver update buster/
-python "$GAE_PATH/appcfg.py" --oauth2 --noauth_local_webserver backends buster/ update
 cd -
