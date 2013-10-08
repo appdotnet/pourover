@@ -4,7 +4,7 @@ import logging
 
 from google.appengine.api import urlfetch, memcache
 from flask import g, request, abort, current_app
-
+import cachepy
 from .models import User, Feed
 
 MEMCACHE_USER_KEY = 'user:%s'
@@ -51,7 +51,7 @@ class ADNTokenAuthMiddleware(object):
 
         resp = urlfetch.fetch(url='https://alpha-api.app.net/stream/0/token', method='GET', headers=headers)
         if resp.status_code == 200:
-            memcache.set(memcache_key, resp.content, 5 * 60)  # Expire in 5 min
+            cachepy.set(memcache_key, resp.content, 5 * 60)  # Expire in 5 min
             return resp.content
 
         return None
@@ -67,7 +67,7 @@ class ADNTokenAuthMiddleware(object):
             method, access_token = authorization_header.split(' ', 1)
             if access_token:
                 memcache_key, token_hash = hash_for_token(access_token)
-                user_data = memcache.get(memcache_key) or self.fetch_user_data(access_token, memcache_key)
+                user_data = cachepy.get(memcache_key) or self.fetch_user_data(access_token, memcache_key)
                 if user_data:
                     token = json.loads(user_data).get('data', {})
                     if token and token['app']['client_id'] == current_app.config['CLIENT_ID']:

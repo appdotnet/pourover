@@ -539,7 +539,7 @@ def update_all_feeds(interval_id):
         if not keys:
             continue
 
-        futures.append(Queue('poll').add_async(Task(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys})))
+        futures.append(Queue('poll').add_async(Task(url=url_for('tq_feed_poll-canonical'), method='POST', params={'keys': keys})))
         success += 1
 
     for future in futures:

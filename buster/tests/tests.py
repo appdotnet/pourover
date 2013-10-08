@@ -46,7 +46,7 @@ from application.constants import FEED_STATE, OVERFLOW_REASON, FEED_TYPE, UPDATE
 from application.utils import append_query_string
 from application.fetcher import hash_content
 from application import settings
-
+import cachepy
 RSS_ITEM = u"""
 <item>
     <title>
@@ -367,7 +367,7 @@ class BusterTestCase(MockUrlfetchTest):
 
     def setMockUser(self, access_token=FAKE_ACCESS_TOKEN, username='voidfiles', id=3):
         user_data = self.buildMockUserResponse(username=username, id=id)
-        memcache.set('user:%s' % access_token, json.dumps(user_data), 60 * 60)
+        cachepy.set('user:%s' % access_token, json.dumps(user_data), 60 * 60)
         user = User(access_token=access_token)
         user.put()
         self.user = user
@@ -1405,7 +1405,7 @@ class BusterTestCase(MockUrlfetchTest):
         )
         feed.put()
 
-        resp = self.app.get('/api/feeds/all', headers=self.authHeaders())
+        resp = self.app.get('/api/backend/feeds/all', headers=self.authHeaders())
         resp = json.loads(resp.data)
         assert 1 == len(resp['data']['feeds'])
 
@@ -1416,7 +1416,7 @@ class BusterTestCase(MockUrlfetchTest):
         )
         feed.put()
 
-        resp = self.app.get('/api/feeds/all', headers=self.authHeaders())
+        resp = self.app.get('/api/backend/feeds/all', headers=self.authHeaders())
         resp = json.loads(resp.data)
         assert 2 == len(resp['data']['feeds'])
         assert 15 == resp['data']['feeds'][1]['update_interval']
