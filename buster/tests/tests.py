@@ -217,6 +217,7 @@ root = logging.getLogger()
 class BusterTestCase(MockUrlfetchTest):
     def setUp(self):
         super(BusterTestCase, self).setUp()
+        cachepy.flush()
         self.ch = logging.StreamHandler(sys.stdout)
         self.ch.setLevel(logging.DEBUG)
         formatter = logging.Formatter(u'%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -225,6 +226,8 @@ class BusterTestCase(MockUrlfetchTest):
         # Flask apps testing. See: http://flask.pocoo.org/docs/testing/
         app.config['TESTING'] = True
         app.config['CSRF_ENABLED'] = False
+        app.config['DEBUG'] = True
+        app.config['DEBUG_MODE'] = True
         self.app = app.test_client()
 
         self.set_response("https://alpha-api.app.net/stream/0/posts", content=FAKE_POST_OBJ_RESP, status_code=200, method="POST")
@@ -1406,6 +1409,7 @@ class BusterTestCase(MockUrlfetchTest):
         feed.put()
 
         resp = self.app.get('/api/backend/feeds/all', headers=self.authHeaders())
+
         resp = json.loads(resp.data)
         assert 1 == len(resp['data']['feeds'])
 
