@@ -1,22 +1,22 @@
 cron:
 - description: very fast poll
-  url: /api/feeds/all/update/5
+  url: /api/backend/feeds/all/update/5
   schedule: every 1 minutes
 - description: fast poll
-  url: /api/feeds/all/update/1
+  url: /api/backend/feeds/all/update/1
   schedule: every 1 minutes
 - description: kinda fast poll
-  url: /api/feeds/all/update/2
+  url: /api/backend/feeds/all/update/2
   schedule: every 15 minutes
 - description: med poll
-  url: /api/feeds/all/update/3
+  url: /api/backend/feeds/all/update/3
   schedule: every 30 minutes
 - description: slow poll
-  url: /api/feeds/all/update/4
+  url: /api/backend/feeds/all/update/4
   schedule: every 1 hours
 - description: very fast poll
-  url: /api/feeds/all/post
+  url: /api/backend/feeds/all/post
   schedule: every 1 minutes
 - description: Resubscribe to PuSH Hubs
-  url: /api/feeds/all/try/subscribe
+  url: /api/backend/feeds/all/try/subscribe
   schedule: every 1 hours

@@ -284,7 +284,7 @@ email_to_feed.login_required = False
 
 
 @app.route('/api/feeds/poll', methods=['POST'])
-@app.route('/api/backend/feeds/poll', methods=['POST'])
+@app.route('/api/backend/feeds/poll', methods=['POST'], endpoint="tq_feed_poll-canonical")
 @ndb.synctasklet
 def tq_feed_poll():
     """Poll some feeds feed"""
@@ -380,7 +380,7 @@ def instagram_push_update():
 
     keys = ','.join([x.urlsafe() for x in keys])
     if keys:
-        yield Queue('poll').add_async(Task(url=url_for('tq_feed_poll'), method='POST', params={'keys': keys}))
+        yield Queue('poll').add_async(Task(url=url_for('tq_feed_poll-canonical'), method='POST', params={'keys': keys}))
 
     raise ndb.Return('ok')
 
