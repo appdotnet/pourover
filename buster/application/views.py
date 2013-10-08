@@ -453,6 +453,11 @@ def feed_push_update_app(feed_key):
     if not feed:
         raise ndb.Return(jsonify_error('Unknown feed'))
 
+    noop = request.args.get('noop')
+    if noop:
+        logger.info('Noop feed publish %s because off testing', feed_key)
+        raise ndb.Return(jsonify(status='ok'))
+
     parsed_feed = feedparser.parse(request.stream.read())
     new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)
     yield Entry.publish_for_feed(feed, skip_queue=False)
@@ -491,6 +496,11 @@ def update_feed_url(feed_key):
     logger.info("Updating feed: %s old feed url: %s new feed url: %s", feed_key, feed.feed_url, request.form.get('feed_url'))
     feed.feed_url = request.form.get('feed_url')
 
+    noop = request.form.get('noop')
+    if noop:
+        logger.info('Noop feed_url update: feed: %s because off testing', feed_key)
+        raise ndb.Return(jsonify(status='ok'))
+
     yield feed.put_async()
 
     raise ndb.Return(jsonify(status='ok'))
@@ -509,6 +519,11 @@ def update_feed_for_error(feed_key):
 
     logger.info("Incrementing error count for feed: %s errors: %s", feed_key, feed.error_count)
     feed.error_count += 1
+
+    noop = request.form.get('noop')
+    if noop:
+        logger.info('Noop feed error feed: %s because off testing', feed_key)
+        raise ndb.Return(jsonify(status='ok'))
 
     yield feed.put_async()
 
