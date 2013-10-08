@@ -284,6 +284,7 @@ email_to_feed.login_required = False
 
 
 @app.route('/api/feeds/poll', methods=['POST'])
+@app.route('/api/backend/feeds/poll', methods=['POST'])
 @ndb.synctasklet
 def tq_feed_poll():
     """Poll some feeds feed"""
@@ -387,6 +388,7 @@ instagram_push_update.login_required = False
 
 
 @app.route('/api/feeds/<feed_key>/subscribe', methods=['GET'])
+@app.route('/api/backend/feeds/<feed_key>/subscribe', methods=['GET'])
 def feed_subscribe(feed_key):
     mode = request.args['hub.mode']
     challenge = request.args['hub.challenge']
@@ -413,6 +415,7 @@ feed_subscribe.login_required = False
 
 
 @app.route('/api/feeds/<feed_key>/subscribe', methods=['POST'])
+@app.route('/api/backend/feeds/<feed_key>/subscribe', methods=['POST'])
 @ndb.synctasklet
 def feed_push_update(feed_key):
     feed = ndb.Key(urlsafe=feed_key).get()
@@ -443,6 +446,7 @@ feed_push_update.login_required = False
 
 
 @app.route('/api/feeds/<feed_key>/subscribe/app', methods=['POST'])
+@app.route('/api/backend/feeds/<feed_key>/subscribe/app', methods=['POST'])
 @ndb.synctasklet
 def feed_push_update_app(feed_key):
     feed = ndb.Key(urlsafe=feed_key).get()
@@ -477,6 +481,7 @@ feed_push_update_app.login_required = False
 
 
 @app.route('/api/feeds/<feed_key>/update/feed_url', methods=['POST'])
+@app.route('/api/backend/feeds/<feed_key>/update/feed_url', methods=['POST'])
 @ndb.synctasklet
 def update_feed_url(feed_key):
     feed = ndb.Key(urlsafe=feed_key).get()
@@ -495,6 +500,7 @@ update_feed_url.login_required = False
 
 
 @app.route('/api/feeds/<feed_key>/error', methods=['POST'])
+@app.route('/api/backend/feeds/<feed_key>/error', methods=['POST'])
 @ndb.synctasklet
 def update_feed_for_error(feed_key):
     feed = ndb.Key(urlsafe=feed_key).get()
@@ -514,6 +520,7 @@ update_feed_for_error.login_required = False
 
 
 @app.route('/api/feeds/all/update/<int:interval_id>')
+@app.route('/api/backend/feeds/all/update/<int:interval_id>')
 @ndb.synctasklet
 def update_all_feeds(interval_id):
     """Update all feeds for a specific interval"""
@@ -546,6 +553,7 @@ update_all_feeds.login_required = False
 
 
 @app.route('/api/feeds/all/post')
+@app.route('/api/backend/feeds/all/post')
 @ndb.synctasklet
 def post_all_feeds():
     """Post all new items for feeds for a specific interval"""
@@ -583,6 +591,7 @@ post_all_feeds.login_required = False
 
 
 @app.route('/api/feeds/all/try/subscribe')
+@app.route('/api/backend/feeds/all/try/subscribe')
 @ndb.synctasklet
 def try_push_resub():
     """Post all new items for feeds for a specific interval"""
@@ -619,6 +628,7 @@ try_push_resub.login_required = False
 
 
 @app.route('/api/feeds/all', methods=['GET'])
+@app.route('/api/backend/feeds/all', methods=['GET'])
 @ndb.synctasklet
 def all_feeds():
     """Post all new items for feeds for a specific interval"""
@@ -653,6 +663,7 @@ all_feeds.login_required = False
 
 
 @app.route('/api/feeds/monitor', methods=['GET'])
+@app.route('/api/backend/feeds/monitor', methods=['GET'])
 @ndb.synctasklet
 def monitor_jobs():
     """Are the jobs running"""
