@@ -87,15 +87,18 @@ angular.module('pourOver')
 
   $scope.createOrUpdateFeed = function () {
     var button = jQuery('[data-save-btn]');
-    var updateLoader = button.data('updateLoader');
-    if (!updateLoader) {
-      updateLoader = Ladda.create(button.get(0));
-      button.data('updateLoader', updateLoader);
-    }
-    updateLoader.start();
+    var last_html = button.html();
+
+    button.attr("disabled", "disabled");
+    button.html('<i class="icon-refresh icon-spin"></i>');
+    var finish = function () {
+      button.attr("disabled", null);
+      button.html(last_html);
+    };
+
     var method = ($rootScope.feed.feed_id) ? 'updateFeed' : 'createFeed';
-    Feeds[method]($rootScope.feed).then(updateLoader.stop, function () {
-      updateLoader.stop();
+    Feeds[method]($rootScope.feed).then(finish, function () {
+      finish();
       window.alert('Something wen\'t wrong while saving your feed');
     });
 
