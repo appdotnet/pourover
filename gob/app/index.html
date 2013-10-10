@@ -9,8 +9,15 @@
     <title></title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width">
+    <script>
+        (function () {
+            var _hostname = window.location.hostname;
+            var base_hostname = (window.location.hostname === 'adn-pourover.appspot.com') ? '' : 'sandbox.';
+            var src_str = "https://account." + base_hostname + "app.net/exports/base/?hostname=" + _hostname;
+            document.write('\x3Cscript type="text/javascript" src="' + src_str + '">\x3C/script>');
+        }());
+    </script>
     <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
-    <link rel="stylesheet" href="https://d2c01jv13s9if1.cloudfront.net/c/T/i/o/Tio6mDrUonwwDcgJCj3iQy21vYI.css" type="text/css" class="ac-css-adn_base" />
 
     <link rel="stylesheet" href="https://d2c01jv13s9if1.cloudfront.net/c/q/-/W/q-WW2U_AtehzmnLIwiZvVk3fNLM.css" type="text/css" class="ac-css-pau_bootstrap" />
 
@@ -33,7 +40,17 @@
       <script src="/components/json3/lib/json3.min.js"></script>
     <![endif]-->
     <!-- endbuild -->
-
+    <div id='replace-header'>
+        <div class="nav header yui3-u-1 ">
+            <div class="container">
+                <div class="yui3-u-1 clearfix">
+                    <a href="/" class="pull-left logo fake-link"></a>
+                </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    <script>ADN.write_markup('replace-header');</script>
     <div ng-view></div>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.1.5/angular.min.js"></script>

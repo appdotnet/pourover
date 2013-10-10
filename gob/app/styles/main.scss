@@ -99,20 +99,6 @@ body {
 
 .container.top {
     border-top: none;
-    .pourover-logo-large {
-        display: block;
-        margin: 0 auto 25px auto;
-        width: 394px;
-        height: 64px;
-        background-size: 394px 64px;
-        background-repeat: no-repeat;
-        background-image: url(/images/pourover-logo-large.png);
-        @include transition(opacity 0.2s linear);
-        &:hover {
-            @include opacity(0.7);
-            @include transition(opacity 0.15s linear);
-        }
-    }
     h2 {
         font-size: 20px;
         color: #fff;
@@ -378,15 +364,6 @@ a.adn-button-large, a.adn-button-large:visited {
     white-space: -hp-pre-wrap;
 }
 
-.nav.header .logo {
-    margin-top: 22px;
-    margin-bottom: 22px;
-    width: 202px;
-    height: 32px;
-    background-size: 202px 32px;
-    background-image: url('/images/pourover-logo.png');
-}
-
 body form label input[type="checkbox"] {
     margin-top: 3px;
 }
@@ -403,12 +380,6 @@ body form label input[type="checkbox"] {
                .adn-logo {
                    background-image: url('/images/adn-logo@2x.png');
                }
-           }
-           .pourover-logo-large {
-               background-image: url('/images/pourover-logo-large@2x.png');
-           }
-           .nav.header .logo {
-               background-image: url('/images/pourover-logo@2x.png');
            }
 }
 
