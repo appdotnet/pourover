@@ -531,6 +531,8 @@ class InstagramFeed(ndb.Model):
     max_stories_per_period = ndb.IntegerProperty(default=1)
     user_agent = ndb.StringProperty(default=None)
 
+    status = ndb.IntegerProperty(default=FEED_STATE.ACTIVE)
+
     include_thumb = True
     include_video = True
 
@@ -562,6 +564,13 @@ class InstagramFeed(ndb.Model):
     def for_user_and_form(cls, user, form):
         user_id = form.data['user_id']
         return cls.query(cls.user_id == user_id, ancestor=user.key)
+
+    @classmethod
+    def for_interval(cls, interval_id):
+        if interval_id != 4:
+            return
+
+        return cls.query(cls.status == FEED_STATE.ACTIVE)
 
     @classmethod
     @ndb.tasklet

@@ -544,18 +544,20 @@ def update_all_feeds(interval_id):
 
     feeds = Feed.for_interval(interval_id)
 
-    success = 0
-    more = True
-    cursor = None
-    futures = []
-    while more:
-        feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(100, start_cursor=cursor)
-        keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
-        if not keys:
-            continue
+    for feed_type, feed_class in FEED_TYPE_TO_CLASS.iteritems():
+        feeds = Feed.for_interval(interval_id)
+        success = 0
+        more = True
+        cursor = None
+        futures = []
+        while more:
+            feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(100, start_cursor=cursor)
+            keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
+            if not keys:
+                continue
 
-        futures.append(Queue('poll').add_async(Task(url=url_for('tq_feed_poll-canonical'), method='POST', params={'keys': keys})))
-        success += 1
+            futures.append(Queue('poll').add_async(Task(url=url_for('tq_feed_poll-canonical'), method='POST', params={'keys': keys})))
+            success += 1
 
     for future in futures:
         yield future
