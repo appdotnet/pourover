@@ -318,6 +318,9 @@ class Entry(ndb.Model):
         if drain_queue:
             yield cls.drain_queue(feed)
 
+        if feed.feed_url == 'http://blog.app.net/feed/':
+            logger.info('debugblogpoll: found new items: %s', num_new_items)
+
         raise ndb.Return((parsed_feed, num_new_items))
 
     @classmethod

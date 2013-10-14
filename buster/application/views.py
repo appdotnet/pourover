@@ -14,7 +14,7 @@ import uuid
 from google.appengine.ext import ndb
 
 import feedparser
-from flask import request, render_template, g, Response, url_for
+from flask import request, render_template, g, Response, url_for, redirect
 from google.appengine.api.taskqueue import Task, Queue
 from google.appengine.api import mail
 from flask_cache import Cache
@@ -57,12 +57,22 @@ def jsonify_error(message='There was an error', code=404):
 @app.route('/login/', endpoint='login')
 @app.route('/login/instagram/', endpoint='login_instagram')
 @app.route('/logout/', endpoint='logout')
-@app.route('/alerts/', endpoint='channels')
-@app.route('/alerts/new/', endpoint='channels')
 def index():
     return render_template('index.html')
 
 index.login_required = False
+
+@app.route('/alerts/', endpoint='channels')
+def alerts():
+    return redirect('https://directory.app.net/alerts/manage/')
+
+alerts.login_required = False
+
+@app.route('/alerts/new/', endpoint='channels')
+def create_alerts():
+    return redirect('https://directory.app.net/alerts/manage/create/')
+
+create_alerts.login_required = False
 
 @app.route('/feed/<feed_type>/<feed_id>/', endpoint='feed_point')
 def feed_point(feed_type, feed_id=None):
@@ -72,7 +82,7 @@ feed_point.login_required = False
 
 @app.route('/alerts/<alert_id>/', endpoint='alerts_detail')
 def alerts_detail(alert_id=None):
-    return render_template('index.html')
+    return redirect('https://directory.app.net/alerts/manage/%s/' % alert_id)
 
 alerts_detail.login_required = False
 

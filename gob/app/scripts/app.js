@@ -25,20 +25,24 @@ pourOver.config(['$routeProvider', '$locationProvider', 'ADNConfigProvider', fun
   });
 
   $routeProvider.when('/alerts/', {
-    templateUrl: '/views/channel_list.html',
-    controller: 'BroadcastChannelListCtrl',
-    auth: true
+    redirectTo: function () {
+      window.location = 'https://directory.app.net/alerts/manage/';
+    },
+    auth: false,
   });
 
   $routeProvider.when('/alerts/new/', {
-    templateUrl: '/views/new-channel.html',
-    controller: 'NewChannelCtrl',
-    auth: true
+    redirectTo: function () {
+      window.location = 'https://directory.app.net/alerts/manage/create/';
+    },
+    auth: false,
   });
 
   $routeProvider.when('/alerts/:channel_id/', {
-    templateUrl: '/views/channel.html',
-    controller: 'ChannelCtrl'
+    redirectTo: function (params) {
+      window.location  = 'https://directory.app.net/alerts/manage/' + params.channel_id + '/';
+    },
+    auth: false,
   });
 
   $routeProvider.when('/signup/', {

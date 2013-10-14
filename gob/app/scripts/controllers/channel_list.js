@@ -2,8 +2,6 @@
   'use strict';
 
   angular.module('pourOver').controller('BroadcastChannelListCtrl', function (ApiClient, Channels, Auth, $scope) {
-    $scope.getChannelTitle = function (channel) {
-      return ApiClient.getChannelMetadata(channel).title;
-    };
+    window.location = 'https://directory.app.net/alerts/manage/';
   });
 }());
