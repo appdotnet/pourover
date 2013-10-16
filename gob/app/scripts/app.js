@@ -65,6 +65,7 @@ pourOver.config(['$routeProvider', '$locationProvider', 'ADNConfigProvider', fun
 
   $routeProvider.when('/signup/', {
     templateUrl: '/views/signup.html',
+    auth: false,
   });
 
   $routeProvider.when('/logout/', {
@@ -130,12 +131,18 @@ pourOver.run(['$rootScope', '$location', 'Auth', 'LocalUser', function ($rootSco
   $rootScope.instagram_client_id = 'e13ece0f2a574acc8a8d404e3330a6e4';
   $rootScope.redirect_uri = window.location.origin + '/login/';
   $rootScope.instagram_redirect_uri = window.location.origin + '/login/instagram/';
+  // Try and log the user in
+  Auth.login();
 
   $rootScope.$on('$routeChangeStart', function (event, next) {
     $rootScope.error = null;
     var loggedIn = Auth.isLoggedIn();
     if (!loggedIn && next.auth) {
-      $location.path('/signup');
+      if (window.location.pathname === '/') {
+        $location.path('/signup');
+      } else {
+        window.location = 'https://account.app.net/oauth/authenticate?client_id='+$rootScope.client_id+'&response_type=token&scope=write_post+messages+public_messages&redirect_uri=' + window.location;
+      }
     }
   });
 

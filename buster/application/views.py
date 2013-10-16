@@ -57,8 +57,8 @@ def jsonify_error(message='There was an error', code=404):
 @app.route('/login/', endpoint='login')
 @app.route('/login/instagram/', endpoint='login_instagram')
 @app.route('/logout/', endpoint='logout')
-@app.route('/alerts_xyx/', endpoint='channels')
-@app.route('/alerts_xyx/new/', endpoint='channels')
+@app.route('/alerts_xyx/')
+@app.route('/alerts_xyx/new/')
 def index():
     return render_template('index.html')
 
@@ -88,7 +88,7 @@ def alerts_detail(alert_id=None):
 
 alerts_detail.login_required = False
 
-@app.route('/alerts_xyx/<alert_id>/', endpoint='alerts_detail')
+@app.route('/alerts_xyx/<alert_id>/')
 def alerts_detail(alert_id=None):
     return render_template('index.html')
 
