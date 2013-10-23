@@ -134,6 +134,10 @@ pourOver.run(['$rootScope', '$location', 'Auth', 'LocalUser', function ($rootSco
   // Try and log the user in
   Auth.login();
 
+  if ($location.search().no_header) {
+    jQuery('.nav.header').hide();
+  }
+
   $rootScope.$on('$routeChangeStart', function (event, next) {
     $rootScope.error = null;
     var loggedIn = Auth.isLoggedIn();

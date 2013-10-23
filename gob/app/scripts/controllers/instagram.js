@@ -27,7 +27,7 @@
         $location.path('/feed/' + feed.feed_type + '/' + feed.feed_id);
       }, function () {
         window.alert('Something wen\'t wrong while saving your feed');
-      }).always();
+      });
 
     });
   };
