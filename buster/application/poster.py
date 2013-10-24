@@ -126,7 +126,7 @@ def build_html_from_post(post):
     def entity_text(e):
         return post['text'][e['pos']:e['pos'] + e['len']]
 
-    link_builder = lambda l: "<a href='%s'>%s</a>" % (l['url'], entity_text(l))
+    link_builder = lambda l: "<a href='%s' target='_blank'>%s</a>" % (l['url'], entity_text(l))
 
     # map starting position, length of entity placeholder to the replacement html
     entity_map = {}
