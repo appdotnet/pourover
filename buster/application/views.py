@@ -122,6 +122,7 @@ def feeds_for_channel_id(channel_id):
 @app.route('/api/feeds', methods=['POST'])
 def feed_create():
     """List all examples"""
+
     try:
         # Get feed type default to RSS feeds
         feed_type = int(request.form.get('feed_type', FEED_TYPE.RSS))
