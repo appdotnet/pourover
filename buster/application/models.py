@@ -648,6 +648,10 @@ class Feed(ndb.Model):
         return cls.query(ancestor=user.key)
 
     @classmethod
+    def for_user_and_channel(cls, user, channel_id):
+        return cls.query(cls.channel_id == channel_id, ancestor=user.key)
+
+    @classmethod
     def for_user_and_form(cls, user, form):
         feed_url = form.data['feed_url']
         return cls.query(cls.feed_url == feed_url, ancestor=user.key)

@@ -1374,10 +1374,26 @@ class BusterTestCase(MockUrlfetchTest):
         feed.put()
 
         posts = feed.format_entry_for_adn(entry).get_result()
-        print posts
         assert len(posts) == 2
         assert posts[0][1] == 'post'
         assert posts[1][1] == 'channel'
+
+    def testFetchFeedsByChannelId(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            max_stories_per_period=1,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+        feed.channel_id = 10
+        feed.put()
+
+        resp = self.app.get('/api/feeds-for-channel/10/', headers=self.authHeaders())
+        assert len(json.loads(resp.data)['data']) == 1
 
 
 if __name__ == '__main__':

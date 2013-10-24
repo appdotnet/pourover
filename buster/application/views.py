@@ -110,6 +110,15 @@ def feeds():
     return jsonify(status='ok', data=users_feeds)
 
 
+@app.route('/api/feeds-for-channel/<int:channel_id>/', methods=['GET'])
+def feeds_for_channel_id(channel_id):
+    """List all examples"""
+
+    users_feeds = [feed.to_json() for feed in FEED_TYPE_TO_CLASS[FEED_TYPE.RSS].for_user_and_channel(g.user, channel_id) if feed.visible]
+
+    return jsonify(status='ok', data=users_feeds)
+
+
 @app.route('/api/feeds', methods=['POST'])
 def feed_create():
     """List all examples"""
