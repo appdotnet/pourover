@@ -62,37 +62,73 @@
           </div>
           <div class="tab-pane" id="settings">
             <div class='yui3-g'>
-              <div class='yui3-u-1-4'>
+              <div class='yui3-u-1-4 t-yui3-u-1-3'>
                 <div ng-include="" src="'/views/includes/settings/' + feed.feed_type + '_form.html'" class='yui3-u-11-12'></div>
               </div>
-              <div class='main-column yui3-u-3-4'>
-                <div class='well-elevated' ng-show='posts'>
-                  <div class='stream-container'>
-                    <div>
-                      <div class="subpixel h-entry post-container" ng-repeat="post in posts">
-                        <div class="content">
-                          <div class="media">
-                            <a class="avatar" style="background-image:url({{ current_user.avatar_image.url }}?h=114&amp;w=114);"></a>
-                          </div>
-                          <div class="post-header">
-                            <span class="username p-author h-card"><a class="u-url p-nickname" ng-bind="current_user.username"></a></span>
-                          </div>
-                          <div class="body" ng-class="{'has-media': post.thumbnail_image_url}">
+              <div class='main-column yui3-u-3-4 t-yui3-u-2-3'>
+                <ul class="nav nav-tabs" ng-show='feed.publish_to_stream && feed.channel_id'>
+                  <li ng-class="{'active': selectedTab == 'posts' }"><a class="like-link" ng-click='selectTab("posts")'>Posts</a></li>
+                  <li ng-class="{'active': selectedTab == 'alerts' }"><a class="like-link" ng-click='selectTab("alerts")'>Alerts</a></li>
+                </ul>
+                <div class="tab-content">
+                  <div class="tab-pane" ng-class="{'active': selectedTab == 'posts' }" id="posts_preview" ng-show='!feed.channel_id || (feed.channel_id && feed.publish_to_stream)'>
+                    <div class='well-elevated' ng-show='posts'>
+                      <div class='stream-container'>
+                        <div>
+                          <div class="subpixel h-entry post-container" ng-repeat="post in posts">
                             <div class="content">
-                              <div class="media" ng-show='post.thumbnail_image_url'>
-                                <div class="post-media">
-                                  <a href="https://photos.app.net/9039984/1" class="shadow-overlay"><i class="icon-zoom-in"></i></a>
-                                  <div class="inner-shadow-overlay"></div><img ng-src='{{post.thumbnail_image_url}}' width='{{post.thumbnail_image_width}}px' height='{{post.thumbnail_image_height}}px' style='max-width: 200px'>
+                              <div class="media">
+                                <a class="avatar" style="background-image:url({{ current_user.avatar_image.url }}?h=114&amp;w=114);"></a>
+                              </div>
+                              <div class="post-header">
+                                <span class="username p-author h-card"><a class="u-url p-nickname" ng-bind="current_user.username"></a></span>
+                              </div>
+                              <div class="body" ng-class="{'has-media': post.thumbnail_image_url}">
+                                <div class="content">
+                                  <div class="media" ng-show='post.thumbnail_image_url'>
+                                    <div class="post-media">
+                                      <a href="https://photos.app.net/9039984/1" class="shadow-overlay"><i class="icon-zoom-in"></i></a>
+                                      <div class="inner-shadow-overlay"></div><img ng-src='{{post.thumbnail_image_url}}' width='{{post.thumbnail_image_width}}px' height='{{post.thumbnail_image_height}}px' style='max-width: 200px'>
+                                    </div>
+                                  </div>
+                                  <div class="post-text"><span class="post-content e-content" ng-bind-html-unsafe="post.html.post"></span></div>
                                 </div>
                               </div>
-                              <div class="post-text"><span class="post-content e-content" ng-bind-html-unsafe="post.html"></span></div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                  <div class='tab-pane' ng-class="{'active': selectedTab == 'alerts'}" id='alerts_preview' ng-show='feed.channel_id' class=>
+                    <div class='well-elevated' ng-show='posts'>
+                      <div class='stream-container'>
+                        <div>
+                          <div class="subpixel h-entry post-container" ng-repeat="post in posts">
+                            <div class="content">
+                              <div class="media">
+                                <a class="avatar" style="background-image:url({{ current_user.avatar_image.url }}?h=114&amp;w=114);"></a>
+                              </div>
+                              <div class="post-header">
+                                <span class="username p-author h-card"><a class="u-url p-nickname" ng-bind="current_user.username"></a></span>
+                              </div>
+                              <div class="body" ng-class="{'has-media': post.thumbnail_image_url}">
+                                <div class="content">
+                                  <div class="media" ng-show='post.thumbnail_image_url'>
+                                    <div class="post-media">
+                                      <a href="https://photos.app.net/9039984/1" class="shadow-overlay"><i class="icon-zoom-in"></i></a>
+                                      <div class="inner-shadow-overlay"></div><img ng-src='{{post.thumbnail_image_url}}' width='{{post.thumbnail_image_width}}px' height='{{post.thumbnail_image_height}}px' style='max-width: 200px'>
+                                    </div>
+                                  </div>
+                                  <div class="post-text"><span class="post-content e-content" ng-bind-html-unsafe="post.html.channel"></span></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
               </div>
             </div>
           </div>

@@ -246,6 +246,12 @@ def published_entries_for_feed(feed_type, feed_id):
 def save_feed_preview(feed_type, feed_id):
     """preview a saved feed"""
     form = FEED_TYPE_TO_CLASS[feed_type].update_form(request.args)
+    logger.info('form errors %s', form.errors)
+    logger.info('form.publish_to_stream errors %s', form.publish_to_stream.errors)
+    for errorMessages, fieldName in enumerate(form.errors):
+        for err in errorMessages:
+            logger.info("Feed errrors, %s", err)
+
     if not form.validate():
         return jsonify_error(message="Invalid update data")
 

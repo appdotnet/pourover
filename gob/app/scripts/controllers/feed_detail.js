@@ -159,6 +159,35 @@ angular.module('pourOver')
     return entry_lists.length === 0;
   };
 
+  $scope.selectedTab = 'posts';
+  var canHavePosts = function () {
+    if (!$scope.feed.channel_id || ($scope.feed.channel_id && $scope.feed.publish_to_stream)) {
+      return true;
+    }
+  };
+
+  var canHaveAlerts = function () {
+    return $scope.feed.channel_id;
+  };
+
+
+  var chooseSelectedTab = function () {
+    var currentTab = $scope.selectedTab;
+    if (currentTab === 'posts' && !canHavePosts()) {
+      $scope.selectedTab = 'alerts';
+    }
+
+    if (currentTab === 'alerts' && !canHaveAlerts()) {
+      $scope.selectedTab = 'posts';
+    }
+  };
+
+  chooseSelectedTab();
+  $scope.$watch('feed', chooseSelectedTab, true);
+  $scope.selectTab = function (tab) {
+    $scope.selectedTab = tab;
+  };
+
   if ($location.hash() === 'settings') {
     jQuery('[data-target="#settings"]').tab('show');
   }

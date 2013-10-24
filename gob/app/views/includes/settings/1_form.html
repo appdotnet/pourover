@@ -73,11 +73,21 @@
     <div class='nav-header'>Publish to Alert Channel</div>
     <div class='nav-pane' id='channels'>
       <div class="control-group format-mode">
-        <p><small>If you choose a channel your feed will stop publishing to your account</small></p>
+        <p class="help-block">
+          <small>To start publishing this RSS feed to an App.net Alert Channel, select one from the dropdown.</small>
+        </p>
         <select name='channel_id' ng-model='feed.channel_id'>
           <option value=''>No Channel</option>
           <option ng-repeat='channel in writeable_channels' value='{{channel.id}}' ng-selected='channel.id == feed.channel_id'>{{ getChannelTitle(channel) }}</option>
         </select>
+        <div class="controls">
+          <label class="checkbox">
+            <input type="checkbox" name="publish_to_stream" ng-model="feed.publish_to_stream"> Publish To Stream
+          </label>
+          <p class="help-block">
+            <small>Publish to your App.net stream as well as an alert channel.</small>
+          </p>
+        </div>
       </div>
     </div>
   </div>

@@ -38,6 +38,7 @@ class FeedUpdate(Form):
     format_mode = fields.IntegerField(default=FORMAT_MODE.LINKED_TITLE, validators=[validators.AnyOf(FORMAT_MODE)])
     bitly_login = fields.TextField(validators=[validators.Length(min=-1, max=40)])
     bitly_api_key = fields.TextField(validators=[validators.Length(min=-1, max=40)])
+    publish_to_stream = fields.BooleanField(default=False, filters=[boolean_filter])
     channel_id = fields.IntegerField()
 
 class FeedPreview(FeedUpdate):
@@ -52,10 +53,3 @@ class InstagramFeedCreate(Form):
     access_token = fields.TextField()
     username = fields.TextField()
     user_id = fields.IntegerField()
-
-
-class BroadcastFeedCreate(Form):
-    title = fields.TextField()
-    description = fields.TextField()
-    any_user = fields.BooleanField(default=True)
-    public = fields.BooleanField(default=True)

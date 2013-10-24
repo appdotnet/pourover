@@ -45,7 +45,7 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'LocalApiClient
   return {
     DEFAULT_FEED_OBJ: DEFAULT_FEED_OBJ,
     serialize_feed: function (feed) {
-      _.each(['linked_list_mode', 'include_thumb', 'include_summary', 'include_video'], function (el) {
+      _.each(['linked_list_mode', 'include_thumb', 'include_summary', 'include_video', 'publish_to_stream'], function (el) {
         if (!feed[el]) {
           delete feed[el];
         }

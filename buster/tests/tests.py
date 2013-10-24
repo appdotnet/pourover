@@ -956,13 +956,13 @@ class BusterTestCase(MockUrlfetchTest):
         feed.put()
         Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG).get_result()
         entry_json = Entry.query().get().to_json(format=True)      
-        assert entry_json['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
+        assert entry_json['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
 
         feed.include_summary = True
         feed.put()
         entry_json = Entry.query().get().to_json(format=True)
 
-        assert entry_json['html']  == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>test</span>"
+        assert entry_json['html']['post']  == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>test</span>"
 
     def testIncludeVideo(self):
         self.setMockUser()
@@ -985,7 +985,7 @@ class BusterTestCase(MockUrlfetchTest):
                 Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG).get_result()
                 entry = Entry.query().get().to_json(format=True)
                 assert entry['thumbnail_image_url'] == thumbnail_url
-                assert entry['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
+                assert entry['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
                 Entry.query().get().key.delete()
                 feed.key.delete()
 
@@ -1089,7 +1089,7 @@ class BusterTestCase(MockUrlfetchTest):
         description  = sentance_1 + sentance_2
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
         feed, entry = self.createFeed(include_summary=True, feed_url=test_feed_url)
-        assert entry.to_json(format=True)['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1)
+        assert entry.to_json(format=True)['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1)
         self.cleanFeed()
 
         sentance_1 = 'x' * 201 + '.'
@@ -1097,7 +1097,7 @@ class BusterTestCase(MockUrlfetchTest):
         description  = sentance_1 + sentance_2
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
         feed, entry = self.createFeed(include_summary=True, feed_url=test_feed_url)
-        assert entry.to_json(format=True)['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1[0:199] + u"\u2026")
+        assert entry.to_json(format=True)['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1[0:199] + u"\u2026")
         self.cleanFeed()
 
         sentances = ['Dog ' * 11 + '.' for i in range(0, 8)]
@@ -1105,7 +1105,7 @@ class BusterTestCase(MockUrlfetchTest):
         expected = ' '.join(['Dog ' * 11 + '.' for i in range(0, 4)])
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
         feed, entry = self.createFeed(include_summary=True, feed_url=test_feed_url)
-        assert entry.to_json(format=True)['html'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (expected)
+        assert entry.to_json(format=True)['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (expected)
         self.cleanFeed()
 
     def testShortUrl(self):
@@ -1316,86 +1316,6 @@ class BusterTestCase(MockUrlfetchTest):
         entry = Entry.query().get()
         assert entry.published == True
 
-
-    def testBroadcastChannel(self):
-        self.setMockUser()
-        mock_channel_response = '{"data": {"id": "23"}}'
-        self.set_response('https://alpha-api.app.net/stream/0/channels', method='POST', content=mock_channel_response)
-        mock_message_create_message = json.dumps({
-            "data": {
-                "channel_id": "23",
-                "created_at": "2012-12-11T00:31:49Z",
-                "entities": {
-                    "hashtags": [],
-                    "links": [],
-                    "mentions": []
-                },
-                "html": "<span itemscope=\"https://app.net/schemas/Post\">Testing</span>",
-                "id": "103",
-                "machine_only": False,
-                "num_replies": 0,
-                "source": {
-                    "client_id": "UxUWrSdVLyCaShN62xZR5tknGvAxK93P",
-                    "link": "https://app.net",
-                    "name": "Test app"
-                },
-                "text": "Testing",
-                "thread_id": "103",
-                "user": {}
-            },
-            "meta": {
-                "code": 200,
-            }
-        })
-        self.set_response('https://alpha-api.app.net/stream/0/channels/23/messages', method='POST', content=mock_message_create_message)
-
-        resp = self.app.post('/api/feeds', data=dict(
-            feed_type=FEED_TYPE.BROADCAST,
-            title='GBC',
-            description='This is a great broadcast channel',
-        ), headers=self.authHeaders())
-
-        parsed_resp = json.loads(resp.data)
-        assert parsed_resp['data']['title'] == 'GBC'
-        assert parsed_resp['data']['link'] == 'https://adn-coldbrew.appspot.com/channels/23'
-        to, _ = parsed_resp['data']['inbound_email'].split('@', 1)
-        unique, feed_type, version = to.split('_', 2)
-        assert int(feed_type) == FEED_TYPE.BROADCAST
-        assert int(version) == 1
-
-        msg = MIMEText('Testing')
-        msg['Subject'] = 'Testing'
-        msg['From'] = 'testing@example.com'
-        msg['To'] = parsed_resp['data']['inbound_email']
-
-        resp = self.app.post('/_ah/mail/%s' % (parsed_resp['data']['inbound_email']), data=msg.as_string())
-        assert Entry.query().count() == 1
-        assert json.loads(resp.data)['status'] == 'ok'
-
-        test_feed_url = 'http://example.com/rss'
-        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
-        feed = Feed(
-            feed_url=test_feed_url,
-            include_summary=False,
-            channel_id=23,
-            email='123',
-            parent=self.user.key
-        )
-
-        feed.put()
-
-        msg = MIMEText('Testing')
-        msg['Subject'] = 'Testing'
-        msg['From'] = 'testing@example.com'
-        msg['To'] = parsed_resp['data']['inbound_email']
-
-        resp = self.app.post('/_ah/mail/123_%s_1@adn-pourover.appspotmail.com' % (FEED_TYPE.RSS), data=msg.as_string())
-        assert Entry.query().count() == 2
-        assert json.loads(resp.data)['status'] == 'ok'
-
-        self.pollUpdate()
-        assert Entry.query().count() == 3
-
     def testBulkFeedFetch(self):
         self.setMockUser(access_token='NEW_FAKE_ACCESS_TOKEN_FOR_USER')
         user_key = self.user.key
@@ -1424,6 +1344,41 @@ class BusterTestCase(MockUrlfetchTest):
         resp = json.loads(resp.data)
         assert 2 == len(resp['data']['feeds'])
         assert 15 == resp['data']['feeds'][1]['update_interval']
+
+
+    def testMultiplePublish(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
+        self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            max_stories_per_period=1,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+
+        entry = Entry.query().get()
+        posts = feed.format_entry_for_adn(entry).get_result()
+        assert len(posts) == 1
+        assert posts[0][1] == 'post'
+
+        feed.channel_id = 10
+        feed.put()
+
+        posts = feed.format_entry_for_adn(entry).get_result()
+        assert len(posts) == 1
+        assert posts[0][1] == 'channel'
+
+        feed.publish_to_stream = True
+        feed.put()
+
+        posts = feed.format_entry_for_adn(entry).get_result()
+        print posts
+        assert len(posts) == 2
+        assert posts[0][1] == 'post'
+        assert posts[1][1] == 'channel'
+
 
 if __name__ == '__main__':
     unittest.main()
