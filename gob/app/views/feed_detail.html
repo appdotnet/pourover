@@ -100,18 +100,21 @@
                       </div>
                     </div>
                   </div>
-                  <div class='tab-pane' ng-class="{'active': selectedTab == 'alerts'}" id='alerts_preview' ng-show='feed.channel_id' class=>
+                  <div class='tab-pane' ng-class="{'active': selectedTab == 'alerts'}" id='alerts_preview' ng-show='feed.channel_id'>
                     <div class='well-elevated' ng-show='posts'>
                       <div class='stream-container'>
                         <div>
                           <div class="subpixel h-entry post-container" ng-repeat="post in posts">
+
                             <div class="content">
+
                               <div class="media">
                                 <a class="avatar" style="background-image:url({{ current_user.avatar_image.url }}?h=114&amp;w=114);"></a>
                               </div>
                               <div class="post-header">
                                 <span class="username p-author h-card"><a class="u-url p-nickname" ng-bind="current_user.username"></a></span>
                               </div>
+
                               <div class="body" ng-class="{'has-media': post.thumbnail_image_url}">
                                 <div class="content">
                                   <div class="media" ng-show='post.thumbnail_image_url'>
@@ -123,12 +126,15 @@
                                   <div class="post-text"><span class="post-content e-content" ng-bind-html-unsafe="post.html.channel"></span></div>
                                 </div>
                               </div>
+
                             </div>
+
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
+                </div>
               </div>
             </div>
           </div>
