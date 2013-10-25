@@ -406,5 +406,15 @@ body form label input[type="checkbox"] {
     overflow: scroll;
 }
 
+html.breakpoint-tablet {
+    .alert-container {
+        width: 550px;
+
+        h1 {
+            font-size: 28px;
+        }
+    }
+}
+
 // Utility classes
 //@import "compass_twitter_bootstrap/utilities"; // Has to be last to override when necessary
