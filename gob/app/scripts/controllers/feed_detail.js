@@ -197,4 +197,36 @@ angular.module('pourOver')
   });
   //jQuery('[data-toggle="tooltip"]').tooltip();
 
+  var getAnnotation = function (alert, kind) {
+    var annotation = _.find(alert.annotations, function (annotation) {
+      return kind === annotation.type;
+    });
+    if (!annotation) {
+      return '';
+    }
+    return annotation.value;
+  };
+
+  $scope.getCrossPostLink = function (alert) {
+    if (!alert) {
+      return '';
+    }
+    var annotation = getAnnotation(alert, 'net.app.core.crosspost');
+    if (!annotation) {
+      return '';
+    }
+    return annotation.canonical_url;
+  };
+
+  $scope.getSubject = function (alert) {
+    if (!alert) {
+      return '';
+    }
+    var annotation = getAnnotation(alert, 'net.app.core.broadcast.message.metadata');
+    if (!annotation) {
+      return '';
+    }
+    return annotation.subject;
+  };
+
 }]);
