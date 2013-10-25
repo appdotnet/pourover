@@ -956,13 +956,13 @@ class BusterTestCase(MockUrlfetchTest):
         feed.put()
         Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG).get_result()
         entry_json = Entry.query().get().to_json(format=True)      
-        assert entry_json['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
+        assert entry_json['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver' target='_blank'>test_0</a></span>"
 
         feed.include_summary = True
         feed.put()
         entry_json = Entry.query().get().to_json(format=True)
 
-        assert entry_json['html']['post']  == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>test</span>"
+        assert entry_json['html']['post']  == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver' target='_blank'>test_0</a><br>test</span>"
 
     def testIncludeVideo(self):
         self.setMockUser()
@@ -985,7 +985,7 @@ class BusterTestCase(MockUrlfetchTest):
                 Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG).get_result()
                 entry = Entry.query().get().to_json(format=True)
                 assert entry['thumbnail_image_url'] == thumbnail_url
-                assert entry['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a></span>"
+                assert entry['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver' target='_blank'>test_0</a></span>"
                 Entry.query().get().key.delete()
                 feed.key.delete()
 
@@ -1089,7 +1089,7 @@ class BusterTestCase(MockUrlfetchTest):
         description  = sentance_1 + sentance_2
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
         feed, entry = self.createFeed(include_summary=True, feed_url=test_feed_url)
-        assert entry.to_json(format=True)['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1)
+        assert entry.to_json(format=True)['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver' target='_blank'>test_0</a><br>%s</span>" % (sentance_1)
         self.cleanFeed()
 
         sentance_1 = 'x' * 201 + '.'
@@ -1097,7 +1097,7 @@ class BusterTestCase(MockUrlfetchTest):
         description  = sentance_1 + sentance_2
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
         feed, entry = self.createFeed(include_summary=True, feed_url=test_feed_url)
-        assert entry.to_json(format=True)['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (sentance_1[0:199] + u"\u2026")
+        assert entry.to_json(format=True)['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver' target='_blank'>test_0</a><br>%s</span>" % (sentance_1[0:199] + u"\u2026")
         self.cleanFeed()
 
         sentances = ['Dog ' * 11 + '.' for i in range(0, 8)]
@@ -1105,7 +1105,7 @@ class BusterTestCase(MockUrlfetchTest):
         expected = ' '.join(['Dog ' * 11 + '.' for i in range(0, 4)])
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
         feed, entry = self.createFeed(include_summary=True, feed_url=test_feed_url)
-        assert entry.to_json(format=True)['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver'>test_0</a><br>%s</span>" % (expected)
+        assert entry.to_json(format=True)['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver' target='_blank'>test_0</a><br>%s</span>" % (expected)
         self.cleanFeed()
 
     def testShortUrl(self):
@@ -1377,6 +1377,13 @@ class BusterTestCase(MockUrlfetchTest):
         assert len(posts) == 2
         assert posts[0][1] == 'post'
         assert posts[1][1] == 'channel'
+
+        entry.published_channel = True
+        entry.put()
+        posts = feed.format_entry_for_adn(entry).get_result()
+        assert len(posts) == 1
+        assert posts[0][1] == 'post'
+
 
     def testFetchFeedsByChannelId(self):
         self.setMockUser()

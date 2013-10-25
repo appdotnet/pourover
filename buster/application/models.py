@@ -61,6 +61,8 @@ class Entry(ndb.Model):
     short_url = ndb.StringProperty()
     added = ndb.DateTimeProperty(auto_now_add=True)
     published = ndb.BooleanProperty(default=False)
+    published_post = ndb.BooleanProperty(default=False)
+    published_channel = ndb.BooleanProperty(default=False)
     overflow = ndb.BooleanProperty(default=False)
     overflow_reason = ndb.IntegerProperty(default=0)
     published_at = ndb.DateTimeProperty()
@@ -106,6 +108,9 @@ class Entry(ndb.Model):
             data['html'] = {}
             for post, kind in feed.format_entry_for_adn(self).get_result():
                 data['html'][kind] = build_html_from_post(post)
+
+            if feed and feed.channel_id:
+                data['alert'] = broadcast_format_for_adn(feed, self)
 
             width = None
             height = None
@@ -166,39 +171,44 @@ class Entry(ndb.Model):
         user = yield feed.key.parent().get_async()
 
         # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
-        posts = yield feed.format_entry_for_adn(self)
+        posts = yield feed.format_entry_for_adn(self, for_publish=True)
 
         ctx = ndb.get_context()
-        try:
-            for post, kind in posts:
-                endpoint = get_endpoint(kind, feed)
+        for post, kind in posts:
+            endpoint = get_endpoint(kind, feed)
+            try:
                 resp = yield ctx.urlfetch('https://alpha-api.app.net/stream/0/%s' % (endpoint), payload=json.dumps(post), deadline=30,
                                           method='POST', headers={
                                               'Authorization': 'Bearer %s' % (user.access_token, ),
                                               'Content-Type': 'application/json',
                                           })
-        except:
-            logger.exception('Failed to post Post: %s' % (post))
-            return
+            except:
+                logger.exception('Failed to post Post: %s' % (post))
+                return
 
-        if resp.status_code == 401:
-            print "Disabling feed authorization has been pulled: %s", feed.key.urlsafe()
-            logger.info("Disabling feed authorization has been pulled: %s", feed.key.urlsafe())
-            feed.status = FEED_STATE.NEEDS_REAUTH
-            yield feed.put_async()
-        elif resp.status_code == 200:
-            post_obj = json.loads(resp.content)
-            logger.info('Published entry key=%s -> post_id=%s: %s', self.key.urlsafe(), post_obj['data']['id'], post)
-        elif resp.status_code == 400:
-            logger.warn("Couldn't post entry key=%s. Error: %s Post:%s putting on the backlog", self.key.urlsafe(), resp.content, post)
-            self.overflow = True
-            self.overflow_reason = OVERFLOW_REASON.MALFORMED
-        else:
-            logger.warn("Couldn't post entry key=%s. Error: %s Post:%s", self.key.urlsafe(), resp.content, post)
-            raise Exception(resp.content)
+            if resp.status_code == 401:
+                print "Disabling feed authorization has been pulled: %s", feed.key.urlsafe()
+                logger.info("Disabling feed authorization has been pulled: %s", feed.key.urlsafe())
+                feed.status = FEED_STATE.NEEDS_REAUTH
+                yield feed.put_async()
+            elif resp.status_code == 200:
+                post_obj = json.loads(resp.content)
+                logger.info('Published entry key=%s -> post_id=%s: %s', self.key.urlsafe(), post_obj['data']['id'], post)
+            elif resp.status_code == 400:
+                logger.warn("Couldn't post entry key=%s. Error: %s Post:%s putting on the backlog", self.key.urlsafe(), resp.content, post)
+                self.overflow = True
+                self.overflow_reason = OVERFLOW_REASON.MALFORMED
+            else:
+                logger.warn("Couldn't post entry key=%s. Error: %s Post:%s", self.key.urlsafe(), resp.content, post)
+                raise Exception(resp.content)
+
+            # Mark that this part has been published
+            setattr(self, 'published_%s' % (kind), True)
+            yield self.put_async()
 
         self.published = True
         self.published_at = datetime.now()
+
         yield self.put_async()
 
     @classmethod
@@ -501,7 +511,7 @@ class InstagramFeed(ndb.Model):
         raise ndb.Return((self, new_entries))
 
     @ndb.tasklet
-    def format_entry_for_adn(self, entry):
+    def format_entry_for_adn(self, entry, for_publish=False):
         post = instagram_format_for_adn(self, entry)
         raise ndb.Return([(post, 'post')])
 
@@ -760,15 +770,17 @@ class Feed(ndb.Model):
         raise ndb.Return(feed)
 
     @ndb.tasklet
-    def format_entry_for_adn(self, entry):
+    def format_entry_for_adn(self, entry, for_publish=False):
         posts = []
-        if not self.channel_id or (self.channel_id and self.publish_to_stream):
-            post = yield format_for_adn(self, entry)
-            posts += [(post, 'post')]
+        if (not self.channel_id or (self.channel_id and self.publish_to_stream)):
+            if for_publish and not entry.published_post or not for_publish:
+                post = yield format_for_adn(self, entry)
+                posts += [(post, 'post')]
 
-        if self.channel_id:
-            post = broadcast_format_for_adn(self, entry)
-            posts += [(post, 'channel')]
+        if self.channel_id and not entry.published_channel:
+            if for_publish and not entry.published_channel or not for_publish:
+                post = broadcast_format_for_adn(self, entry)
+                posts += [(post, 'channel')]
 
         raise ndb.Return(posts)
 
