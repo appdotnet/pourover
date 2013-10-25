@@ -48,7 +48,7 @@ class User(ndb.Model):
 
 def get_endpoint(kind, feed):
     if kind == 'channel':
-        return 'channels/%s/message' % (feed.channel_id)
+        return 'channels/%s/messages' % (feed.channel_id)
     else:
         return 'posts'
 
