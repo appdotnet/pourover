@@ -754,6 +754,11 @@ class Client(object):
         kw['method'] = 'PUT'
         return self.open(*args, **kw)
 
+    def options(self, *args, **kw):
+        """Like open but method is enforced to PUT."""
+        kw['method'] = 'OPTIONS'
+        return self.open(*args, **kw)
+
     def delete(self, *args, **kw):
         """Like open but method is enforced to DELETE."""
         kw['method'] = 'DELETE'

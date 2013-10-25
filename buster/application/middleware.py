@@ -59,6 +59,10 @@ class ADNTokenAuthMiddleware(object):
     def before_request(self):
         '''Try and setup user for this request'''
 
+        if request.method == 'OPTIONS':
+            # This is a cors-preflight don't do any auth work on this one
+            return
+
         adn_user = None
         is_app_token = False
 
