@@ -373,7 +373,7 @@ def parse_meta_data(doc):
                 if isinstance(ref.get(part), basestring):
                     ref[part] = {'url': ref[part]}
             ref = ref[part]
-    logger.info('Found some meta data: %s', data)
+    # logger.info('Found some meta data: %s', data)
 
     return data
 
@@ -422,7 +422,7 @@ def get_meta_data_for_url(url):
         'meta_tags': parse_meta_data(doc),
         'images_in_html': parse_images(doc),
     }
-    logger.info('Fetched meta tags: %s', data['meta_tags'])
+    # logger.info('Fetched meta tags: %s', data['meta_tags'])
     raise ndb.Return(data)
 
 

@@ -355,8 +355,10 @@ class BusterTestCase(MockUrlfetchTest):
         """
 
         # Execute the task in the taskqueue
+        print 'Quenames %s' % (self.get_task_queue_names())
         tasks = self.taskqueue_stub.GetTasks(queue_name)
-        self.assertEqual(len(tasks), n)
+        if n is not None:
+            self.assertEqual(len(tasks), n)
         # Run each of the tasks, checking that they succeeded.
         for task in tasks:
             params = base64.b64decode(task["body"])
@@ -365,8 +367,6 @@ class BusterTestCase(MockUrlfetchTest):
             content_type = dict(task['headers']).pop('content-type', '')
             response = self.app.post(task['url'], data=params, headers=task['headers'], content_type=content_type)
             self.assertEqual(200, response.status_code)
-
-        self.clear_task_queue()
 
     def setMockUser(self, access_token=FAKE_ACCESS_TOKEN, username='voidfiles', id=3):
         user_data = self.buildMockUserResponse(username=username, id=id)
@@ -380,10 +380,12 @@ class BusterTestCase(MockUrlfetchTest):
         self.set_response('https://alpha-api.app.net/stream/0/token', content=json.dumps(app_data), method='GET')
 
     def pollUpdate(self, interval_id=1, n=1, queue_name='poll'):
-        resp = self.app.get('/api/feeds/all/update/%s' % (interval_id), headers={'X-Appengine-Cron': 'true'})
+        self.app.get('/api/feeds/all/update/%s' % (interval_id), headers={'X-Appengine-Cron': 'true'})
         self.execute_tasks(n=n, queue_name=queue_name)
-        resp = self.app.get('/api/feeds/all/post', headers={'X-Appengine-Cron': 'true'})
-
+        print "executing posts"
+        self.app.get('/api/feeds/all/post', headers={'X-Appengine-Cron': 'true'})
+        self.execute_tasks(n=None)
+        self.clear_task_queue()
 
     def testSmoke(self):
         self.setMockUser()
@@ -1113,7 +1115,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.set_rss_response("https://api-ssl.bitly.com/v3/shorten?login=example&apiKey=R_123&longUrl=http%3A%2F%2Fexample.com%2Fbuster%2Ftest1_0%3Futm_medium%3DApp.net%26utm_source%3DPourOver", content=BIT_LY_RESPONSE)
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
             max_stories_per_period=2,
@@ -1123,6 +1125,7 @@ class BusterTestCase(MockUrlfetchTest):
         ), headers=self.authHeaders())
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1), status_code=200)
+        print "poll update"
         self.pollUpdate()
         entry = Entry.query().order(-Entry.added).get()
         assert entry.short_url == 'http://bit.ly/123'
@@ -1313,8 +1316,10 @@ class BusterTestCase(MockUrlfetchTest):
         assert entry
         resp = self.app.get('/api/feeds/all/post', headers={'X-Appengine-Cron': 'true'})
         assert 1 == Entry.query().count()
+        self.execute_tasks(n=1, queue_name='default')
         entry = Entry.query().get()
         assert entry.published == True
+        self.clear_task_queue()
 
     def testBulkFeedFetch(self):
         self.setMockUser(access_token='NEW_FAKE_ACCESS_TOKEN_FOR_USER')

@@ -333,10 +333,9 @@ def tq_feed_poll():
     success = 0
     errors = 0
     entries_created = 0
-    logger.info('Getting feeds')
     ndb_keys = [ndb.Key(urlsafe=key) for key in keys.split(',')]
     feeds = yield ndb.get_multi_async(ndb_keys)
-    logger.info('Got %d feed(s)', len(feeds))
+    logger.info('Got %d feed(s) for polling', len(feeds))
     futures = []
 
     for i, feed in enumerate(feeds):
@@ -357,7 +356,7 @@ def tq_feed_poll():
             feed = feeds[i]
             logger.exception('Failed to update feed:%s, i=%s' % (feed.feed_url, i))
 
-    stat = yield write_epoch_to_stat(Stat, 'poll_job')
+    yield write_epoch_to_stat(Stat, 'poll_job')
     logger.info('Polled feeds entries_created: %s success: %s errors: %s', entries_created, success, errors)
 
     raise ndb.Return(jsonify(status='ok'))
@@ -603,26 +602,29 @@ def update_all_feeds(interval_id):
 update_all_feeds.login_required = False
 
 
-@app.route('/api/feeds/all/post')
-@app.route('/api/backend/feeds/all/post')
+@app.route('/api/feeds/post/job', methods=['POST'])
+@app.route('/api/backend/feeds/post/job', methods=['POST'], endpoint="tq_feed_post-canonical")
 @ndb.synctasklet
-def post_all_feeds():
-    """Post all new items for feeds for a specific interval"""
-    if request.headers.get('X-Appengine-Cron') != 'true':
-        raise ndb.Return(jsonify_error(message='Not a cron call'))
+def tq_feed_post_job():
+    """Post some feeds feed"""
+    if not request.headers.get('X-AppEngine-QueueName'):
+        raise ndb.Return(jsonify_error(message='Not a Task call'))
 
-    feed_classes = (Feed, InstagramFeed)
-    iterators = [x.query().iter() for x in feed_classes]
+    keys = request.form.get('keys')
+    if not keys:
+        logger.info('Task Queue post no keys')
+        raise ndb.Return(jsonify_error(code=500))
 
-    errors = 0
     success = 0
+    errors = 0
     num_posted = 0
+    ndb_keys = [ndb.Key(urlsafe=key) for key in keys.split(',')]
+    feeds = yield ndb.get_multi_async(ndb_keys)
+    logger.info('Got %d feed(s) for posting, keys: ', len(feeds), ndb_keys)
     futures = []
 
-    for iterator in iterators:
-        while (yield iterator.has_next_async()):
-            feed = iterator.next()
-            futures.append((feed, Entry.publish_for_feed(feed)))
+    for feed in feeds:
+        futures.append((feed, Entry.publish_for_feed(feed)))
 
     for feed, future in futures:
         try:
@@ -634,8 +636,43 @@ def post_all_feeds():
             errors += 1
             logger.exception('Failed to Publish feed:%s' % (feed.feed_url, ))
 
-    stat = yield write_epoch_to_stat(Stat, 'post_job')
     logger.info('Post Feeds success:%s errors: %s num_posted: %s', success, errors, num_posted)
+    raise ndb.Return(jsonify(status='ok'))
+
+
+tq_feed_post_job.login_required = False
+
+
+@app.route('/api/feeds/all/post')
+@app.route('/api/backend/feeds/all/post')
+@ndb.synctasklet
+def post_all_feeds():
+    """Post all new items for feeds for a specific interval"""
+    if request.headers.get('X-Appengine-Cron') != 'true':
+        raise ndb.Return(jsonify_error(message='Not a cron call'))
+
+    logger.info('Starting a post job')
+    futures = []
+    for feed_type, feed_class in FEED_TYPE_TO_CLASS.iteritems():
+        feeds = feed_class.query()
+        logger.info("Got some feeds_count: %s feeds_type: %s", feeds.count(), feed_type)
+        success = 0
+        more = True
+        cursor = None
+        while more:
+            feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(100, start_cursor=cursor)
+            keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
+            if not keys:
+                continue
+            futures.append(Queue().add_async(Task(url=url_for('tq_feed_post-canonical'), method='POST', params={'keys': keys})))
+            success += 1
+        logger.info('queued post for %d feeds feed_type:%s', success, feed_type)
+
+    for future in futures:
+        resp = yield future
+
+    logger.info('Finished Post Job')
+    yield write_epoch_to_stat(Stat, 'post_job')
     raise ndb.Return(jsonify(status='ok'))
 
 post_all_feeds.login_required = False
