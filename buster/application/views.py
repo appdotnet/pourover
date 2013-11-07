@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 # Flask-Cache (configured to use App Engine Memcache API)
 cache = Cache(app)
-
+BATCH_SIZE = 5
 
 class APIEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -408,7 +408,7 @@ def instagram_push_update():
     more = True
     keys = []
     while more:
-        feed_keys, cursor, more = feeds.fetch_page(100, keys_only=True, start_cursor=cursor)
+        feed_keys, cursor, more = feeds.fetch_page(BATCH_SIZE, keys_only=True, start_cursor=cursor)
         keys += feed_keys
 
     keys = ','.join([x.urlsafe() for x in keys])
@@ -584,7 +584,7 @@ def update_all_feeds(interval_id):
         cursor = None
         futures = []
         while more:
-            feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(100, start_cursor=cursor)
+            feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(BATCH_SIZE, start_cursor=cursor)
             keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
             if not keys:
                 continue
@@ -660,12 +660,12 @@ def post_all_feeds():
         more = True
         cursor = None
         while more:
-            feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(100, start_cursor=cursor)
+            feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(BATCH_SIZE, start_cursor=cursor)
             keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
             if not keys:
                 continue
             futures.append(Queue().add_async(Task(url=url_for('tq_feed_post-canonical'), method='POST', params={'keys': keys})))
-            success += 1
+            success += len(feeds_to_fetch)
         logger.info('queued post for %d feeds feed_type:%s', success, feed_type)
 
     for future in futures:
