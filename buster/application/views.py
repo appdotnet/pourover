@@ -620,7 +620,7 @@ def tq_feed_post_job():
     num_posted = 0
     ndb_keys = [ndb.Key(urlsafe=key) for key in keys.split(',')]
     feeds = yield ndb.get_multi_async(ndb_keys)
-    logger.info('Got %d feed(s) for posting, keys: ', len(feeds), ndb_keys)
+    logger.info('Got %d feed(s) for posting', len(feeds))
     futures = []
 
     for feed in feeds:
