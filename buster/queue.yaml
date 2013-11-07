@@ -1,5 +1,7 @@
 total_storage_limit: 500M
 queue:
+- name: default
+  rate: 25/s
 - name: poll
   rate: 25/s
   retry_parameters:
