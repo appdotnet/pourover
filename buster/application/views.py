@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 # Flask-Cache (configured to use App Engine Memcache API)
 cache = Cache(app)
-BATCH_SIZE = 5
+BATCH_SIZE = 50
 
 class APIEncoder(json.JSONEncoder):
     def default(self, obj):
