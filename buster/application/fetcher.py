@@ -45,7 +45,7 @@ def fetch_url(url, etag=None, user_agent=None):
                     'User-Agent': user_agent or 'ADN Pour-Over/1.0 +https://adn-pourover.appspot.com/',
                 },
                 'follow_redirects': True,
-                'deadline': 60,
+                'deadline': 30,
                 'headers': {
                     'Cache-Control': 'no-cache, must-revalidate'
                 }
