@@ -138,6 +138,12 @@ def feed_create():
     existing_feeds = feed_class.for_user_and_form(user=g.user, form=form)
     if existing_feeds.count():
         feed = existing_feeds.get()
+        # Did we get a channel_id from the form
+        channel_id = form.data.get('channel_id')
+        # Update the channel id for this feed
+        if channel_id:
+            feed.channel_id = channel_id
+            feed.put()
     else:
         feed = feed_class.create_feed_from_form(g.user, form).get_result()
 
