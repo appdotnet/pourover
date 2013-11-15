@@ -68,7 +68,7 @@
               <div class='main-column yui3-u-3-4 t-yui3-u-2-3'>
                 <ul class="nav nav-tabs" ng-show='feed.publish_to_stream && feed.channel_id'>
                   <li ng-class="{'active': selectedTab == 'posts' }"><a class="like-link" ng-click="selectTab('posts')">Posts</a></li>
-                  <li ng-class="{'active': selectedTab == 'alerts' }"><a class="like-link" ng-click="selectTab('alerts')">Alerts</a></li>
+                  <li ng-class="{'active': selectedTab == 'alerts' }"><a class="like-link" ng-click="selectTab('alerts')">Broadcasts</a></li>
                 </ul>
                 <div class="tab-content">
                   <div class="tab-pane" ng-class="{'active': selectedTab == 'posts' }" id="posts_preview" ng-show='!feed.channel_id || (feed.channel_id && feed.publish_to_stream)'>

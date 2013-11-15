@@ -70,11 +70,11 @@
     </div>
   </div>
   <div class="nav nav-list" ng-show='writeable_channels'>
-    <div class='nav-header'>Publish to Alert Channel</div>
+    <div class='nav-header'>Publish to Broadcast Channel</div>
     <div class='nav-pane' id='channels'>
       <div class="control-group format-mode">
         <p class="help-block">
-          <small>To start publishing this RSS feed to an App.net Alert Channel, select one from the dropdown.</small>
+          <small>To start publishing this RSS feed to an App.net Broadcast Channel, select one from the dropdown.</small>
         </p>
         <select name='channel_id' ng-model='feed.channel_id'>
           <option value=''>No Channel</option>
@@ -85,7 +85,7 @@
             <input type="checkbox" name="publish_to_stream" ng-model="feed.publish_to_stream"> Publish To Stream
           </label>
           <p class="help-block">
-            <small>Publish to your public App.net stream as well as an alert channel.</small>
+            <small>Publish to your public App.net stream as well as an broadcast channel.</small>
           </p>
         </div>
       </div>

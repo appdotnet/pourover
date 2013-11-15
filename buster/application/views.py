@@ -57,24 +57,10 @@ def jsonify_error(message='There was an error', code=404):
 @app.route('/login/', endpoint='login')
 @app.route('/login/instagram/', endpoint='login_instagram')
 @app.route('/logout/', endpoint='logout')
-@app.route('/alerts_xyx/')
-@app.route('/alerts_xyx/new/')
 def index():
     return render_template('index.html')
 
 index.login_required = False
-
-@app.route('/alerts/', endpoint='channels')
-def alerts():
-    return redirect('https://directory.app.net/alerts/manage/')
-
-alerts.login_required = False
-
-@app.route('/alerts/new/', endpoint='channels')
-def create_alerts():
-    return redirect('https://directory.app.net/alerts/manage/create/')
-
-create_alerts.login_required = False
 
 @app.route('/feed/<feed_type>/<feed_id>/', endpoint='feed_point')
 def feed_point(feed_type, feed_id=None):
@@ -87,13 +73,6 @@ def alerts_detail(alert_id=None):
     return redirect('https://directory.app.net/alerts/manage/%s/' % alert_id)
 
 alerts_detail.login_required = False
-
-@app.route('/alerts_xyx/<alert_id>/')
-def alerts_detail(alert_id=None):
-    return render_template('index.html')
-
-alerts_detail.login_required = False
-
 
 @app.route('/api/me', methods=['GET'])
 def me():
