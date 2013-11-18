@@ -47,7 +47,7 @@ def fetch_url(url, etag=None, user_agent=None):
                 'follow_redirects': True,
                 'deadline': 30,
                 'headers': {
-                    'Cache-Control': 'no-cache, must-revalidate'
+                    'Cache-Control': 'max-age=60'
                 }
             }
 
