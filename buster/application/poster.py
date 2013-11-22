@@ -653,6 +653,7 @@ def broadcast_format_for_adn(feed, entry):
         og_description = entry.meta_tags.get('og', {}).get('description')
         twitter_description = entry.meta_tags.get('twitter', {}).get('description')
         description = og_description or twitter_description
+        description = strip_html_tags(description)
 
     if description:
         post['text'] = description
