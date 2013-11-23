@@ -1,6 +1,7 @@
 from collections import defaultdict
 import logging
 from datetime import datetime
+from lxml.html.clean import Cleaner
 import json
 import StringIO
 from urlparse import urlparse
