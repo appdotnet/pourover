@@ -27,7 +27,7 @@ STATS_MISSES = 0
 STATS_KEYS_COUNT = 0
 
 """ Flag to deactivate it on local environment. """
-ACTIVE = False if os.environ.get('SERVER_SOFTWARE').startswith('Devel') else True
+ACTIVE = False if os.environ.get('SERVER_SOFTWARE', '').startswith('Devel') else True
 
 """ 
 None means forever.

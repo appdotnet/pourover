@@ -1,9 +1,6 @@
 from collections import defaultdict
 import logging
 from datetime import datetime
-from lxml import html
-from lxml.html.clean import Cleaner
-from lxml.cssselect import CSSSelector
 import json
 import StringIO
 from urlparse import urlparse
@@ -338,24 +335,22 @@ def find_thumbnail(item, meta_tags, image_strategy_blacklist=None, remote_fetch=
     raise ndb.Return(None)
 
 
-def parse_meta_data(doc):
+def parse_meta_data(soup):
     data = defaultdict(dict)
-    props = doc.xpath('//meta[re:test(@name|@property, "^twitter|og:.*$", "i")]',
-                      namespaces={"re": "http://exslt.org/regular-expressions"})
+    props = soup.findAll('meta')
 
     for prop in props:
-        if prop.get('property'):
-            key = prop.get('property').split(':')
-        else:
-            key = prop.get('name').split(':')
+        key = prop.get('property', prop.get('name'))
+        if not key:
+            continue
 
-        if prop.get('content'):
-            value = prop.get('content')
-        else:
-            value = prop.get('value')
+        key = key.split(':')
+
+        value = prop.get('content', prop.get('value'))
 
         if not value:
             continue
+
         value = value.strip()
 
         if value.isdigit():
@@ -373,15 +368,14 @@ def parse_meta_data(doc):
                 if isinstance(ref.get(part), basestring):
                     ref[part] = {'url': ref[part]}
             ref = ref[part]
-    # logger.info('Found some meta data: %s', data)
+
 
     return data
 
 
-def parse_images(doc):
-    sel = CSSSelector('img')
+def parse_images(soup):
     images = []
-    for image in sel(doc):
+    for image in soup.findAll('img'):
         try:
             w = int(image.get('width', '').replace('px', ''))
             h = int(image.get('height', '').replace('px', ''))
@@ -412,15 +406,11 @@ def get_meta_data_for_url(url):
         logger.exception('Failed to fetch meta data for %s' % url)
         raise ndb.Return({})
 
-    try:
-        doc = html.parse(StringIO.StringIO(resp.content))
-    except Exception, e:
-        logger.exception('Failed to parse some html %s' % (e))
-        raise ndb.Return({})
+    soup = BeautifulSoup(resp.content)
 
     data = {
-        'meta_tags': parse_meta_data(doc),
-        'images_in_html': parse_images(doc),
+        'meta_tags': parse_meta_data(soup),
+        'images_in_html': parse_images(soup),
     }
     # logger.info('Fetched meta tags: %s', data['meta_tags'])
     raise ndb.Return(data)
