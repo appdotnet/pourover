@@ -117,8 +117,6 @@ def hash_content(text):
 @ndb.tasklet
 def fetch_parsed_feed_for_feed(feed):
     now = datetime.datetime.now()
-    if feed.feed_url == 'http://blog.app.net/feed/':
-        logger.info('debugblogpoll: Fetching %s', feed.feed_url)
 
     try:
         resp = yield fetch_url(feed.feed_url, feed.etag, feed.user_agent)
@@ -140,24 +138,14 @@ def fetch_parsed_feed_for_feed(feed):
     # if feed_preview is None:
     #    yield feed.put_async()
 
-    if feed.feed_url == 'http://blog.app.net/feed/':
-        logger.info('debugblogpoll: fetched blog content: %s', resp.content)
-
     if resp.status_code == 304:
-        if feed.feed_url == 'http://blog.app.net/feed/':
-            logger.info('debugblogpoll: got 304 from the blog')
-
         raise ndb.Return((None, resp, feed))
 
     content_hash = hash_content(resp.content)
-    if feed.feed_url == 'http://blog.app.net/feed/':
-        logger.info('debugblogpoll: comparing content hash old: %s new: %s', feed.last_fetched_content_hash, content_hash)
 
     if feed.last_fetched_content_hash == content_hash:
         # Trigger 304 path
         resp.status_code = 304
-        if feed.feed_url == 'http://blog.app.net/feed/':
-            logger.info('debugblogpoll: matched on hash nothing new')
 
         raise ndb.Return((None, resp, feed))
 
