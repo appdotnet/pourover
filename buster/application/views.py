@@ -320,6 +320,7 @@ def tq_feed_poll():
     entries_created = 0
     ndb_keys = [ndb.Key(urlsafe=key) for key in keys.split(',')]
     feeds = yield ndb.get_multi_async(ndb_keys)
+    feeds = filter(lambda x: not getattr(x, 'use_external_poller', False), feeds)
     logger.info('Got %d feed(s) for polling', len(feeds))
     futures = []
 
@@ -560,8 +561,6 @@ def update_all_feeds(interval_id):
     if request.headers.get('X-Appengine-Cron') != 'true':
         raise ndb.Return(jsonify_error(message='Not a cron call'))
 
-    feeds = Feed.for_interval(interval_id)
-
     for feed_type, feed_class in FEED_TYPE_TO_CLASS.iteritems():
         feeds = Feed.for_interval(interval_id)
         success = 0
@@ -570,6 +569,7 @@ def update_all_feeds(interval_id):
         futures = []
         while more:
             feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(BATCH_SIZE, start_cursor=cursor)
+            feeds_to_fetch = filter(lambda x: not getattr(x, 'use_external_poller', False), feeds_to_fetch)
             keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
             if not keys:
                 continue

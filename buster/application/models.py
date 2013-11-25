@@ -581,6 +581,7 @@ class Feed(ndb.Model):
     publish_to_stream = ndb.BooleanProperty(default=False)
     email = ndb.StringProperty()
     error_count = ndb.IntegerProperty(default=0)
+    use_external_poller = ndb.BooleanProperty(default=False)
 
     # Class variables
     update_form = FeedUpdate
