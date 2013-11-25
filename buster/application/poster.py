@@ -11,7 +11,7 @@ import urllib
 from bs4 import BeautifulSoup
 from fnl.nlp import sentencesplitter as splitter
 from google.appengine.ext import ndb
-from google.appengine.api.images import Image
+from google.appengine.api.images import Image, NotImageError
 from constants import FORMAT_MODE
 from django.utils.encoding import iri_to_uri
 from utils import (append_query_string, strip_html_tags, ellipse_text, get_language,
@@ -245,6 +245,9 @@ def get_image_from_url(url):
     try:
         resp = yield ctx.urlfetch(url, deadline=60)
         image = Image(image_data=resp.content)
+        image.width # Try
+    except NotImageError:
+        logger.info('Image at url isnt an image: %s', url)
     except Exception, e:
         logger.exception(e)
         raise ndb.Return(None)
@@ -325,7 +328,7 @@ def find_thumbnail(item, meta_tags, image_strategy_blacklist=None, remote_fetch=
         twitter = meta_tags.get('twitter', {})
 
         meta_tags_image_url = og.get('image', twitter.get('image'))
-        if meta_tags_image_url and isinstance(meta_tags_image_url, dict):
+        if meta_tags_image_url and isinstance(meta_tags_image_url, dict) and meta_tags_image_url.get('url'):
             raise ndb.Return(image_dict(meta_tags_image_url['url'], meta_tags_image_url['width'],
                              meta_tags_image_url['height']))
         elif meta_tags_image_url and remote_fetch:
