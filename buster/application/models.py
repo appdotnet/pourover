@@ -198,6 +198,12 @@ class Entry(ndb.Model):
                 logger.warn("Couldn't post entry key=%s. Error: %s Post:%s putting on the backlog", self.key.urlsafe(), resp.content, post)
                 self.overflow = True
                 self.overflow_reason = OVERFLOW_REASON.MALFORMED
+            elif resp.status_code == 403:
+                message = json.loads(resp.content)
+                if message.get('meta').get('error_message') == 'Forbidden: This channel is inactive':
+                    logger.error('Trying to post to an inactive channel: %s shutting this channel down for this feed: %s', feed.channel_id, feed.key.urlsafe())
+                    feed.channel_id = None
+
             else:
                 logger.warn("Couldn't post entry key=%s. Error: %s Post:%s", self.key.urlsafe(), resp.content, post)
                 raise Exception(resp.content)
