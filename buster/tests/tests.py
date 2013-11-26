@@ -1329,7 +1329,8 @@ class BusterTestCase(MockUrlfetchTest):
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
         feed = Feed(
             feed_url=test_feed_url,
-            parent=user_key
+            parent=user_key,
+            use_external_poller=True,
         )
         feed.put()
 
@@ -1341,7 +1342,8 @@ class BusterTestCase(MockUrlfetchTest):
         feed = Feed(
             feed_url=test_feed_url + "?new_1=1",
             update_interval=UPDATE_INTERVAL.MINUTE_15,
-            parent=user_key
+            parent=user_key,
+            use_external_poller=True,
         )
         feed.put()
 

@@ -718,7 +718,9 @@ def all_feeds():
     qit = Feed.query().iter()
     feeds_response = []
     while (yield qit.has_next_async()):
-        feeds_response.append(feed_to_dict(qit.next()))
+        feed = qit.next()
+        if feed.use_external_poller:
+            feeds_response.append(feed_to_dict(feed))
 
     poller_run_id = uuid.uuid4().hex
 
