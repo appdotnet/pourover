@@ -64,24 +64,24 @@ def fetch_url(url, etag=None, user_agent=None):
 
             location = resp.headers.get('Location')
             if not location:
-                logger.info('Failed to follow redirects for %s', url)
+                logger.info(u'Failed to follow redirects for %s', url)
                 raise FetchException('Feed URL has a bad redirect')
 
             url = location
 
     except urlfetch.DownloadError, e:
-        logger.info('Failed to download feed: %s', url)
+        logger.info(u'Failed to download feed: %s', url)
         logger.exception(e)
-        raise FetchException('Failed to fetch that URL.')
+        raise FetchException(u'Failed to fetch that URL.')
     except urlfetch.DeadlineExceededError:
-        logger.info('Feed took too long: %s', url)
-        raise FetchException('URL took to long to fetch.')
+        logger.info(u'Feed took too long: %s', url)
+        raise FetchException(u'URL took to long to fetch.')
     except urlfetch.InvalidURLError:
-        logger.info('Invalid URL: %s', url)
-        raise FetchException('The URL for this feeds seems to be invalid.')
+        logger.info(u'Invalid URL: %s', url)
+        raise FetchException(u'The URL for this feeds seems to be invalid.')
 
     if resp.status_code not in VALID_STATUS:
-        raise FetchException('Could not fetch url. url:%s status_code:%s final_url:%s resp:%s' % (url, resp.status_code, resp.final_url, resp.content))
+        raise FetchException(u'Could not fetch url. url:%s status_code:%s final_url:%s' % (url, resp.status_code, resp.final_url))
 
     # Let upstream consumers know if they need to update their URL or not
     resp.was_permanente_redirect = was_permanente_redirect

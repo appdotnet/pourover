@@ -175,6 +175,11 @@ class Entry(ndb.Model):
 
         ctx = ndb.get_context()
         for post, kind in posts:
+            # If this job gets run more then twice don't double publish
+            posted_kind = getattr(self, 'published_%s' % (kind))
+            if posted_kind:
+                continue
+
             endpoint = get_endpoint(kind, feed)
             try:
                 resp = yield ctx.urlfetch('https://alpha-api.app.net/stream/0/%s' % (endpoint), payload=json.dumps(post), deadline=30,

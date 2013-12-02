@@ -497,7 +497,7 @@ def feed_push_update_app(feed_key):
         feed.error_count = 0
 
     yield feed.put_async()
-
+    logger.info(u'Saving feed: %s new_items: %s old_items: %s', feed_key, len(new_guids), len(old_guids))
     raise ndb.Return(jsonify(status='ok'))
 
 feed_push_update_app.app_token_required = True
