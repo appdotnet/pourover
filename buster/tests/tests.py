@@ -652,7 +652,7 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.post('/api/feeds/%s/error' % (feed.key.urlsafe(), ), headers=headers)
         feed = Feed.query().get()
 
-        assert feed.error_count == 1
+        assert feed.initial_error != None
         headers = self.authHeaders(access_token='NEW_TOKEN')
         headers.update({
             'Content-Type': 'application/xml',
@@ -665,7 +665,13 @@ class BusterTestCase(MockUrlfetchTest):
 
         resp = self.app.post('/api/feeds/%s/subscribe/app?%s' % (feed.key.urlsafe(), urllib.urlencode(query_string)), data=self.buildRSS('test', items=2), headers=headers)
 
-        assert feed.error_count == 0
+        assert feed.initial_error == None
+
+        feed = Feed.query().get()
+        feed.initial_error = datetime.utcnow() - timedelta(days=4)
+        print 'initial_error: %s' % (feed.initial_error)
+        yield feed.track_error()
+        assert feed.feed_disabled == True
 
     def testSchedule(self):
         self.setMockUser()

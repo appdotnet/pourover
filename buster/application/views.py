@@ -455,6 +455,7 @@ def feed_push_update(feed_key):
 
             raise ndb.Return('')
 
+    yield feed.clear_error()
     parsed_feed = feedparser.parse(data)
     new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)
     yield Entry.publish_for_feed(feed, skip_queue=False)
@@ -478,6 +479,7 @@ def feed_push_update_app(feed_key):
         raise ndb.Return(jsonify(status='ok'))
 
     parsed_feed = feedparser.parse(request.stream.read())
+
     new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)
     yield Entry.publish_for_feed(feed, skip_queue=False)
 
@@ -493,10 +495,9 @@ def feed_push_update_app(feed_key):
     else:
         logger.info('Missing an updated hash for feed: %s', feed_key)
 
-    if feed.error_count > 0:
-        feed.error_count = 0
-
+    yield feed.clear_error()
     yield feed.put_async()
+
     logger.info(u'Saving feed: %s new_items: %s old_items: %s', feed_key, len(new_guids), len(old_guids))
     raise ndb.Return(jsonify(status='ok'))
 
@@ -537,14 +538,13 @@ def update_feed_for_error(feed_key):
         raise ndb.Return(jsonify_error('Unknown feed'))
 
     logger.info("Incrementing error count for feed: %s errors: %s", feed_key, feed.error_count)
-    feed.error_count += 1
 
     noop = request.form.get('noop')
     if noop:
         logger.info('Noop feed error feed: %s because off testing', feed_key)
         raise ndb.Return(jsonify(status='ok'))
 
-    yield feed.put_async()
+    yield feed.track_error()
 
     raise ndb.Return(jsonify(status='ok'))
 

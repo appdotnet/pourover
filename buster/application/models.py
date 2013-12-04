@@ -588,6 +588,9 @@ class Feed(ndb.Model):
     error_count = ndb.IntegerProperty(default=0)
     use_external_poller = ndb.BooleanProperty(default=False)
 
+    # Error tracking tools
+    initial_error = ndb.DateTimeProperty()
+
     # Class variables
     update_form = FeedUpdate
     create_form = FeedCreate
@@ -814,6 +817,29 @@ class Feed(ndb.Model):
         yield entry.put_async()
 
         raise ndb.Return(entry)
+
+    @ndb.tasklet
+    def track_error(self):
+        now = datetime.utcnow()
+        logger.info('initial error: %s', self.initial_error)
+        if not self.initial_error:
+            self.initial_error = now
+            yield self.put_async()
+            raise ndb.Return()
+        logger.info("Now: %s - intial_error: %s > 2 days %s", now, self.initial_error, timedelta(days=2))
+        if (now - self.initial_error) > timedelta(days=2):
+            logger.info('Disabling a feed thats been bad for greater then two days: %s', self.key.urlsafe())
+            self.feed_disabled = True
+            yield self.put_async()
+            raise ndb.Return()
+
+    @ndb.tasklet
+    def clear_error(self):
+        if self.initial_error:
+            self.initial_error = None
+            yield self.put_async()
+
+        raise ndb.Return()
 
     def to_json(self):
         feed_info = {

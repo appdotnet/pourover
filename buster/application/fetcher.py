@@ -117,21 +117,19 @@ def hash_content(text):
 @ndb.tasklet
 def fetch_parsed_feed_for_feed(feed):
     now = datetime.datetime.now()
+    feed_preview = getattr(feed, 'preview', None)
 
     try:
         resp = yield fetch_url(feed.feed_url, feed.etag, feed.user_agent)
     except FetchException, e:
-        # If we haven't been able to fetch this feed in the last 24 hours lets disable it
-        # This doesn't do anything right now, just want to make sure we are doing this correctly
-        # logger.info('Failed fetch url: %s Last last_successful_fetch: %s', feed.feed_url, feed.last_successful_fetch)
-        # if feed.last_successful_fetch and feed.last_successful_fetch < now - datetime.timedelta(days=1):
-        #     feed.feed_disabled = True
-        #     logging.warning('Would have deleted feed:%s', feed.key.urlsafe())
-        #     yield feed.put_async()
+        if not feed_preview:
+            yield feed.track_error()
 
         raise e
 
-    feed_preview = getattr(feed, 'preview', None)
+
+    if not feed_preview:
+        yield feed.clear_error()
 
     # Trying to reduce the number of writes per fetch
     # feed.last_successful_fetch = now
