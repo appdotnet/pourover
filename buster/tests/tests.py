@@ -668,7 +668,8 @@ class BusterTestCase(MockUrlfetchTest):
         assert feed.initial_error == None
 
         feed = Feed.query().get()
-        feed.initial_error = datetime.utcnow() - timedelta(days=4)
+        times = datetime.utcnow() - timedelta(days=1)
+        feed.initial_error = times
         print 'initial_error: %s' % (feed.initial_error)
         yield feed.track_error()
         assert feed.feed_disabled == True

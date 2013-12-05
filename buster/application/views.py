@@ -121,6 +121,11 @@ def feed_create():
         channel_id = form.data.get('channel_id')
         # Update the channel id for this feed
         if channel_id:
+            # If this feed is already publishing to a channel don't yank it away.
+            if feed.channel_id:
+                return jsonify(status='error', message='The feed is already connected to a channel.')
+
+            feed.publish_to_stream = True
             feed.channel_id = channel_id
             feed.put()
     else:
