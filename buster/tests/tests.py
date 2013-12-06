@@ -605,8 +605,8 @@ class BusterTestCase(MockUrlfetchTest):
             'last_hash': 'abc'
         }
 
-        resp = self.app.post('/api/feeds/%s/subscribe/app?%s' % (feed.key.urlsafe(), urllib.urlencode(query_string)), data=self.buildRSS('test', items=2), headers=headers)
-
+        self.app.post('/api/feeds/%s/subscribe/app?%s' % (feed.key.urlsafe(), urllib.urlencode(query_string)), data=self.buildRSS('test', items=2), headers=headers)
+        yield self.execute_tasks(n=1, queue_name='inbound-posts')
         assert 2 == Entry.query().count()
 
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
@@ -670,7 +670,7 @@ class BusterTestCase(MockUrlfetchTest):
         feed = Feed.query().get()
         times = datetime.utcnow() - timedelta(days=1)
         feed.initial_error = times
-        print 'initial_error: %s' % (feed.initial_error)
+
         yield feed.track_error()
         assert feed.feed_disabled == True
 

@@ -470,20 +470,17 @@ def feed_push_update(feed_key):
 feed_push_update.login_required = False
 
 
-@app.route('/api/feeds/<feed_key>/subscribe/app', methods=['POST'])
-@app.route('/api/backend/feeds/<feed_key>/subscribe/app', methods=['POST'])
+@app.route('/api/backend/feeds/subscribe/app/task', methods=['POST'], endpoint="tq_inbound_feed")
 @ndb.synctasklet
-def feed_push_update_app(feed_key):
+def tq_inbound_feed():
+    if request.headers.get('X-Appengine-Queuename') != 'inbound-posts':
+        raise ndb.Return(jsonify_error(message='Not a cron call'))
+
+    feed_key = request.form.get('feed_key')
+    feed_data = request.form.get('feed_data')
+    logger.info('Task to process inbound feed: %s', feed_key)
     feed = ndb.Key(urlsafe=feed_key).get()
-    if not feed:
-        raise ndb.Return(jsonify_error('Unknown feed'))
-
-    noop = request.args.get('noop')
-    if noop:
-        logger.info('Noop feed publish %s because off testing', feed_key)
-        raise ndb.Return(jsonify(status='ok'))
-
-    parsed_feed = feedparser.parse(request.stream.read())
+    parsed_feed = feedparser.parse(feed_data)
 
     new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)
     yield Entry.publish_for_feed(feed, skip_queue=False)
@@ -504,6 +501,32 @@ def feed_push_update_app(feed_key):
     yield feed.put_async()
 
     logger.info(u'Saving feed: %s new_items: %s old_items: %s', feed_key, len(new_guids), len(old_guids))
+    raise ndb.Return(jsonify(status='ok'))
+
+
+tq_inbound_feed.login_required = False
+
+
+@app.route('/api/feeds/<feed_key>/subscribe/app', methods=['POST'])
+@app.route('/api/backend/feeds/<feed_key>/subscribe/app', methods=['POST'])
+@ndb.synctasklet
+def feed_push_update_app(feed_key):
+    feed = ndb.Key(urlsafe=feed_key).get()
+    if not feed:
+        raise ndb.Return(jsonify_error('Unknown feed'))
+
+    noop = request.args.get('noop')
+    if noop:
+        logger.info('Noop feed publish %s because off testing', feed_key)
+        raise ndb.Return(jsonify(status='ok'))
+
+    post_data = {
+        'feed_key': feed_key,
+        'feed_data': request.stream.read(),
+    }
+
+    yield Queue('inbound-posts').add_async(Task(url=url_for('tq_inbound_feed'), method='POST', params=post_data))
+
     raise ndb.Return(jsonify(status='ok'))
 
 feed_push_update_app.app_token_required = True
