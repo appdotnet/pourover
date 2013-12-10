@@ -469,29 +469,20 @@ def feed_push_update(feed_key):
 
 feed_push_update.login_required = False
 
-
-@app.route('/api/backend/feeds/subscribe/app/task', methods=['POST'], endpoint="tq_inbound_feed")
-@ndb.synctasklet
-def tq_inbound_feed():
-    if request.headers.get('X-Appengine-Queuename') != 'inbound-posts':
-        raise ndb.Return(jsonify_error(message='Not a cron call'))
-
-    feed_key = request.form.get('feed_key')
-    feed_data = request.form.get('feed_data')
-    logger.info('Task to process inbound feed: %s', feed_key)
+@ndb.tasklet
+def inbound_feed_process(feed_key, feed_data, etag, last_hash):
     feed = ndb.Key(urlsafe=feed_key).get()
+
     parsed_feed = feedparser.parse(feed_data)
 
     new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)
     yield Entry.publish_for_feed(feed, skip_queue=False)
 
-    etag = request.args.get('etag')
     if etag:
         feed.etag = etag
     else:
         logger.info('Missing an updated etag for feed: %s', feed_key)
 
-    last_hash = request.args.get('last_hash')
     if last_hash:
         feed.last_fetched_content_hash = last_hash
     else:
@@ -501,8 +492,22 @@ def tq_inbound_feed():
     yield feed.put_async()
 
     logger.info(u'Saving feed: %s new_items: %s old_items: %s', feed_key, len(new_guids), len(old_guids))
-    raise ndb.Return(jsonify(status='ok'))
+    raise ndb.Return()
 
+@app.route('/api/backend/feeds/subscribe/app/task', methods=['POST'], endpoint="tq_inbound_feed")
+@ndb.synctasklet
+def tq_inbound_feed():
+    if request.headers.get('X-Appengine-Queuename') != 'inbound-posts':
+        raise ndb.Return(jsonify_error(message='Not a cron call'))
+
+    feed_key = request.form.get('feed_key')
+    feed_data = request.form.get('feed_data')
+    etag = request.form.get('etag')
+    last_hash = request.form.get('last_hash')
+
+    logger.info('Task to process inbound feed: %s', feed_key)
+    yield inbound_feed_process(feed_key, feed_data, etag, last_hash)
+    raise ndb.Return(jsonify(status='ok'))
 
 tq_inbound_feed.login_required = False
 
@@ -523,9 +528,12 @@ def feed_push_update_app(feed_key):
     post_data = {
         'feed_key': feed_key,
         'feed_data': request.stream.read(),
+        'etag': request.args.get('etag'),
+        'last_hash': request.args.get('last_hash'),
     }
 
-    yield Queue('inbound-posts').add_async(Task(url=url_for('tq_inbound_feed'), method='POST', params=post_data))
+    yield inbound_feed_process(**post_data)
+    # yield Queue('inbound-posts').add_async(Task(url=url_for('tq_inbound_feed'), method='POST', params=post_data))
 
     raise ndb.Return(jsonify(status='ok'))
 
@@ -597,7 +605,7 @@ def update_all_feeds(interval_id):
         futures = []
         while more:
             feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(BATCH_SIZE, start_cursor=cursor)
-            feeds_to_fetch = filter(lambda x: not getattr(x, 'use_external_poller', False), feeds_to_fetch)
+            feeds_to_fetch = filter(lambda x: getattr(x, 'external_polling_bucket', 0) == 0, feeds_to_fetch)
             keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
             if not keys:
                 continue
@@ -743,12 +751,16 @@ def all_feeds():
             'update_interval': UPDATE_INTERVAL_TO_MINUTES.get(feed.update_interval)
         }
 
-    qit = Feed.query().iter()
+    bucket = int(request.args.get('bucket_id', 1))
+
+    qit = Feed.query(Feed.external_polling_bucket == bucket)
+
     feeds_response = []
-    while (yield qit.has_next_async()):
-        feed = qit.next()
-        if feed.use_external_poller:
-            feeds_response.append(feed_to_dict(feed))
+    more = True
+    cursor = None
+    while more:
+        feeds_to_fetch, cursor, more = yield qit.fetch_page_async(1000, start_cursor=cursor)
+        feeds_response.extend((feed_to_dict(feed) for feed in feeds_to_fetch))
 
     poller_run_id = uuid.uuid4().hex
 

@@ -605,8 +605,8 @@ class BusterTestCase(MockUrlfetchTest):
             'last_hash': 'abc'
         }
 
-        self.app.post('/api/feeds/%s/subscribe/app?%s' % (feed.key.urlsafe(), urllib.urlencode(query_string)), data=self.buildRSS('test', items=2), headers=headers)
-        yield self.execute_tasks(n=1, queue_name='inbound-posts')
+        yield self.app.post('/api/feeds/%s/subscribe/app?%s' % (feed.key.urlsafe(), urllib.urlencode(query_string)), data=self.buildRSS('test', items=2), headers=headers)
+        # yield self.execute_tasks(n=1, queue_name='inbound-posts')
         assert 2 == Entry.query().count()
 
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == False).count()
@@ -1337,7 +1337,7 @@ class BusterTestCase(MockUrlfetchTest):
         feed = Feed(
             feed_url=test_feed_url,
             parent=user_key,
-            use_external_poller=True,
+            external_polling_bucket=1,
         )
         feed.put()
 
@@ -1350,7 +1350,14 @@ class BusterTestCase(MockUrlfetchTest):
             feed_url=test_feed_url + "?new_1=1",
             update_interval=UPDATE_INTERVAL.MINUTE_15,
             parent=user_key,
-            use_external_poller=True,
+            external_polling_bucket=1,
+        )
+        feed.put()
+
+        feed = Feed(
+            feed_url=test_feed_url + "?new_2=2",
+            update_interval=UPDATE_INTERVAL.MINUTE_15,
+            parent=user_key,
         )
         feed.put()
 

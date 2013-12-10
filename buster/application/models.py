@@ -587,6 +587,7 @@ class Feed(ndb.Model):
     email = ndb.StringProperty()
     error_count = ndb.IntegerProperty(default=0)
     use_external_poller = ndb.BooleanProperty(default=False)
+    external_polling_bucket = ndb.IntegerProperty(default=0)
 
     # Error tracking tools
     initial_error = ndb.DateTimeProperty()
