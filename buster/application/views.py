@@ -587,7 +587,7 @@ def update_feed_for_error(feed_key):
 update_feed_for_error.app_token_required = True
 update_feed_for_error.login_required = False
 
-
+DEFAULT_POLLING_BUCKET = 0
 
 @app.route('/api/feeds/all/update/<int:interval_id>')
 @app.route('/api/backend/feeds/all/update/<int:interval_id>')
@@ -605,7 +605,7 @@ def update_all_feeds(interval_id):
         futures = []
         while more:
             feeds_to_fetch, cursor, more = yield feeds.fetch_page_async(BATCH_SIZE, start_cursor=cursor)
-            feeds_to_fetch = filter(lambda x: getattr(x, 'external_polling_bucket', 0) == 0, feeds_to_fetch)
+            feeds_to_fetch = filter(lambda x: getattr(x, 'external_polling_bucket', DEFAULT_POLLING_BUCKET) == DEFAULT_POLLING_BUCKET, feeds_to_fetch)
             keys = ','.join([x.key.urlsafe() for x in feeds_to_fetch])
             if not keys:
                 continue
@@ -675,7 +675,7 @@ def post_all_feeds():
     logger.info('Starting a post job')
     futures = []
     for feed_type, feed_class in FEED_TYPE_TO_CLASS.iteritems():
-        feeds = feed_class.query()
+        feeds = feed_class.query(feed_class.is_dirty == True)
         logger.info("Got some feeds_count: %s feeds_type: %s", feeds.count(), feed_type)
         success = 0
         more = True
@@ -783,11 +783,9 @@ all_feeds.login_required = False
 def monitor_jobs():
     """Are the jobs running"""
     post_value = yield get_epoch_from_stat(Stat, 'post_job')
-    poll_value = yield get_epoch_from_stat(Stat, 'poll_job')
 
     response = {
         'post': post_value,
-        'poll': poll_value,
     }
 
     raise ndb.Return(jsonify(status='ok', data=response))

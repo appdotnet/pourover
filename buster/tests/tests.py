@@ -46,7 +46,12 @@ from application.constants import FEED_STATE, OVERFLOW_REASON, FEED_TYPE, UPDATE
 from application.utils import append_query_string
 from application.fetcher import hash_content
 from application import settings
+import application
+
+application.views.DEFAULT_POLLING_BUCKET = 1
+
 import cachepy
+
 RSS_ITEM = u"""
 <item>
     <title>
@@ -1337,11 +1342,11 @@ class BusterTestCase(MockUrlfetchTest):
         feed = Feed(
             feed_url=test_feed_url,
             parent=user_key,
-            external_polling_bucket=1,
+            external_polling_bucket=0,
         )
         feed.put()
 
-        resp = self.app.get('/api/backend/feeds/all', headers=self.authHeaders())
+        resp = self.app.get('/api/backend/feeds/all?bucket_id=0', headers=self.authHeaders())
 
         resp = json.loads(resp.data)
         assert 1 == len(resp['data']['feeds'])
@@ -1350,7 +1355,7 @@ class BusterTestCase(MockUrlfetchTest):
             feed_url=test_feed_url + "?new_1=1",
             update_interval=UPDATE_INTERVAL.MINUTE_15,
             parent=user_key,
-            external_polling_bucket=1,
+            external_polling_bucket=0,
         )
         feed.put()
 
@@ -1361,7 +1366,7 @@ class BusterTestCase(MockUrlfetchTest):
         )
         feed.put()
 
-        resp = self.app.get('/api/backend/feeds/all', headers=self.authHeaders())
+        resp = self.app.get('/api/backend/feeds/all?bucket_id=0', headers=self.authHeaders())
         resp = json.loads(resp.data)
         assert 2 == len(resp['data']['feeds'])
         assert 15 == resp['data']['feeds'][1]['update_interval']

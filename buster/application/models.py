@@ -257,10 +257,20 @@ class Entry(ndb.Model):
             if skip_queue:
                 max_stories_to_publish = max_stories_to_publish or 1
 
-            latest_entries = yield cls.latest_unpublished(feed).fetch_async(max_stories_to_publish)
+            latest_entries = yield cls.latest_unpublished(feed).fetch_async(max_stories_to_publish + 1)
+
+            more_to_publish = False
+            if len(latest_entries) > max_stories_to_publish:
+                more_to_publish = True
+                latest_entries = latest_entries[0: max_stories_to_publish]
+
             for entry in latest_entries:
                 yield entry.publish_entry(feed)
                 entries_posted += 1
+
+            if not more_to_publish:
+                feed.is_dirty = False
+                yield feed.put_async()
 
         raise ndb.Return(entries_posted)
 
@@ -306,6 +316,10 @@ class Entry(ndb.Model):
             entry_kwargs.pop('parent')
             entry_kwargs['creating'] = False
             entry.populate(**entry_kwargs)
+
+        if len(futures):
+            feed.is_dirty = True
+            yield feed.put_async()
 
         saved_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
 
@@ -428,7 +442,7 @@ class InstagramFeed(ndb.Model):
     user_agent = ndb.StringProperty(default=None)
 
     status = ndb.IntegerProperty(default=FEED_STATE.ACTIVE)
-
+    is_dirty = ndb.BooleanProperty(default=True)
     include_thumb = True
     include_video = True
 
@@ -588,6 +602,9 @@ class Feed(ndb.Model):
     error_count = ndb.IntegerProperty(default=0)
     use_external_poller = ndb.BooleanProperty(default=False)
     external_polling_bucket = ndb.IntegerProperty(default=1)
+
+    # Does this feed need to be processed
+    is_dirty = ndb.IntegerProperty(default=True)
 
     # Error tracking tools
     initial_error = ndb.DateTimeProperty()
