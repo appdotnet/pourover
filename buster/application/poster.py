@@ -507,7 +507,6 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
 
     if thumbnail:
         thumbnail_hash = dict_hash(thumbnail)
-        print 'Found thumbnail_hash: %s thumbnail: %s' % (thumbnail_hash, thumbnail)
         if thumbnail_hash != feed.last_image_hash:
             kwargs.update(thumbnail)
             feed.last_image_hash = thumbnail_hash
