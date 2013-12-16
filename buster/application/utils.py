@@ -1,12 +1,14 @@
 import logging
+import hashlib
 import urllib
 from urlparse import urljoin
 import time
 
-from google.appengine.ext import ndb
 from bs4 import BeautifulSoup
 from django.utils.encoding import smart_str
 from django.utils.text import Truncator
+from google.appengine.ext import ndb
+
 
 logger = logging.getLogger(__name__)
 
@@ -132,3 +134,9 @@ def fit_to_box(w, h, max_w, max_h, expand=False):
     new_height = int(float(h) / largest_ratio)
     new_width = int(float(w) / largest_ratio)
     return (new_width, new_height)
+
+def dict_hash(_dict):
+    _dict_items = _dict.items()
+    _dict_items = sorted(_dict_items, key=lambda x: x[0])
+    _dict_items = ''.join([unicode(item) for sublist in _dict_items for item in sublist])
+    return hashlib.sha224(_dict_items).hexdigest()

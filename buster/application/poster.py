@@ -1,21 +1,24 @@
 from collections import defaultdict
-import logging
 from datetime import datetime
-from lxml.html.clean import Cleaner
+import hashlib
 import json
+import logging
 import StringIO
-from urlparse import urlparse
 import urllib
+from urlparse import urlparse
 
 
 from bs4 import BeautifulSoup
+from django.utils.encoding import iri_to_uri
 from fnl.nlp import sentencesplitter as splitter
 from google.appengine.ext import ndb
 from google.appengine.api.images import Image, NotImageError
+from lxml.html.clean import Cleaner
+
+
 from constants import FORMAT_MODE
-from django.utils.encoding import iri_to_uri
 from utils import (append_query_string, strip_html_tags, ellipse_text, get_language,
-                   guid_for_item)
+                   guid_for_item, dict_hash)
 
 
 logger = logging.getLogger(__name__)
@@ -493,8 +496,6 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
     thumbnail = None
     try:
         thumbnail = yield find_thumbnail(item, kwargs.get('meta_tags', {}), feed.image_strategy_blacklist, remote_fetch)
-        if thumbnail:
-            kwargs.update(thumbnail)
     except Exception, e:
         logger.info("Exception while trying to find thumbnail %s", e)
         logger.exception(e)
@@ -502,7 +503,15 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
     # If we still don't have a thumbnail and we haven't blacklisted looking for images on the webpage
     # Lets take the first image on the page
     if 'html' not in feed.image_strategy_blacklist and not thumbnail and kwargs.get('images_in_html'):
-        kwargs.update(kwargs['images_in_html'][0])
+        thumbnail = kwargs['images_in_html'][0]
+
+    if thumbnail:
+        thumbnail_hash = dict_hash(thumbnail)
+        print 'Found thumbnail_hash: %s thumbnail: %s' % (thumbnail_hash, thumbnail)
+        if thumbnail_hash != feed.last_image_hash:
+            kwargs.update(thumbnail)
+            feed.last_image_hash = thumbnail_hash
+            yield feed.put_async()
 
     if feed.language:
         kwargs['language'] = feed.language
@@ -610,7 +619,7 @@ def instagram_format_for_adn(feed, entry):
     return post
 
 
-def format_link_for_entry(feed, entry):
+def format_link_for_entry(feed, entry, medium='App.net'):
     if entry.feed_item:
         link = get_link_for_item(feed, entry.feed_item)
     else:
@@ -618,7 +627,8 @@ def format_link_for_entry(feed, entry):
 
     if link:
         link = iri_to_uri(link)
-        link = append_query_string(link, params={'utm_source': 'PourOver', 'utm_medium': 'App.net'})
+        if "utm_medium" not in link and "utm_source" not in link:
+            link = append_query_string(link, params={'utm_source': 'PourOver', 'utm_medium': medium})
 
     return link
 
@@ -631,7 +641,7 @@ def broadcast_format_for_adn(feed, entry):
     # This will try and fix broken html
     #summary = html.tostring(html.fromstring(summary))
 
-    link = format_link_for_entry(feed, entry)
+    link = format_link_for_entry(feed, entry, medium='App.net Broadcast')
 
     post = {
         'annotations': [metadata_annotation(entry), cross_post_annotation(link)]

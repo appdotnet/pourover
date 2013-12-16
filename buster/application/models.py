@@ -609,6 +609,9 @@ class Feed(ndb.Model):
     # Error tracking tools
     initial_error = ndb.DateTimeProperty()
 
+    # last image hash
+    last_image_hash = ndb.StringProperty()
+
     # Class variables
     update_form = FeedUpdate
     create_form = FeedCreate

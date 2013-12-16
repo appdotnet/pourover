@@ -1078,9 +1078,39 @@ class BusterTestCase(MockUrlfetchTest):
 
         self.set_rss_response(test_feed_url, content=self.buildRSS('test2'), status_code=200)
         self.set_response('http://example.com/buster/test2_0', content=HTML_PAGE_TEMPLATE_WITH_IMAGES, method='GET')
-        print 'Yo dawg'
         self.pollUpdate()
         assert Entry.query().fetch(2)[1].thumbnail_image_url == "http://example.com/good.jpg"
+
+    def testThumbnailDuplicateDetection(self):
+        self.setMockUser()
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test1'), status_code=200)
+        self.set_response('http://example.com/buster/test1_0', content=HTML_PAGE_TEMPLATE_WITH_IMAGES, method='GET')
+        self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+        feed.image_in_html = True
+        feed.put()
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test2'), status_code=200)
+        self.set_response('http://example.com/buster/test2_0', content=HTML_PAGE_TEMPLATE_WITH_IMAGES, method='GET')
+        self.pollUpdate()
+        assert Entry.query().fetch(2)[1].thumbnail_image_url == "http://example.com/good.jpg"
+
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test2', items=2), status_code=200)
+        self.set_response('http://example.com/buster/test2_1', content=HTML_PAGE_TEMPLATE_WITH_IMAGES, method='GET')
+        self.pollUpdate()
+        assert not Entry.query().fetch(3)[2].thumbnail_image_url
+
+        new_html_content = HTML_PAGE_TEMPLATE_WITH_IMAGES
+        new_html_content = new_html_content.replace('http://example.com/good.jpg', 'http://example.com/good2.jpg')
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test2', items=3), status_code=200)
+        self.set_response('http://example.com/buster/test2_2', content=new_html_content, method='GET')
+        self.pollUpdate()
+
+        assert Entry.query().fetch(4)[3].thumbnail_image_url == "http://example.com/good2.jpg"
 
     def createFeed(self, **kwargs):
         feed = Feed(**kwargs)

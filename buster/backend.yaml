@@ -25,7 +25,7 @@ inbound_services:
 - warmup
 - mail
 
-instance_class: F4
+instance_class: F1
 automatic_scaling:
   max_idle_instances: automatic
   min_pending_latency: 10.0s
