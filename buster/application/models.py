@@ -207,8 +207,12 @@ class Entry(ndb.Model):
                 message = json.loads(resp.content)
                 if message.get('meta').get('error_message') == 'Forbidden: This channel is inactive':
                     logger.error('Trying to post to an inactive channel: %s shutting this channel down for this feed: %s', feed.channel_id, feed.key.urlsafe())
-                    feed.channel_id = None
-                    yield feed.put_async()
+                    if not feed.publish_to_stream:
+                        logger.error('Feed wasnt set to publish publicly deleting channel all together %s %s %s', feed.channel_id, feed.key.urlsafe(), feed.feed_url)
+                        yield feed.delete_async()
+                    else:
+                        feed.channel_id = None
+                        yield feed.put_async()
             else:
                 logger.warn("Couldn't post entry key=%s. Error: %s Post:%s", self.key.urlsafe(), resp.content, post)
                 raise Exception(resp.content)
