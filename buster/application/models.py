@@ -11,32 +11,33 @@ import hashlib
 import itertools
 import time
 
-from bs4 import BeautifulSoup
 from google.appengine.ext import ndb
-from google.appengine.ext.ndb import polymodel
 from google.appengine.api import urlfetch
 import urllib
-from urlparse import urlparse, parse_qs
+from urlparse import urlparse
 import json
 
 
-from flask import url_for, g
+from flask import url_for
 from forms import FeedUpdate, FeedCreate, FeedPreview, InstagramFeedCreate, NoOpForm
 from fetcher import fetch_parsed_feed_for_url, fetch_parsed_feed_for_feed, fetch_url
 from constants import (ENTRY_STATE, FEED_STATE, FORMAT_MODE, UPDATE_INTERVAL, PERIOD_SCHEDULE, OVERFLOW_REASON,
                        DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD, FEED_TYPE, INBOUND_EMAIL_VERSION)
 from poster import (build_html_from_post, format_for_adn, prepare_entry_from_item, instagram_format_for_adn,
                     broadcast_format_for_adn)
-from utils import get_language, guid_for_item, find_feed_url, fit_to_box
+from process import process_parsed_feed
+from utils import get_language, find_feed_url, fit_to_box
 
 logger = logging.getLogger(__name__)
 
 # Don't complain about this
 ndb.add_flow_exception(urlfetch.DeadlineExceededError)
 
+
 def format_date(dt):
     logger.info('dt: %s', dt)
     return dt.strftime('%a %b %d %I:%M %p')
+
 
 class User(ndb.Model):
     access_token = ndb.StringProperty()
@@ -52,11 +53,12 @@ def get_endpoint(kind, feed):
     else:
         return 'posts'
 
+
 class Entry(ndb.Model):
     guid = ndb.StringProperty(required=True)
     creating = ndb.BooleanProperty(default=False)
-    title = ndb.StringProperty()
-    summary = ndb.TextProperty()
+    title = ndb.StringProperty(indexed=False)
+    summary = ndb.TextProperty(indexed=False)
     link = ndb.StringProperty()
     short_url = ndb.StringProperty()
     added = ndb.DateTimeProperty(auto_now_add=True)
@@ -68,7 +70,7 @@ class Entry(ndb.Model):
     published_at = ndb.DateTimeProperty()
     status = ndb.IntegerProperty(default=ENTRY_STATE.ACTIVE)
     language = ndb.StringProperty()
-    extra_info = ndb.JsonProperty()
+    extra_info = ndb.JsonProperty(indexed=False)
 
     image_url = ndb.StringProperty()
     image_width = ndb.IntegerProperty()
@@ -77,14 +79,14 @@ class Entry(ndb.Model):
     thumbnail_image_url = ndb.StringProperty()
     thumbnail_image_width = ndb.IntegerProperty()
     thumbnail_image_height = ndb.IntegerProperty()
-    video_oembed = ndb.PickleProperty()
+    video_oembed = ndb.PickleProperty(indexed=False)
 
     tags = ndb.StringProperty(repeated=True)
-    author = ndb.StringProperty()
+    author = ndb.StringProperty(indexed=False)
 
-    feed_item = ndb.PickleProperty()
-    meta_tags = ndb.JsonProperty()
-    images_in_html = ndb.JsonProperty(repeated=True)
+    feed_item = ndb.PickleProperty(indexed=False)
+    meta_tags = ndb.JsonProperty(indexed=False)
+    images_in_html = ndb.JsonProperty(repeated=True, indexed=False)
 
     def to_json(self, feed=None, format=False):
         include = ['title', 'link', 'published', 'published_at', 'added']
@@ -148,7 +150,7 @@ class Entry(ndb.Model):
         entries = []
         futures = []
         for item in parsed_feed.entries[0:3]:
-            futures.append((item, prepare_entry_from_item(parsed_feed, item, feed=feed)))
+            futures.append((item, prepare_entry_from_item(item, feed=feed)))
 
         for item, future in futures:
             entry = cls(**(yield future))
@@ -242,7 +244,7 @@ class Entry(ndb.Model):
     @classmethod
     @ndb.tasklet
     def publish_for_feed(cls, feed, skip_queue=False):
- 
+
         minutes_schedule = DEFAULT_PERIOD_SCHEDULE
         max_stories_to_publish = MAX_STORIES_PER_PERIOD
         if feed.manual_control:
@@ -281,53 +283,7 @@ class Entry(ndb.Model):
     @classmethod
     @ndb.tasklet
     def process_parsed_feed(cls, parsed_feed, feed, overflow, overflow_reason=OVERFLOW_REASON.BACKLOG):
-        keys_by_guid = {guid_for_item(item): ndb.Key(cls, guid_for_item(item), parent=feed.key) for item in parsed_feed.entries}
-        entries = yield ndb.get_multi_async(keys_by_guid.values())
-        old_guids = [x.key.id() for x in entries if x]
-        new_guids = filter(lambda x: x not in old_guids, keys_by_guid.keys())
-        new_entries_by_guid = {x: cls(key=keys_by_guid.get(x), guid=x, creating=True) for x in new_guids}
-        new_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
-
-        parsed_entries = parsed_feed.entries
-        # If we process first time feeds backwards the entries will be in the right added order
-        parsed_entries = reversed(parsed_entries)
-
-        published = overflow
-        futures = []
-        counter = 0
-        first_time = getattr(feed, 'first_time', False)
-        for item in parsed_entries:
-            entry = new_entries_by_guid.get(guid_for_item(item))
-            if not entry:
-                continue
-
-            # We only need the first three items to be fully fleshed out on the first fetch because that is all
-            # The user can see in the preview area.
-            # Otherwise always fetch remote data
-            remote_fetch = True
-            if first_time and counter > 2:
-                remote_fetch = False
-
-            added = datetime.now()
-            futures.append((entry, prepare_entry_from_item(parsed_feed, item, feed, overflow, overflow_reason, published, added, remote_fetch)))
-            counter += 1
-
-        for entry, future in futures:
-            entry_kwargs = yield future
-            if not entry_kwargs:
-                continue
-
-            entry_kwargs.pop('parent')
-            entry_kwargs['creating'] = False
-            entry.populate(**entry_kwargs)
-
-        if len(futures):
-            feed.is_dirty = True
-            yield feed.put_async()
-
-        saved_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
-
-        raise ndb.Return((new_guids, old_guids))
+        raise ndb.Return(process_parsed_feed(cls, parsed_feed, feed, overflow, overflow_reason))
 
     @classmethod
     @ndb.tasklet
@@ -385,11 +341,9 @@ class Entry(ndb.Model):
     def latest_for_feed(cls, feed):
         return cls.query(cls.creating == False, ancestor=feed.key)
 
-
     @classmethod
     def latest_for_feed_by_added(cls, feed):
         return cls.query(cls.creating == False, ancestor=feed.key).order(-cls.added)
-
 
     @classmethod
     def latest_unpublished(cls, feed,):
@@ -519,7 +473,7 @@ class InstagramFeed(ndb.Model):
                 kwargs['thumbnail_image_height'] = low_resolution.get('height')
                 caption = post.get('caption')
                 if not caption:
-                    kwargs['title']  = '.'
+                    kwargs['title'] = '.'
                 else:
                     kwargs['title'] = caption.get('text', '')
                 kwargs['link'] = post.get('link')
@@ -654,7 +608,7 @@ class Feed(ndb.Model):
         link = feed_info.get('link')
         if not link or not link.startswith('http'):
             try:
-                urlparts = urlparse(feed.feed_url)
+                urlparts = urlparse(self.feed_url)
                 link = '%s://%s' % (urlparts.scheme, urlparts.netloc)
             except:
                 link = None
@@ -709,7 +663,7 @@ class Feed(ndb.Model):
 
     @classmethod
     def for_email(cls, email):
-        return cls.query(cls.email==email).get()
+        return cls.query(cls.email == email).get()
 
     @ndb.tasklet
     def process_feed(self, overflow, overflow_reason):
@@ -733,7 +687,7 @@ class Feed(ndb.Model):
             "hub.callback": url_for('feed_subscribe', feed_key=self.key.urlsafe(), _external=True),
             "hub.mode": 'subscribe',
             "hub.topic": self.feed_url,
-            'hub.verify_token': self.verify_token, # apparently this is no longer apart of PuSH v0.4, but it is apart of v3 so lets try and do both
+            'hub.verify_token': self.verify_token,  # apparently this is no longer apart of PuSH v0.4, but it is apart of v3 so lets try and do both
             'hub.verify': self.verify_token,  # apparently this is no longer apart of PuSH v0.4, but it is apart of v3 so lets try and do both
         }
 
@@ -865,6 +819,11 @@ class Feed(ndb.Model):
             yield self.put_async()
 
         raise ndb.Return()
+
+    @ndb.tasklet
+    def process_incoming_feed(self, parsed_feed, overflow=False):
+        result = yield Entry.process_parsed_feed(parsed_feed, self, overflow=False)
+        raise ndb.Return(result)
 
     def to_json(self):
         feed_info = {

@@ -3,7 +3,6 @@ views.py
 
 URL route handlers
 """
-import base64
 import datetime
 import hmac
 import hashlib
@@ -20,16 +19,18 @@ from google.appengine.api import mail
 from flask_cache import Cache
 
 from application import app
-from constants import UPDATE_INTERVAL, FEED_TYPE, OVERFLOW_REASON, UPDATE_INTERVAL_TO_MINUTES, FEED_STATE
+from constants import UPDATE_INTERVAL, FEED_TYPE, UPDATE_INTERVAL_TO_MINUTES
 from models import Entry, Feed, Stat, Configuration, InstagramFeed, FEED_TYPE_TO_CLASS
 from fetcher import FetchException, fetch_parsed_feed_for_feed
 from utils import write_epoch_to_stat, get_epoch_from_stat
+from prospective import RssFeed
 
 logger = logging.getLogger(__name__)
 
 # Flask-Cache (configured to use App Engine Memcache API)
 cache = Cache(app)
 BATCH_SIZE = 50
+
 
 class APIEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -62,17 +63,20 @@ def index():
 
 index.login_required = False
 
+
 @app.route('/feed/<feed_type>/<feed_id>/', endpoint='feed_point')
 def feed_point(feed_type, feed_id=None):
     return render_template('index.html')
 
 feed_point.login_required = False
 
+
 @app.route('/alerts/<alert_id>/', endpoint='alerts_detail')
 def alerts_detail(alert_id=None):
     return redirect('https://directory.app.net/alerts/manage/%s/' % alert_id)
 
 alerts_detail.login_required = False
+
 
 @app.route('/api/me', methods=['GET'])
 def me():
@@ -160,7 +164,6 @@ def feed_validate():
         error = 'Something went wrong while fetching your URL.'
         logger.exception('Feed Preview: Failed to update feed:%s' % (feed.feed_url, ))
     logger.info('Parsed feed: %s', parsed_feed)
-
 
     if error:
         raise ndb.Return(jsonify(status='error', message=error))
@@ -285,6 +288,7 @@ def feed_entry_publish(feed_type, feed_id, entry_id):
     entry.put()
 
     return jsonify(status='ok')
+
 
 @app.route('/_ah/mail/<string:email>', methods=['POST'])
 @ndb.synctasklet
@@ -469,13 +473,14 @@ def feed_push_update(feed_key):
 
 feed_push_update.login_required = False
 
+
 @ndb.tasklet
 def inbound_feed_process(feed_key, feed_data, etag, last_hash):
     feed = ndb.Key(urlsafe=feed_key).get()
 
     parsed_feed = feedparser.parse(feed_data)
 
-    new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)
+    new_guids, old_guids = yield feed.process_inbound_feed(parsed_feed, overflow=False)
     yield Entry.publish_for_feed(feed, skip_queue=False)
 
     if etag:
@@ -494,6 +499,7 @@ def inbound_feed_process(feed_key, feed_data, etag, last_hash):
     logger.info(u'Saving feed: %s new_items: %s old_items: %s', feed_key, len(new_guids), len(old_guids))
     raise ndb.Return()
 
+
 @app.route('/api/backend/feeds/subscribe/app/task', methods=['POST'], endpoint="tq_inbound_feed")
 @ndb.synctasklet
 def tq_inbound_feed():
@@ -510,6 +516,26 @@ def tq_inbound_feed():
     raise ndb.Return(jsonify(status='ok'))
 
 tq_inbound_feed.login_required = False
+
+
+@app.route('/api/backend/queries/matched', methods=['POST'], endpoint="quries_matched")
+@ndb.synctasklet
+def inbound_search_matches(self):
+    if request.headers.get('X-Appengine-Queuename') != 'default':
+        raise ndb.Return(jsonify_error(message='Not a cron call'))
+
+    # List of subscription ids that matched for match.
+    sub_ids = request.form.get_list('id')
+    keys = []
+    for sub_id in sub_ids:
+        keys.append(ndb.Key(urlsafe=sub_id))
+
+    subs = yield ndb.get_multi_async(keys)
+
+    for sub in subs:
+        logger.info('Would have sent to %s', sub)
+
+    logger.info('Request form: %s', request.form)
 
 
 @app.route('/api/feeds/<feed_key>/subscribe/app', methods=['POST'])
@@ -588,6 +614,7 @@ update_feed_for_error.app_token_required = True
 update_feed_for_error.login_required = False
 
 DEFAULT_POLLING_BUCKET = 0
+
 
 @app.route('/api/feeds/all/update/<int:interval_id>')
 @app.route('/api/backend/feeds/all/update/<int:interval_id>')
@@ -690,7 +717,7 @@ def post_all_feeds():
         logger.info('queued post for %d feeds feed_type:%s', success, feed_type)
 
     for future in futures:
-        resp = yield future
+        yield future
 
     logger.info('Finished Post Job')
     yield write_epoch_to_stat(Stat, 'post_job')
@@ -753,14 +780,16 @@ def all_feeds():
 
     bucket = int(request.args.get('bucket_id', 1))
 
-    qit = Feed.query(Feed.external_polling_bucket == bucket)
+    feed_clss = [Feed, RssFeed]
 
     feeds_response = []
-    more = True
-    cursor = None
-    while more:
-        feeds_to_fetch, cursor, more = yield qit.fetch_page_async(1000, start_cursor=cursor)
-        feeds_response.extend((feed_to_dict(feed) for feed in feeds_to_fetch))
+    for feed_cls in feed_clss:
+        qit = feed_cls.query(feed_cls.external_polling_bucket == bucket)
+        more = True
+        cursor = None
+        while more:
+            feeds_to_fetch, cursor, more = yield qit.fetch_page_async(1000, start_cursor=cursor)
+            feeds_response.extend((feed_to_dict(feed) for feed in feeds_to_fetch))
 
     poller_run_id = uuid.uuid4().hex
 

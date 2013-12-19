@@ -40,8 +40,7 @@ def parse_style_tag(text):
     return {x[0].strip(): x[1].strip() for x in attrs}
 
 
-def find_video_src_url(item):
-    summary = item.get('summary', item.get('content'))
+def find_video_src_url(summary):
     if not summary:
         return None, None
 
@@ -94,8 +93,8 @@ OEMBED_ENDPOINTS = {
 
 
 @ndb.tasklet
-def find_video_oembed(item):
-    url, oembed_provider = find_video_src_url(item)
+def find_video_oembed(content):
+    url, oembed_provider = find_video_src_url(content)
     if not url or not oembed_provider:
         return
 
@@ -248,7 +247,7 @@ def get_image_from_url(url):
     try:
         resp = yield ctx.urlfetch(url, deadline=60)
         image = Image(image_data=resp.content)
-        image.width # Try
+        image.width  # Try
     except NotImageError:
         logger.info('Image at url isnt an image: %s', url)
     except Exception, e:
@@ -275,69 +274,74 @@ def image_dict(url, w, h):
 
 
 @ndb.tasklet
-def find_thumbnail(item, meta_tags, image_strategy_blacklist=None, remote_fetch=True):
-    image_strategy_blacklist = image_strategy_blacklist or set()
+def find_image_in_rss_item(item, remote_fetch=False):
+    media_thumbnails = item.get('media_thumbnail') or []
+    # print 'Media thumbnails %s' % (media_thumbnails)
+    for thumb in media_thumbnails:
+        w = int(thumb.get('width', 0))
+        h = int(thumb.get('height', 0))
+        if not (w and h) and remote_fetch:
+            image = yield get_image_from_url(thumb['url'])
+            if image:
+                w = image.width
+                h = image.height
 
-    if 'rss' not in image_strategy_blacklist:
-        media_thumbnails = item.get('media_thumbnail') or []
-        # print 'Media thumbnails %s' % (media_thumbnails)
-        for thumb in media_thumbnails:
-            w = int(thumb.get('width', 0))
-            h = int(thumb.get('height', 0))
-            if not (w and h) and remote_fetch:
-                image = yield get_image_from_url(thumb['url'])
-                if image:
-                    w = image.width
-                    h = image.height
+        if image_fits(w, h):
+            raise ndb.Return(image_dict(thumb['url'], w, h))
 
-            if image_fits(w, h):
-                raise ndb.Return(image_dict(thumb['url'], w, h))
+    raise ndb.Return(None)
 
-    if 'content' not in image_strategy_blacklist:
-        soup = BeautifulSoup(item.get('summary', ''))
-        for image in soup.findAll('img'):
-            w = image.get('width', 0)
-            h = image.get('height', 0)
-            if not (w and h):
-                style = parse_style_tag(image.get('style'))
-                if style:
-                    w = style.get('width', w)
-                    h = style.get('height', h)
 
-            if not(w and h):
-                continue
+@ndb.tasklet
+def find_image_in_html(content, remote_fetch=False):
+    soup = BeautifulSoup(content)
+    for image in soup.findAll('img'):
+        w = image.get('width', 0)
+        h = image.get('height', 0)
+        if not (w and h):
+            style = parse_style_tag(image.get('style'))
+            if style:
+                w = style.get('width', w)
+                h = style.get('height', h)
 
-            w, h = map(lambda x: x.replace('px', ''), (w, h))
+        if not(w and h):
+            continue
 
-            try:
-                w = int(w)
-                h = int(h)
-            except:
-                continue
+        w, h = map(lambda x: x.replace('px', ''), (w, h))
 
-            if image_fits(w, h):
-                raise ndb.Return(image_dict(image['src'], w, h))
+        try:
+            w = int(w)
+            h = int(h)
+        except:
+            continue
 
-        # If we are still here lets grab the first image, and try and download it.
-        first_image = soup.find('img')
-        if first_image and remote_fetch:
-            image_url = first_image.get('src')
-            image = yield get_image_from_url(image_url)
-            if image and image_fits(image.width, image.height):
+        if image_fits(w, h):
+            raise ndb.Return(image_dict(image['src'], w, h))
+
+    # If we are still here lets grab the first image, and try and download it.
+    first_image = soup.find('img')
+    if first_image and remote_fetch:
+        image_url = first_image.get('src')
+        image = yield get_image_from_url(image_url)
+        if image and image_fits(image.width, image.height):
                 raise ndb.Return(image_dict(image_url, image.width, image.height))
 
-    if 'meta' not in image_strategy_blacklist:
-        og = meta_tags.get('og', {})
-        twitter = meta_tags.get('twitter', {})
+    raise ndb.Return(None)
 
-        meta_tags_image_url = og.get('image', twitter.get('image'))
-        if meta_tags_image_url and isinstance(meta_tags_image_url, dict) and meta_tags_image_url.get('url'):
-            raise ndb.Return(image_dict(meta_tags_image_url['url'], meta_tags_image_url['width'],
-                             meta_tags_image_url['height']))
-        elif meta_tags_image_url and remote_fetch:
-            image = yield get_image_from_url(meta_tags_image_url)
-            if image and image_fits(image.width, image.height):
-                raise ndb.Return(image_dict(meta_tags_image_url, image.width, image.height))
+
+@ndb.tasklet
+def find_image_in_meta_tags(meta_tags, remote_fetch=False):
+    og = meta_tags.get('og', {})
+    twitter = meta_tags.get('twitter', {})
+
+    meta_tags_image_url = og.get('image', twitter.get('image'))
+    if meta_tags_image_url and isinstance(meta_tags_image_url, dict) and meta_tags_image_url.get('url'):
+        raise ndb.Return(image_dict(meta_tags_image_url['url'], meta_tags_image_url['width'],
+                         meta_tags_image_url['height']))
+    elif meta_tags_image_url and remote_fetch:
+        image = yield get_image_from_url(meta_tags_image_url)
+        if image and image_fits(image.width, image.height):
+            raise ndb.Return(image_dict(meta_tags_image_url, image.width, image.height))
 
     raise ndb.Return(None)
 
@@ -375,7 +379,6 @@ def parse_meta_data(soup):
                 if isinstance(ref.get(part), basestring):
                     ref[part] = {'url': ref[part]}
             ref = ref[part]
-
 
     return data
 
@@ -447,11 +450,18 @@ def get_short_url(entry, link, feed):
             raise ndb.Return(link)
 
 
-# Next steps for this function, it should probably just get a bunch of meta data at the top of the function
-# And then be a bunch of functions that parse through that meta data in various manners to get the good stuff
-# out of it.
 @ndb.tasklet
-def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reason=None, published=False, added=None, remote_fetch=True):
+def check_thumbnail(feed, thumbnail):
+    thumbnail_hash = dict_hash(thumbnail)
+    if thumbnail_hash != feed.last_image_hash:
+        feed.last_image_hash = thumbnail_hash
+        yield feed.put_async()
+        raise ndb.Return(True)
+
+    raise ndb.Return(False)
+
+
+def prepare_title_from_item(item):
     title_detail = item.get('title_detail')
     title = item.get('title', 'No Title')
 
@@ -461,6 +471,13 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
         if title_detail['type'] == u'text/html':
             title = BeautifulSoup(title).text
 
+    return title
+
+
+@ndb.tasklet
+def prepare_entry_from_item_local(feed, item, published, added, overflow, overflow_reason, remote_fetch):
+
+    title = prepare_title_from_item(item)
     link = iri_to_uri(get_link_for_item(feed, item))
 
     # We can only store a title up to 500 chars
@@ -489,29 +506,6 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
     if feed:
         kwargs['parent'] = feed.key
 
-    if remote_fetch:
-        page_data = yield get_meta_data_for_url(link)
-        kwargs.update(page_data)
-
-    thumbnail = None
-    try:
-        thumbnail = yield find_thumbnail(item, kwargs.get('meta_tags', {}), feed.image_strategy_blacklist, remote_fetch)
-    except Exception, e:
-        logger.info("Exception while trying to find thumbnail %s", e)
-        logger.exception(e)
-
-    # If we still don't have a thumbnail and we haven't blacklisted looking for images on the webpage
-    # Lets take the first image on the page
-    if 'html' not in feed.image_strategy_blacklist and not thumbnail and kwargs.get('images_in_html'):
-        thumbnail = kwargs['images_in_html'][0]
-
-    if thumbnail:
-        thumbnail_hash = dict_hash(thumbnail)
-        if thumbnail_hash != feed.last_image_hash:
-            kwargs.update(thumbnail)
-            feed.last_image_hash = thumbnail_hash
-            yield feed.put_async()
-
     if feed.language:
         kwargs['language'] = feed.language
 
@@ -521,19 +515,82 @@ def prepare_entry_from_item(rss_feed, item, feed, overflow=False, overflow_reaso
     if 'author' in item and item.author:
         kwargs['author'] = item.author
 
+    thumbnail = None
+    try:
+        if 'rss' not in feed.image_strategy_blacklist:
+            thumbnail = yield find_image_in_rss_item(item, remote_fetch)
+
+        if not thumbnail and 'content' not in feed.image_strategy_blacklist:
+            thumbnail = yield find_image_in_html(summary, remote_fetch)
+
+    except Exception, e:
+        logger.info("Exception while trying to find thumbnail %s", e)
+        logger.exception(e)
+
+    print 'thumbnail %s' % (thumbnail)
+
+    if thumbnail:
+        valid_thumbnail = yield check_thumbnail(feed, thumbnail)
+        if valid_thumbnail:
+            kwargs.update(thumbnail)
+
+    kwargs['feed_item'] = item
+
+    if added:
+        kwargs['added'] = added
+
+    raise ndb.Return(kwargs)
+
+
+@ndb.tasklet
+def prepare_entry_from_item_remote(feed, has_thumbnail, item_content, link, remote_fetch):
+    kwargs = {}
+
+    if remote_fetch:
+        page_data = yield get_meta_data_for_url(link)
+        kwargs.update(page_data)
+
+    thumbnail = None
+    try:
+        if not has_thumbnail and 'meta' not in feed.image_strategy_blacklist:
+            thumbnail = yield find_image_in_meta_tags(kwargs.get('meta_tags', {}), remote_fetch)
+    except Exception, e:
+        logger.info("Exception while trying to find thumbnail %s", e)
+        logger.exception(e)
+
+    # If we still don't have a thumbnail and we haven't blacklisted looking for images on the webpage
+    # Lets take the first image on the page
+    if 'html' not in feed.image_strategy_blacklist and not thumbnail and kwargs.get('images_in_html'):
+        thumbnail = kwargs['images_in_html'][0]
+
+    print 'thumbnail %s' % (thumbnail)
+
+    if thumbnail:
+        valid_thumbnail = yield check_thumbnail(feed, thumbnail)
+        if valid_thumbnail:
+            kwargs.update(thumbnail)
+
     if feed.include_video:
         try:
-            embed = yield find_video_oembed(item)
+            embed = yield find_video_oembed(item_content)
             if embed:
                 kwargs['video_oembed'] = embed
         except Exception, e:
             logger.exception(e)
             logger.error('Finding an oebmed')
 
-    kwargs['feed_item'] = item
+    raise ndb.Return(kwargs)
 
-    if added:
-        kwargs['added'] = added
+
+# Next steps for this function, it should probably just get a bunch of meta data at the top of the function
+# And then be a bunch of functions that parse through that meta data in various manners to get the good stuff
+# out of it.
+@ndb.tasklet
+def prepare_entry_from_item(item, feed, overflow=False, overflow_reason=None, published=False, added=None, remote_fetch=True):
+
+    kwargs = yield prepare_entry_from_item_local(feed, item, published, added, overflow, overflow_reason, remote_fetch)
+    more_kwargs = yield prepare_entry_from_item_remote(feed, bool(kwargs.get('thumbnail_image_url')), kwargs.get('summary'), kwargs.get('link'), remote_fetch)
+    kwargs.update(more_kwargs)
 
     raise ndb.Return(kwargs)
 
@@ -545,6 +602,7 @@ def cross_post_annotation(link):
             "canonical_url": link
         }
     }
+
 
 def image_annotation_for_entry(entry):
     url, width, height = (entry.thumbnail_image_url, entry.thumbnail_image_width, entry.thumbnail_image_height)
@@ -566,6 +624,7 @@ def image_annotation_for_entry(entry):
             "embeddable_url": iri_to_uri(entry.link),
         }
     }
+
 
 def metadata_annotation(entry):
     subject = ellipse_text(entry.title, 128)

@@ -1379,6 +1379,7 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.get('/api/backend/feeds/all?bucket_id=0', headers=self.authHeaders())
 
         resp = json.loads(resp.data)
+        print resp
         assert 1 == len(resp['data']['feeds'])
 
         feed = Feed(
