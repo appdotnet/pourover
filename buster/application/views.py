@@ -16,6 +16,7 @@ import feedparser
 from flask import request, render_template, g, Response, url_for, redirect
 from google.appengine.api.taskqueue import Task, Queue
 from google.appengine.api import mail
+from google.appengine.api import prospective_search
 from flask_cache import Cache
 
 from application import app
@@ -481,7 +482,7 @@ def inbound_feed_process(feed_key, feed_data, etag, last_hash):
     parsed_feed = feedparser.parse(feed_data)
 
     new_guids, old_guids = yield feed.process_inbound_feed(parsed_feed, overflow=False)
-    yield Entry.publish_for_feed(feed, skip_queue=False)
+    yield feed.publish_inbound_feed(skip_queue=False)
 
     if etag:
         feed.etag = etag
@@ -520,22 +521,25 @@ tq_inbound_feed.login_required = False
 
 @app.route('/api/backend/queries/matched', methods=['POST'], endpoint="quries_matched")
 @ndb.synctasklet
-def inbound_search_matches(self):
+def inbound_search_matches():
     if request.headers.get('X-Appengine-Queuename') != 'default':
         raise ndb.Return(jsonify_error(message='Not a cron call'))
 
     # List of subscription ids that matched for match.
-    sub_ids = request.form.get_list('id')
+    sub_ids = request.form.getlist('id')
     keys = []
     for sub_id in sub_ids:
         keys.append(ndb.Key(urlsafe=sub_id))
 
     subs = yield ndb.get_multi_async(keys)
-
+    doc = prospective_search.get_document(request.form)
     for sub in subs:
-        logger.info('Would have sent to %s', sub)
+        logger.info('prospective: Would have sent to %s %s', sub, doc)
 
-    logger.info('Request form: %s', request.form)
+    logger.info('prospective: Request form: %s', request.form)
+    raise ndb.Return(jsonify(status='ok'))
+
+inbound_search_matches.login_required = False
 
 
 @app.route('/api/feeds/<feed_key>/subscribe/app', methods=['POST'])

@@ -45,7 +45,20 @@ def append_query_string(url, params=None, force_percent=False):
 
 
 def guid_for_item(item):
-    return item.get('guid', item.get('link'))
+    guid = item.get('guid')
+    if guid:
+        return guid
+
+    guid = item.get('link')
+    if guid:
+        return guid
+
+    guid = item.get('published')
+    if guid:
+        return guid
+
+    summary = item.get('summary', 'No content')
+    return hashlib.sha224(summary)
 
 
 def strip_html_tags(html):

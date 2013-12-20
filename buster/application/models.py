@@ -821,8 +821,13 @@ class Feed(ndb.Model):
         raise ndb.Return()
 
     @ndb.tasklet
-    def process_incoming_feed(self, parsed_feed, overflow=False):
+    def process_inbound_feed(self, parsed_feed, overflow=False):
         result = yield Entry.process_parsed_feed(parsed_feed, self, overflow=False)
+        raise ndb.Return(result)
+
+    @ndb.tasklet
+    def publish_inbound_feed(self, skip_queue=False):
+        result = yield Entry.publish_for_feed(self, skip_queue=skip_queue)
         raise ndb.Return(result)
 
     def to_json(self):
