@@ -564,7 +564,7 @@ def feed_push_update_app(feed_key):
 
     yield inbound_feed_process(**post_data)
     # yield Queue('inbound-posts').add_async(Task(url=url_for('tq_inbound_feed'), method='POST', params=post_data))
-
+    yield write_epoch_to_stat(Stat, 'external_poll_post_feed')
     raise ndb.Return(jsonify(status='ok'))
 
 feed_push_update_app.app_token_required = True
@@ -804,6 +804,8 @@ def all_feeds():
         'feeds': feeds_response,
     }
 
+    yield write_epoch_to_stat(Stat, 'external_poll_get_all_feeds')
+
     raise ndb.Return(jsonify(status='ok', data=response))
 
 all_feeds.app_token_required = True
@@ -816,9 +818,13 @@ all_feeds.login_required = False
 def monitor_jobs():
     """Are the jobs running"""
     post_value = yield get_epoch_from_stat(Stat, 'post_job')
+    external_poll_get_all_feeds = yield get_epoch_from_stat(Stat, 'external_poll_get_all_feeds')
+    external_poll_post_feed = yield get_epoch_from_stat(Stat, 'external_poll_post_feed')
 
     response = {
         'post': post_value,
+        'external_poll_get_all_feeds': external_poll_get_all_feeds,
+        'external_poll_post_feed': external_poll_post_feed,
     }
 
     raise ndb.Return(jsonify(status='ok', data=response))
