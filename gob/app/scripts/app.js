@@ -76,6 +76,7 @@ pourOver.config(['$routeProvider', '$locationProvider', 'ADNConfigProvider', fun
   $routeProvider.when('/login/instagram/', {
     controller: 'InstagramCtrl',
     templateUrl: '/views/instagram_signup.html',
+    auth: true,
   });
 
   $routeProvider.when('/login/', {
