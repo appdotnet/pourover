@@ -8,7 +8,7 @@
     "bootstrap": "~2.3.2",
     "Ladda": "git://github.com/hakimel/Ladda.git#~0.6.0",
     "underscore": "~1.5.1",
-    "angular-adn": "~0.0.10",
+    "angular-adn": "=0.0.10",
     "angular-ui": "~0.4.0",
     "angular-markdown": "~0.0.1"
   },
