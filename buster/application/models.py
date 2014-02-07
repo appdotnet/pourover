@@ -211,8 +211,7 @@ class Entry(ndb.Model):
                     logger.error('Trying to post to an inactive channel: %s shutting this channel down for this feed: %s', feed.channel_id, feed.key.urlsafe())
                     if not feed.publish_to_stream:
                         logger.error('Feed wasnt set to publish publicly deleting channel all together %s %s %s', feed.channel_id, feed.key.urlsafe(), feed.feed_url)
-                        logger.info('Feed class: %s, name:%s', feed.__class__, feed.__class__.__name__)
-                        feed.delete()
+                        yield feed.key.delete_async()
                     else:
                         feed.channel_id = None
                         yield feed.put_async()
