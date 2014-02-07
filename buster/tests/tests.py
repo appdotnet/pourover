@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
 from collections import defaultdict
-from email.mime.text import MIMEText
 import logging
 import hmac
 import hashlib
@@ -14,7 +13,6 @@ from datetime import datetime, timedelta
 import urllib
 import inspect
 
-from google.appengine.api import memcache
 from google.appengine.api import apiproxy_stub_map
 from google.appengine.ext import ndb
 
