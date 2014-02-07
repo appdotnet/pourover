@@ -48,7 +48,7 @@ from application.fetcher import hash_content
 from application import settings
 import application
 
-application.views.DEFAULT_POLLING_BUCKET = 1
+application.views.task_queue.DEFAULT_POLLING_BUCKET = 1
 
 import cachepy
 
@@ -547,7 +547,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         self.pollUpdate(2, n=0)
         assert 2 == Entry.query().count()
- 
+
         self.pollUpdate()
 
         assert 3 == Entry.query().count()
@@ -969,7 +969,7 @@ class BusterTestCase(MockUrlfetchTest):
         )
         feed.put()
         Entry.update_for_feed(feed, overflow=True, overflow_reason=OVERFLOW_REASON.BACKLOG).get_result()
-        entry_json = Entry.query().get().to_json(format=True)      
+        entry_json = Entry.query().get().to_json(format=True)
         assert entry_json['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver' target='_blank'>test_0</a></span>"
 
         feed.include_summary = True
