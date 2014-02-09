@@ -7,6 +7,7 @@ from application import app
 from application.constants import FEED_TYPE
 from application.models import Entry, Feed, FEED_TYPE_TO_CLASS
 from application.fetcher import FetchException, fetch_parsed_feed_for_feed
+from application.publisher.entry import publish_entry
 
 from view_utils import jsonify, jsonify_error
 
@@ -218,7 +219,7 @@ def feed_entry_publish(feed_type, feed_id, entry_id):
     if not entry:
         return jsonify_error(message="Can't find that entry")
 
-    entry.publish_entry(feed).get_result()
+    publish_entry(entry, feed).get_result()
     entry.overflow = False
     entry.put()
 

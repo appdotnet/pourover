@@ -1,16 +1,15 @@
 from datetime import datetime, timedelta
 import logging
-import json
 import time
 
 from google.appengine.ext import ndb
 
-from application.constants import ENTRY_STATE, OVERFLOW_REASON, FEED_STATE, DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD
+from application.constants import ENTRY_STATE, OVERFLOW_REASON, DEFAULT_PERIOD_SCHEDULE, MAX_STORIES_PER_PERIOD
 from application.fetcher import fetch_parsed_feed_for_url, fetch_parsed_feed_for_feed
 from application.poster import build_html_from_post, broadcast_format_for_adn, prepare_entry_from_item
 from application.process import process_parsed_feed
 from application.utils import fit_to_box, find_feed_url, get_language
-
+from application.publisher.entry import publish_entry
 
 logger = logging.getLogger(__name__)
 
@@ -132,75 +131,6 @@ class Entry(ndb.Model):
 
         raise ndb.Return(cls.entry_preview(entries, feed, format=True))
 
-    @ndb.tasklet
-    def publish_entry(self, feed):
-        feed = yield self.key.parent().get_async()
-        user_parent = feed.key.parent()
-
-        if not user_parent:
-            logger.info('Found feed without parent deleteing feed_url: %s')
-            yield Entry.delete_for_feed(feed)
-            feed.key.delete()
-            return
-
-        user = yield feed.key.parent().get_async()
-
-        # logger.info('Feed settings include_summary:%s, include_thumb: %s', feed.include_summary, feed.include_thumb)
-        posts = yield feed.format_entry_for_adn(self, for_publish=True)
-
-        ctx = ndb.get_context()
-        for post, kind in posts:
-            # If this job gets run more then twice don't double publish
-            posted_kind = getattr(self, 'published_%s' % (kind))
-            if posted_kind:
-                continue
-
-            endpoint = get_endpoint(kind, feed)
-            try:
-                resp = yield ctx.urlfetch('https://alpha-api.app.net/stream/0/%s' % (endpoint), payload=json.dumps(post), deadline=30,
-                                          method='POST', headers={
-                                              'Authorization': 'Bearer %s' % (user.access_token, ),
-                                              'Content-Type': 'application/json',
-                                          })
-            except:
-                logger.exception('Failed to post Post: %s' % (post))
-                return
-
-            if resp.status_code == 401:
-                print "Disabling feed authorization has been pulled: %s", feed.key.urlsafe()
-                logger.info("Disabling feed authorization has been pulled: %s", feed.key.urlsafe())
-                feed.status = FEED_STATE.NEEDS_REAUTH
-                yield feed.put_async()
-            elif resp.status_code == 200:
-                post_obj = json.loads(resp.content)
-                logger.info('Published entry key=%s -> post_id=%s: %s', self.key.urlsafe(), post_obj['data']['id'], post)
-            elif resp.status_code == 400:
-                logger.warn("Couldn't post entry key=%s. Error: %s Post:%s putting on the backlog", self.key.urlsafe(), resp.content, post)
-                self.overflow = True
-                self.overflow_reason = OVERFLOW_REASON.MALFORMED
-            elif resp.status_code == 403:
-                message = json.loads(resp.content)
-                if message.get('meta').get('error_message') == 'Forbidden: This channel is inactive':
-                    logger.error('Trying to post to an inactive channel: %s shutting this channel down for this feed: %s', feed.channel_id, feed.key.urlsafe())
-                    if not feed.publish_to_stream:
-                        logger.error('Feed wasnt set to publish publicly deleting channel all together %s %s %s', feed.channel_id, feed.key.urlsafe(), feed.feed_url)
-                        yield feed.key.delete_async()
-                    else:
-                        feed.channel_id = None
-                        yield feed.put_async()
-            else:
-                logger.warn("Couldn't post entry key=%s. Error: %s Post:%s", self.key.urlsafe(), resp.content, post)
-                raise Exception(resp.content)
-
-            # Mark that this part has been published
-            setattr(self, 'published_%s' % (kind), True)
-            yield self.put_async()
-
-        self.published = True
-        self.published_at = datetime.now()
-
-        yield self.put_async()
-
     @classmethod
     @ndb.tasklet
     def drain_queue(cls, feed):
@@ -244,7 +174,7 @@ class Entry(ndb.Model):
                 latest_entries = latest_entries[0: max_stories_to_publish]
 
             for entry in latest_entries:
-                yield entry.publish_entry(feed)
+                yield publish_entry(entry, feed)
                 entries_posted += 1
 
             if not more_to_publish:

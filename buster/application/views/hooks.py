@@ -12,6 +12,7 @@ from google.appengine.ext import ndb
 from application import app
 from application.constants import UPDATE_INTERVAL, BATCH_SIZE
 from application.models import FEED_TYPE_TO_CLASS, Entry, Configuration, InstagramFeed
+from application.publisher.entry import publish_entry
 
 from view_utils import jsonify
 
@@ -31,7 +32,7 @@ def email_to_feed(email):
     logger.info('Found feed: %s', feed)
     mail_message = mail.InboundEmailMessage(request.stream.read())
     entry = yield feed.create_entry_from_mail(mail_message)
-    yield entry.publish_entry(feed)
+    yield publish_entry(entry, feed)
 
     raise ndb.Return(jsonify(status='ok'))
 

@@ -39,11 +39,13 @@ feedparser.parse = fake_parse
 from agar.test import MockUrlfetchTest
 # from rss_to_adn import Feed
 from application import app
+from application.publisher.entry import publish_entry
 from application.models import Entry, User, Feed, Configuration, InstagramFeed
 from application.constants import FEED_STATE, OVERFLOW_REASON, FEED_TYPE, UPDATE_INTERVAL
 from application.utils import append_query_string
 from application.fetcher import hash_content
 from application import settings
+
 import application
 
 application.views.task_queue.DEFAULT_POLLING_BUCKET = 1
@@ -652,7 +654,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.setMockAppToken()
         headers = self.authHeaders(access_token='NEW_TOKEN')
 
-        resp = self.app.post('/api/feeds/%s/error' % (feed.key.urlsafe(), ), headers=headers)
+        self.app.post('/api/feeds/%s/error' % (feed.key.urlsafe(), ), headers=headers)
         feed = Feed.query().get()
 
         assert feed.initial_error != None
@@ -666,7 +668,7 @@ class BusterTestCase(MockUrlfetchTest):
             'last_hash': 'abc'
         }
 
-        resp = self.app.post('/api/feeds/%s/subscribe/app?%s' % (feed.key.urlsafe(), urllib.urlencode(query_string)), data=self.buildRSS('test', items=2), headers=headers)
+        self.app.post('/api/feeds/%s/subscribe/app?%s' % (feed.key.urlsafe(), urllib.urlencode(query_string)), data=self.buildRSS('test', items=2), headers=headers)
 
         assert feed.initial_error == None
 
@@ -683,7 +685,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         for test_feed_url in urls:
             self.set_rss_response(test_feed_url, content=self.buildRSS('test1'), status_code=200)
-            resp = self.app.post('/api/feeds', data=dict(
+            self.app.post('/api/feeds', data=dict(
                 feed_url=test_feed_url,
                 include_summary=True,
                 max_stories_per_period=1,
@@ -736,12 +738,11 @@ class BusterTestCase(MockUrlfetchTest):
         # Should have been rate limited
         assert 2 == Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feeds[1].key).count()
 
-
     def testMulitpleSchedule(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test'), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
             max_stories_per_period=2,
@@ -799,7 +800,6 @@ class BusterTestCase(MockUrlfetchTest):
         feed = Feed.query().get()
         assert feed.feed_url == 'http://techcrunch.com/feed/'
 
-
     def testLinkedListMode(self):
         self.setMockUser()
         data = get_file_from_data('/data/df_feed.xml')
@@ -829,12 +829,11 @@ class BusterTestCase(MockUrlfetchTest):
         entry = Entry.query().get()
         assert entry.link == 'http://daringfireball.net/linked/2013/07/17/pourover'
 
-
     def testSingleItemPublish(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test'), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
             max_stories_per_period=2,
@@ -843,13 +842,13 @@ class BusterTestCase(MockUrlfetchTest):
 
         entry = Entry.query().get()
         feed = Feed.query().get()
-        resp = self.app.post('/api/feeds/%s/entries/%s/publish' % (feed.key.id(), entry.key.id()), headers=self.authHeaders())
+        self.app.post('/api/feeds/%s/entries/%s/publish' % (feed.key.id(), entry.key.id()), headers=self.authHeaders())
 
     def testLargeOverflow(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=6), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             include_summary=True,
             max_stories_per_period=1,
@@ -974,7 +973,7 @@ class BusterTestCase(MockUrlfetchTest):
         feed.put()
         entry_json = Entry.query().get().to_json(format=True)
 
-        assert entry_json['html']['post']  == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver' target='_blank'>test_0</a><br>test</span>"
+        assert entry_json['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver' target='_blank'>test_0</a><br>test</span>"
 
     def testIncludeVideo(self):
         self.setMockUser()
@@ -1000,7 +999,6 @@ class BusterTestCase(MockUrlfetchTest):
                 assert entry['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver' target='_blank'>test_0</a></span>"
                 Entry.query().get().key.delete()
                 feed.key.delete()
-
 
     def testThumbnail(self):
         self.setMockUser()
@@ -1211,8 +1209,6 @@ class BusterTestCase(MockUrlfetchTest):
             max_stories_per_period=2,
             schedule_period=5,
         ), headers=self.authHeaders())
-
-
         self.set_response("https://alpha-api.app.net/stream/0/posts", content=FAKE_POST_OBJ_RESP, status_code=401, method="POST")
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1), status_code=200)
         self.pollUpdate()
@@ -1222,7 +1218,7 @@ class BusterTestCase(MockUrlfetchTest):
         another_fake_access_token = 'another_banana_stand'
         self.setMockUser(access_token=another_fake_access_token, username='voidfiles', id=3)
 
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
             max_stories_per_period=1,
             schedule_period=5,
@@ -1295,8 +1291,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         assert entry.thumbnail_image_url is None
 
-
-    def testFeedMetaDataUpdate(self):
+    def testFeedOverflow(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1), status_code=200)
@@ -1305,7 +1300,6 @@ class BusterTestCase(MockUrlfetchTest):
             max_stories_per_period=1,
             schedule_period=5,
         ), headers=self.authHeaders())
-
         self.set_rss_response(test_feed_url, content=self.buildRSS('test1', items=1), status_code=200)
         self.set_response("https://alpha-api.app.net/stream/0/posts", content=FAKE_POST_OBJ_RESP, status_code=400, method="POST")
         self.pollUpdate()
@@ -1400,7 +1394,6 @@ class BusterTestCase(MockUrlfetchTest):
         assert 2 == len(resp['data']['feeds'])
         assert 15 == resp['data']['feeds'][1]['update_interval']
 
-
     def testMultiplePublish(self):
         self.setMockUser()
         test_feed_url = 'http://example.com/rss'
@@ -1411,34 +1404,65 @@ class BusterTestCase(MockUrlfetchTest):
             schedule_period=5,
         ), headers=self.authHeaders())
 
+        self.set_response("https://alpha-api.app.net/stream/0/channels/10/messages", content=FAKE_POST_OBJ_RESP, status_code=200, method="POST")
         feed = Feed.query().get()
 
         entry = Entry.query().get()
-        posts = feed.format_entry_for_adn(entry).get_result()
-        assert len(posts) == 1
-        assert posts[0][1] == 'post'
+        publish_entry(entry, feed).get_result()
+        entry = Entry.query().get()
+        assert entry.published == True
+        assert entry.published_post == True
+        assert entry.published_channel == False
 
+        entry.published = False
+        entry.published_post = False
+        entry.published_channel = False
+        entry.put()
         feed.channel_id = 10
         feed.put()
 
-        posts = feed.format_entry_for_adn(entry).get_result()
-        assert len(posts) == 1
-        assert posts[0][1] == 'channel'
+        entry = Entry.query().get()
+        publish_entry(entry, feed).get_result()
+        entry = Entry.query().get()
+        assert entry.published == True
+        assert entry.published_post == False
+        assert entry.published_channel == True
 
+        entry.published = False
+        entry.published_post = False
+        entry.published_channel = False
+        entry.put()
         feed.publish_to_stream = True
         feed.put()
 
-        posts = feed.format_entry_for_adn(entry).get_result()
-        assert len(posts) == 2
-        assert posts[0][1] == 'post'
-        assert posts[1][1] == 'channel'
+        entry = Entry.query().get()
+        publish_entry(entry, feed).get_result()
+        entry = Entry.query().get()
+        assert entry.published == True
+        assert entry.published_post == True
+        assert entry.published_channel == True
 
-        entry.published_channel = True
+        entry.published = False
+        entry.published_post = False
+        entry.published_channel = False
         entry.put()
-        posts = feed.format_entry_for_adn(entry).get_result()
-        assert len(posts) == 1
-        assert posts[0][1] == 'post'
 
+        self.set_response("https://alpha-api.app.net/stream/0/posts", content=FAKE_POST_OBJ_RESP, status_code=500, method="POST")
+        entry = Entry.query().get()
+        publish_entry(entry, feed).get_result()
+        entry = Entry.query().get()
+        assert entry.published == False
+        assert entry.published_post == False
+        assert entry.published_channel == True
+
+        self.set_response("https://alpha-api.app.net/stream/0/posts", content=FAKE_POST_OBJ_RESP, status_code=200, method="POST")
+
+        entry = Entry.query().get()
+        publish_entry(entry, feed).get_result()
+        entry = Entry.query().get()
+        assert entry.published == True
+        assert entry.published_post == True
+        assert entry.published_channel == True
 
     def testFetchFeedsByChannelId(self):
         self.setMockUser()
