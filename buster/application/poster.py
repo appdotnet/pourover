@@ -527,7 +527,7 @@ def prepare_entry_from_item_local(feed, item, published, added, overflow, overfl
         logger.info("Exception while trying to find thumbnail %s", e)
         logger.exception(e)
 
-    print 'thumbnail %s' % (thumbnail)
+    # print 'thumbnail %s' % (thumbnail)
 
     if thumbnail:
         valid_thumbnail = yield check_thumbnail(feed, thumbnail)
