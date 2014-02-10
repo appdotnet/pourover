@@ -45,7 +45,6 @@
       return false;
     };
 
-
   };
 
   MainCtrl.$inject = ['$rootScope', '$scope', 'LocalApiClient', '$routeParams', '$location', 'Feeds', 'debounce'];

@@ -36,6 +36,7 @@ def stage_new_entries(cls, parsed_feed, parent_key):
 def date_filter():
     now = datetime.now()
     two_days_ago = now - timedelta(days=2)
+
     def filter(entry):
         published_parsed = entry.get('published_parsed')
         if not published_parsed:
@@ -67,8 +68,7 @@ def process_parsed_feed(cls, parsed_feed, feed, overflow, overflow_reason=OVERFL
 
     new_entries_by_guid, new_guids, old_guids = yield stage_new_entries(cls, feed_entries_by_guid, feed.key)
 
-
-    new_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
+    yield ndb.put_multi_async(new_entries_by_guid.values())
 
     entry_items = feed_entries_by_guid.items()
     # If we process first time feeds backwards the entries will be in the right added order
@@ -107,6 +107,6 @@ def process_parsed_feed(cls, parsed_feed, feed, overflow, overflow_reason=OVERFL
         feed.is_dirty = True
         yield feed.put_async()
 
-    saved_entries = yield ndb.put_multi_async(new_entries_by_guid.values())
+    yield ndb.put_multi_async(new_entries_by_guid.values())
 
     raise ndb.Return((new_guids, old_guids))

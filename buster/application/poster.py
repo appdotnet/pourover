@@ -1,12 +1,8 @@
 from collections import defaultdict
-from datetime import datetime
-import hashlib
 import json
 import logging
-import StringIO
 import urllib
-from urlparse import urlparse
-
+from urlparse import urlparse, parse_qs
 
 from bs4 import BeautifulSoup
 from django.utils.encoding import iri_to_uri
@@ -412,7 +408,7 @@ def get_meta_data_for_url(url):
 
     try:
         resp = yield ctx.urlfetch(url=url, deadline=60, follow_redirects=True)
-    except Exception, e:
+    except Exception:
         logger.exception('Failed to fetch meta data for %s' % url)
         raise ndb.Return({})
 
@@ -747,8 +743,6 @@ def format_for_adn(feed, entry):
         summary_text = ellipse_text(summary_text, 200)
 
     link = format_link_for_entry(feed, entry)
-    # If viewing feed from preview don't shorten urls
-    preview = getattr(feed, 'preview', False)
     has_own_bitly_creds = feed.bitly_login and feed.bitly_api_key
     if has_own_bitly_creds or feed.format_mode == FORMAT_MODE.TITLE_THEN_LINK:
         if not has_own_bitly_creds:

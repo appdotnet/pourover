@@ -2,7 +2,7 @@ import hashlib
 import json
 import logging
 
-from google.appengine.api import urlfetch, memcache
+from google.appengine.api import urlfetch
 from flask import g, request, abort, current_app
 import cachepy
 from .models import User, Feed

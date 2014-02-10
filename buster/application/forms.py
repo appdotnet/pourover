@@ -6,7 +6,7 @@ from wtforms import validators
 from wtforms.validators import ValidationError
 from urlparse import urlparse
 
-from constants import PERIOD_SCHEDULE, FORMAT_MODE, FEED_TYPE
+from constants import PERIOD_SCHEDULE, FORMAT_MODE
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +20,16 @@ def adn_rss_feed_check(form, field):
     if urlparts.netloc.endswith('alpha-api.app.net'):
         raise ValidationError('App.net RSS feeds are disallowed')
 
+
 def url_filter(value):
     if not (value.startswith('http://') or value.startswith('https://')):
         value = u'http://%s' % (value)
     return value
 
+
 class NoOpForm(Form):
     pass
+
 
 class FeedUpdate(Form):
     include_summary = fields.BooleanField(default=False, filters=[boolean_filter])
@@ -40,6 +43,7 @@ class FeedUpdate(Form):
     bitly_api_key = fields.TextField(validators=[validators.Length(min=-1, max=40)])
     publish_to_stream = fields.BooleanField(default=False, filters=[boolean_filter])
     channel_id = fields.IntegerField()
+
 
 class FeedPreview(FeedUpdate):
     feed_url = fields.TextField(filters=[url_filter], validators=[validators.DataRequired(), validators.URL(), adn_rss_feed_check])

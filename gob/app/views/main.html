@@ -20,7 +20,7 @@
 
   <p><a data-target="#newFeedModal" role="button" class="btn btn-primary" data-toggle="modal">Add a feed</a></p>
 
-  <div id='newFeedModal' class="modal hide fade">
+  <div id='newFeedModal' class="modal hide fade" data-backdrop="false">
     <div class="modal-header">
       <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>
       Add a Feed
@@ -55,7 +55,7 @@
           </form>
         </div>
         <div class='tab-pane' id='instagram'>
-            <a href='https://instagram.com/oauth/authorize/?client_id={{instagram_client_id}}&redirect_uri={{instagram_redirect_uri}}&response_type=token' class="">Click here to add your Instagram account</a>
+            <a href='/login/instagram/'>Click here to add your Instagram account</a>
         </div>
       </div>
     </div>
