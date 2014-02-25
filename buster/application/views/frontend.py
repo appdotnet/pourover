@@ -219,7 +219,7 @@ def feed_entry_publish(feed_type, feed_id, entry_id):
     if not entry:
         return jsonify_error(message="Can't find that entry")
 
-    publish_entry(entry, feed).get_result()
+    publish_entry(entry, feed, ignore_publish_state=True).get_result()
     entry.overflow = False
     entry.put()
 

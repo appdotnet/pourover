@@ -16,16 +16,17 @@ class PublishException(Exception):
 
 class EntryPublisher(object):
 
-    def __init__(self, entry, feed, user):
+    def __init__(self, entry, feed, user, ignore_publish_state=False):
         self.entry = entry
         self.feed = feed
         self.user = user
+        self.ignore_publish_state = ignore_publish_state
 
     @classmethod
     @ndb.tasklet
-    def from_data(cls, entry, feed):
+    def from_data(cls, entry, feed, ignore_publish_state=False):
         user = yield feed.key.parent().get_async()
-        raise ndb.Return(cls(entry, feed, user))
+        raise ndb.Return(cls(entry, feed, user, ignore_publish_state))
 
     @ndb.tasklet
     def send_to_api(self, path, post, access_token):
@@ -85,25 +86,26 @@ class EntryPublisher(object):
     @ndb.tasklet
     def publish(self):
         published = True
-        if not self.entry.published_post and (self.feed.publish_to_stream or not self.feed.channel_id):
-            data = yield format_for_adn(self.feed, self.entry)
+        entry = yield self.entry.key.get_async()
+        if (not entry.published_post or self.ignore_publish_state) and (self.feed.publish_to_stream or not self.feed.channel_id):
+            data = yield format_for_adn(self.feed, entry)
             path = 'posts'
 
             try:
                 yield self.send_to_api(path, data, self.user.access_token)
-                self.entry.published_post = True
-                yield self.entry.put_async()
+                entry.published_post = True
+                yield entry.put_async()
             except PublishException:
                 published = False
 
-        if not self.entry.published_channel and self.feed.channel_id:
-            data = broadcast_format_for_adn(self.feed, self.entry)
+        if (not entry.published_channel or self.ignore_publish_state) and self.feed.channel_id:
+            data = broadcast_format_for_adn(self.feed, entry)
             path = 'channels/%s/messages' % self.feed.channel_id
 
             try:
                 yield self.send_to_api(path, data, self.user.access_token)
-                self.entry.published_channel = True
-                yield self.entry.put_async()
+                entry.published_channel = True
+                yield entry.put_async()
             except PublishException:
                 published = False
 
@@ -112,9 +114,9 @@ class EntryPublisher(object):
         # will not be attempted again. Once they are done the entire
         # entry will be marked as published.
         if published:
-            self.entry.published = True
-            self.entry.published_at = datetime.now()
-            yield self.entry.put_async()
+            entry.published = True
+            entry.published_at = datetime.now()
+            yield entry.put_async()
 
 
 class InstagramEntryPublisher(EntryPublisher):
@@ -134,10 +136,10 @@ class InstagramEntryPublisher(EntryPublisher):
 
 
 @ndb.tasklet
-def publish_entry(entry, feed):
+def publish_entry(entry, feed, ignore_publish_state=False):
     if feed.__class__.__name__ == 'Feed':
-        publisher = yield EntryPublisher.from_data(entry, feed)
+        publisher = yield EntryPublisher.from_data(entry, feed, ignore_publish_state=ignore_publish_state)
     else:
-        publisher = yield InstagramEntryPublisher.from_data(entry, feed)
+        publisher = yield InstagramEntryPublisher.from_data(entry, feed, ignore_publish_state=ignore_publish_state)
 
     yield publisher.publish()
