@@ -5,6 +5,7 @@ import logging
 import hmac
 import hashlib
 import os
+import pickle
 import sys
 import unittest
 import json
@@ -353,25 +354,31 @@ class BusterTestCase(MockUrlfetchTest):
         for name in self.get_task_queue_names():
             stub.FlushQueue(name)
 
-
     def execute_tasks(self, n=0, queue_name='default'):
         """
         Executes all currently queued tasks.
         """
 
         # Execute the task in the taskqueue
-        print 'Quenames %s' % (self.get_task_queue_names())
         tasks = self.taskqueue_stub.GetTasks(queue_name)
         if n is not None:
             self.assertEqual(len(tasks), n)
         # Run each of the tasks, checking that they succeeded.
         for task in tasks:
-            params = base64.b64decode(task["body"])
-            #response = self.app.post(task["url"], params)
-            #params = task.get('params', {})
+            # response = self.app.post(task["url"], params)
+            # params = task.get('params', {})
+            # print 'Running task params:%s task:%s' % (params, task)
             content_type = dict(task['headers']).pop('content-type', '')
-            response = self.app.post(task['url'], data=params, headers=task['headers'], content_type=content_type)
-            self.assertEqual(200, response.status_code)
+            if task['url'] == '/_ah/queue/deferred':
+                (func, args, opts) = pickle.loads(base64.b64decode(task["body"]))
+                resp = ndb.toplevel(func)(*args)
+                #if isinstance(resp, ndb.Future):
+                #    ndb.toplevel(resp)
+                #print 'What the hell did we get back %s' % resp
+            else:
+                params = base64.b64decode(task["body"])
+                response = self.app.post(task['url'], data=params, headers=task['headers'], content_type=content_type)
+
 
     def setMockUser(self, access_token=FAKE_ACCESS_TOKEN, username='voidfiles', id=3):
         user_data = self.buildMockUserResponse(username=username, id=id)
@@ -389,6 +396,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.execute_tasks(n=n, queue_name=queue_name)
         print "executing posts"
         self.app.get('/api/feeds/all/post', headers={'X-Appengine-Cron': 'true'})
+        self.execute_tasks(n=None)
         self.execute_tasks(n=None)
         self.clear_task_queue()
 
@@ -1451,8 +1459,8 @@ class BusterTestCase(MockUrlfetchTest):
         entry = Entry.query().get()
         publish_entry(entry, feed).get_result()
         entry = Entry.query().get()
-        assert entry.published == False
-        assert entry.published_post == False
+        assert entry.published == True
+        assert entry.published_post == True
         assert entry.published_channel == True
 
         self.set_response("https://alpha-api.app.net/stream/0/posts", content=FAKE_POST_OBJ_RESP, status_code=200, method="POST")
