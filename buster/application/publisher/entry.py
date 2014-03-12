@@ -86,7 +86,7 @@ class ApiPublisher(object):
 @ndb.synctasklet
 def publish_to_api(entry_key, feed_key, path, post, access_token):
     api_publisher = ApiPublisher(entry_key, feed_key)
-    api_publisher.send_to_api(path, post, access_token)
+    yield api_publisher.send_to_api(path, post, access_token)
     logger.info('publishing to the api')
 api_publish_opts = TaskRetryOptions(task_retry_limit=3)
 
@@ -105,29 +105,40 @@ class EntryPublisher(object):
         user = yield feed.key.parent().get_async()
         raise ndb.Return(cls(entry, feed, user, ignore_publish_state))
 
-    @ndb.transactional_tasklet(retries=0)
-    def publish(self):
-        entry = self.entry = yield self.entry.key.get_async()
-
-        if self.feed.publish_to_stream or not self.feed.channel_id:
+    # This is the path for immediatly posting
+    @ndb.tasklet
+    def _immediate_publish(self, entry, in_transaction=False):
+        if (self.feed.publish_to_stream or not self.feed.channel_id) and (not entry.published_post or self.ignore_publish_state):
             entry.published_post = True
             data = yield format_for_adn(self.feed, entry)
             path = 'posts'
-            logger.info('Deffering post')
             deferred.defer(publish_to_api, entry.key.urlsafe(), self.feed.key.urlsafe(), path, data,
-                           self.user.access_token, _transactional=True, _retry_options=api_publish_opts)
+                           self.user.access_token, _transactional=in_transaction, _retry_options=api_publish_opts)
 
-        if self.feed.channel_id:
+        if self.feed.channel_id and (not entry.published_channel or self.ignore_publish_state):
             entry.published_channel = True
             data = broadcast_format_for_adn(self.feed, entry)
             path = 'channels/%s/messages' % self.feed.channel_id
-            logger.info('Deffering message')
             deferred.defer(publish_to_api, entry.key.urlsafe(), self.feed.key.urlsafe(), path, data,
-                           self.user.access_token, _transactional=True, _retry_options=api_publish_opts)
+                           self.user.access_token, _transactional=in_transaction, _retry_options=api_publish_opts)
 
         entry.published = True
         entry.published_at = datetime.now()
         yield entry.put_async()
+
+    # For scheduled posting
+    @ndb.transactional_tasklet()
+    def _transactionaly_publish(self, entry):
+        self._immediate_publish(entry, in_transaction=True)
+
+    @ndb.tasklet
+    def publish(self):
+        entry = self.entry = yield self.entry.key.get_async()
+
+        if self.ignore_publish_state:
+            yield self._immediate_publish(entry)
+        else:
+            yield self._transactionaly_publish(entry)
 
 
 class InstagramEntryPublisher(EntryPublisher):

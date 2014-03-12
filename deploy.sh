@@ -11,5 +11,5 @@ cp "$root_dir/gob/dist/favicon.ico" "$root_dir/buster/static/"
 cp "$root_dir/gob/dist/"*.html "$root_dir/buster/application/templates"
 
 cd "$root_dir"
-python "$GAE_PATH/appcfg.py" --oauth2 --noauth_local_webserver update buster/app.yaml buster/backend.yaml
+python "$GAE_PATH/appcfg.py" --oauth2 --noauth_local_webserver update buster/app.yaml buster/backend.yaml "$@"
 cd -
