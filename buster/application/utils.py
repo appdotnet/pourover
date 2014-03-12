@@ -59,7 +59,7 @@ def guid_for_item(item):
 
     summary = item.get('summary', u'No content')
     summary = summary.encode('utf-8', 'replace')
-    return hashlib.sha224(summary)
+    return hashlib.sha224(summary).hexdigest()
 
 
 def strip_html_tags(html):

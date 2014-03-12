@@ -9,6 +9,7 @@ from django.utils.encoding import iri_to_uri
 from fnl.nlp import sentencesplitter as splitter
 from google.appengine.ext import ndb
 from google.appengine.api.images import Image, NotImageError
+from google.appengine.api.urlfetch import InvalidURLError
 from lxml.html.clean import Cleaner
 
 
@@ -240,6 +241,7 @@ def get_image_from_url(url):
     # logger.info('Downloading image %s', url)
     ctx = ndb.get_context()
 
+    url = unicode(url)
     if url and url.startswith('//'):
         url = 'http:' + url
 
@@ -251,6 +253,8 @@ def get_image_from_url(url):
         image.width  # Try
     except NotImageError:
         # logger.info('Image at url isnt an image: %s', url)
+        pass
+    except InvalidURLError:
         pass
     except Exception, e:
         logger.exception(e)
