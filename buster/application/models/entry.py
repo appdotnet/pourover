@@ -147,6 +147,9 @@ class Entry(ndb.Model):
     @classmethod
     @ndb.tasklet
     def publish_for_feed(cls, feed, skip_queue=False):
+        if not feed:
+            logger.info("Asked to publishf for a non-exsistant feed")
+            raise ndb.Return(0)
 
         minutes_schedule = DEFAULT_PERIOD_SCHEDULE
         max_stories_to_publish = MAX_STORIES_PER_PERIOD

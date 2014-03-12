@@ -57,7 +57,8 @@ def guid_for_item(item):
     if guid:
         return guid
 
-    summary = item.get('summary', 'No content')
+    summary = item.get('summary', u'No content')
+    summary = summary.encode('utf-8', 'replace')
     return hashlib.sha224(summary)
 
 
@@ -155,4 +156,5 @@ def dict_hash(_dict):
     _dict_items = _dict.items()
     _dict_items = sorted(_dict_items, key=lambda x: x[0])
     _dict_items = u''.join([unicode(item) for sublist in _dict_items for item in sublist])
+    _dict_items = _dict_items.encode('utf-8', 'replace')
     return hashlib.sha224(_dict_items).hexdigest()

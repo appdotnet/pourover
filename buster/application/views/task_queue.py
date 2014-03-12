@@ -253,7 +253,10 @@ def tq_feed_post_job():
             success += 1
         except:
             errors += 1
-            logger.exception('Failed to Publish feed:%s' % (feed.feed_url, ))
+            if feed:
+                logger.exception('Failed to Publish feed:%s' % (feed.feed_url, ))
+            else:
+                logger.exception('Failed to publish non-exsistant feed')
 
     logger.info('Post Feeds success:%s errors: %s num_posted: %s', success, errors, num_posted)
     raise ndb.Return(jsonify(status='ok'))

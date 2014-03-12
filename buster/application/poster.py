@@ -243,12 +243,15 @@ def get_image_from_url(url):
     if url and url.startswith('//'):
         url = 'http:' + url
 
+    image = None
+
     try:
         resp = yield ctx.urlfetch(url, deadline=60)
         image = Image(image_data=resp.content)
         image.width  # Try
     except NotImageError:
-        logger.info('Image at url isnt an image: %s', url)
+        # logger.info('Image at url isnt an image: %s', url)
+        pass
     except Exception, e:
         logger.exception(e)
         raise ndb.Return(None)
@@ -718,6 +721,7 @@ def broadcast_format_for_adn(feed, entry):
         twitter_description = entry.meta_tags.get('twitter', {}).get('description')
         description = og_description or twitter_description
         if description:
+            logger.info("What are we striping html from: %s", description)
             description = strip_html_tags(description)
 
     if description:
