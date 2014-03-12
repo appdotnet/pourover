@@ -127,6 +127,7 @@ def write_epoch_to_stat(model, name):
     yield stat.put_async()
     raise ndb.Return(stat)
 
+
 @ndb.tasklet
 def get_epoch_from_stat(model, name):
     key = ndb.Key(model, name)
@@ -138,6 +139,7 @@ def get_epoch_from_stat(model, name):
 
     raise ndb.Return(value)
 
+
 def fit_to_box(w, h, max_w, max_h, expand=False):
     # proportionately scale a box defined by (w,h) so that it fits within a box defined by (max_w, max_h)
     # by default, only scaling down is allowed, unless expand=True, in which case scaling up is allowed
@@ -148,8 +150,9 @@ def fit_to_box(w, h, max_w, max_h, expand=False):
     new_width = int(float(w) / largest_ratio)
     return (new_width, new_height)
 
+
 def dict_hash(_dict):
     _dict_items = _dict.items()
     _dict_items = sorted(_dict_items, key=lambda x: x[0])
-    _dict_items = ''.join([unicode(item) for sublist in _dict_items for item in sublist])
+    _dict_items = u''.join([unicode(item) for sublist in _dict_items for item in sublist])
     return hashlib.sha224(_dict_items).hexdigest()

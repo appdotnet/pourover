@@ -15,6 +15,7 @@ import urllib
 import inspect
 
 from google.appengine.api import apiproxy_stub_map
+from google.appengine.ext import deferred
 from google.appengine.ext import ndb
 
 sys.path.insert(1, os.path.join(os.path.abspath('./buster/'), 'lib'))
@@ -371,14 +372,15 @@ class BusterTestCase(MockUrlfetchTest):
             content_type = dict(task['headers']).pop('content-type', '')
             if task['url'] == '/_ah/queue/deferred':
                 (func, args, opts) = pickle.loads(base64.b64decode(task["body"]))
-                resp = ndb.toplevel(func)(*args)
-                #if isinstance(resp, ndb.Future):
-                #    ndb.toplevel(resp)
-                #print 'What the hell did we get back %s' % resp
+
+                try:
+                    ndb.toplevel(func)(*args)
+                except deferred.PermanentTaskFailure:
+                    pass
+
             else:
                 params = base64.b64decode(task["body"])
-                response = self.app.post(task['url'], data=params, headers=task['headers'], content_type=content_type)
-
+                self.app.post(task['url'], data=params, headers=task['headers'], content_type=content_type)
 
     def setMockUser(self, access_token=FAKE_ACCESS_TOKEN, username='voidfiles', id=3):
         user_data = self.buildMockUserResponse(username=username, id=id)

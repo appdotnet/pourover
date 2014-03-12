@@ -88,6 +88,7 @@ def publish_to_api(entry_key, feed_key, path, post, access_token):
     api_publisher = ApiPublisher(entry_key, feed_key)
     yield api_publisher.send_to_api(path, post, access_token)
     logger.info('publishing to the api')
+
 api_publish_opts = TaskRetryOptions(task_retry_limit=3)
 
 
@@ -129,7 +130,7 @@ class EntryPublisher(object):
     # For scheduled posting
     @ndb.transactional_tasklet()
     def _transactionaly_publish(self, entry):
-        self._immediate_publish(entry, in_transaction=True)
+        yield self._immediate_publish(entry, in_transaction=True)
 
     @ndb.tasklet
     def publish(self):

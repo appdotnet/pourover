@@ -234,6 +234,9 @@ def get_link_for_item(feed, item):
 
 @ndb.tasklet
 def get_image_from_url(url):
+    if not url:
+        raise ndb.Return(None)
+
     # logger.info('Downloading image %s', url)
     ctx = ndb.get_context()
 
@@ -336,8 +339,11 @@ def find_image_in_meta_tags(meta_tags, remote_fetch=False):
                          meta_tags_image_url['height']))
     elif meta_tags_image_url and remote_fetch:
         image = yield get_image_from_url(meta_tags_image_url)
-        if image and image_fits(image.width, image.height):
-            raise ndb.Return(image_dict(meta_tags_image_url, image.width, image.height))
+        try:
+            if image and image_fits(image.width, image.height):
+                raise ndb.Return(image_dict(meta_tags_image_url, image.width, image.height))
+        except NotImageError:
+            pass
 
     raise ndb.Return(None)
 
@@ -559,7 +565,7 @@ def prepare_entry_from_item_remote(feed, has_thumbnail, item_content, link, remo
     if 'html' not in feed.image_strategy_blacklist and not thumbnail and kwargs.get('images_in_html'):
         thumbnail = kwargs['images_in_html'][0]
 
-    print 'thumbnail %s' % (thumbnail)
+    # print 'thumbnail %s' % (thumbnail)
 
     if thumbnail:
         valid_thumbnail = yield check_thumbnail(feed, thumbnail)
@@ -711,7 +717,8 @@ def broadcast_format_for_adn(feed, entry):
         og_description = entry.meta_tags.get('og', {}).get('description')
         twitter_description = entry.meta_tags.get('twitter', {}).get('description')
         description = og_description or twitter_description
-        description = strip_html_tags(description)
+        if description:
+            description = strip_html_tags(description)
 
     if description:
         post['text'] = description
