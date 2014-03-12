@@ -721,7 +721,8 @@ def broadcast_format_for_adn(feed, entry):
         twitter_description = entry.meta_tags.get('twitter', {}).get('description')
         description = og_description or twitter_description
         if description:
-            logger.info("What are we striping html from: %s %s", description, type(description))
+            # logger.info("What are we striping html from: %s %s", description, type(description))
+            description = unicode(description)
             description = strip_html_tags(description)
 
     if description:
