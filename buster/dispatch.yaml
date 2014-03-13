@@ -4,8 +4,8 @@ dispatch:
 - url: '*/api/backend/*'
   module: backend
 
-# - url: '*/_ah/*'
-#   module: backend
+- url: '*/_ah/*'
+  module: backend
 
 # Default module serves the typical web resources and all static resources.
 - url: '*/*'

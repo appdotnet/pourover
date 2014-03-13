@@ -114,14 +114,16 @@ class EntryPublisher(object):
             data = yield format_for_adn(self.feed, entry)
             path = 'posts'
             deferred.defer(publish_to_api, entry.key.urlsafe(), self.feed.key.urlsafe(), path, data,
-                           self.user.access_token, _transactional=in_transaction, _retry_options=api_publish_opts)
+                           self.user.access_token, _transactional=in_transaction, _retry_options=api_publish_opts,
+                           _target='backend')
 
         if self.feed.channel_id and (not entry.published_channel or self.ignore_publish_state):
             entry.published_channel = True
             data = broadcast_format_for_adn(self.feed, entry)
             path = 'channels/%s/messages' % self.feed.channel_id
             deferred.defer(publish_to_api, entry.key.urlsafe(), self.feed.key.urlsafe(), path, data,
-                           self.user.access_token, _transactional=in_transaction, _retry_options=api_publish_opts)
+                           self.user.access_token, _transactional=in_transaction, _retry_options=api_publish_opts,
+                           _target='backend')
 
         entry.published = True
         entry.published_at = datetime.now()
@@ -155,7 +157,8 @@ class InstagramEntryPublisher(EntryPublisher):
             path = 'posts'
 
             deferred.defer(publish_to_api, entry.key.urlsafe(), self.feed.key.urlsafe(), path, data,
-                           self.user.access_token, _transactional=True, _retry_options=api_publish_opts)
+                           self.user.access_token, _transactional=True, _retry_options=api_publish_opts,
+                           _target='backend')
 
 
 @ndb.tasklet
