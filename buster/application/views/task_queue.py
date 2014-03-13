@@ -3,6 +3,7 @@ import uuid
 
 import feedparser
 from flask import request, url_for
+from google.appengine.ext import deferred
 from google.appengine.api.taskqueue import Task, Queue
 from google.appengine.ext import ndb
 
@@ -380,3 +381,25 @@ def all_feeds():
 
 all_feeds.app_token_required = True
 all_feeds.login_required = False
+
+
+@app.route('/api/deferred/task', methods=['POST'])
+@app.route('/api/backend/deferred/task', methods=['POST'], endpoint="tq_deferred-task")
+@ndb.synctasklet
+def deferred_task():
+    if not request.headers.get('X-AppEngine-QueueName'):
+        raise ndb.Return(jsonify_error(message='Not a Task call'))
+
+    data = request.stream.read()
+    try:
+        deferred.run(data)
+    except deferred.SingularTaskFailure:
+        logger.debug("Failure executing task, task retry forced")
+        raise ndb.Return(jsonify_error(code=408))
+    except deferred.PermanentTaskFailure:
+        logger.debug("Permanent Failure")
+        raise ndb.Return(jsonify_error(code=500))
+
+    raise ndb.Return(jsonify(status='ok'))
+
+deferred_task.login_required = False

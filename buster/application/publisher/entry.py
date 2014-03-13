@@ -2,9 +2,11 @@ from datetime import datetime
 import logging
 import json
 
+from flask import url_for
 from google.appengine.ext import deferred
 from google.appengine.ext import ndb
 from google.appengine.api.taskqueue import TaskRetryOptions
+
 
 from application.constants import FEED_STATE, OVERFLOW_REASON
 from application.poster import format_for_adn, broadcast_format_for_adn, instagram_format_for_adn
@@ -115,7 +117,7 @@ class EntryPublisher(object):
             path = 'posts'
             deferred.defer(publish_to_api, entry.key.urlsafe(), self.feed.key.urlsafe(), path, data,
                            self.user.access_token, _transactional=in_transaction, _retry_options=api_publish_opts,
-                           _target='backend')
+                           _target='backend', _url='/api/backend/deferred/task')
 
         if self.feed.channel_id and (not entry.published_channel or self.ignore_publish_state):
             entry.published_channel = True
@@ -123,7 +125,7 @@ class EntryPublisher(object):
             path = 'channels/%s/messages' % self.feed.channel_id
             deferred.defer(publish_to_api, entry.key.urlsafe(), self.feed.key.urlsafe(), path, data,
                            self.user.access_token, _transactional=in_transaction, _retry_options=api_publish_opts,
-                           _target='backend')
+                           _target='backend', _url='/api/backend/deferred/task')
 
         entry.published = True
         entry.published_at = datetime.now()
@@ -158,7 +160,7 @@ class InstagramEntryPublisher(EntryPublisher):
 
             deferred.defer(publish_to_api, entry.key.urlsafe(), self.feed.key.urlsafe(), path, data,
                            self.user.access_token, _transactional=True, _retry_options=api_publish_opts,
-                           _target='backend')
+                           _target='backend', _url='/api/backend/deferred/task')
 
 
 @ndb.tasklet
