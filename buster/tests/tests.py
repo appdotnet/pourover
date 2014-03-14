@@ -1491,6 +1491,35 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.get('/api/feeds-for-channel/10/', headers=self.authHeaders())
         assert len(json.loads(resp.data)['data']) == 1
 
+    def testFirstToThePollSchedule(self):
+        self.setMockUser()
+
+        self.set_rss_response('http://example.com/rss', content=self.buildRSS('test1', items=2), status_code=200)
+        self.app.post('/api/feeds', data=dict(
+            feed_url='http://example.com/rss',
+            include_summary=True,
+            max_stories_per_period=2,
+            schedule_period=5,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+        feed.manual_control = True
+        feed.put()
+
+        assert 0 == Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feed.key).count()
+        assert 2 == Entry.query(ancestor=feed.key).count()
+
+        self.set_rss_response('http://example.com/rss', content=self.buildRSS('test2', items=2), status_code=200)
+
+        feed = Feed.query().get()
+        feed.dump_excess_in_period = True
+        feed.put()
+        self.set_rss_response('http://example.com/rss', content=self.buildRSS('test3', items=2), status_code=200)
+        self.pollUpdate()
+        # Should have been rate limited
+        assert 1 == Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feed.key).count()
+        assert 4 == Entry.query(Entry.published == True, ancestor=feed.key).count()
+        assert 3 == Entry.query(Entry.published == True, Entry.overflow == True, ancestor=feed.key).count()
 
 if __name__ == '__main__':
     unittest.main()

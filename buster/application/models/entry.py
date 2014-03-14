@@ -148,7 +148,7 @@ class Entry(ndb.Model):
     @ndb.tasklet
     def publish_for_feed(cls, feed, skip_queue=False):
         if not feed:
-            logger.info("Asked to publishf for a non-exsistant feed")
+            logger.info("Asked to publish for a non-exsistant feed")
             raise ndb.Return(0)
 
         minutes_schedule = DEFAULT_PERIOD_SCHEDULE
@@ -156,6 +156,9 @@ class Entry(ndb.Model):
         if feed.manual_control:
             minutes_schedule = feed.schedule_period
             max_stories_to_publish = feed.max_stories_per_period
+
+        if feed.dump_excess_in_period:
+            max_stories_to_publish = 1
 
         # How many stories have been published in the last period_length
         now = datetime.now()
@@ -183,6 +186,9 @@ class Entry(ndb.Model):
             if not more_to_publish:
                 feed.is_dirty = False
                 yield feed.put_async()
+
+            if more_to_publish and feed.dump_excess_in_period:
+                yield cls.drain_queue(feed)
 
         raise ndb.Return(entries_posted)
 

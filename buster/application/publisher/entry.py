@@ -2,7 +2,6 @@ from datetime import datetime
 import logging
 import json
 
-from flask import url_for
 from google.appengine.ext import deferred
 from google.appengine.ext import ndb
 from google.appengine.api.taskqueue import TaskRetryOptions

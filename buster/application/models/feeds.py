@@ -60,6 +60,7 @@ class InstagramFeed(ndb.Model):
     preview_form = NoOpForm
     alpha_api_path = 'posts'
     visible = True
+    dump_excess_in_period = False
     # Custom user_agent
 
     @property
@@ -171,6 +172,7 @@ class Feed(ndb.Model):
     manual_control = ndb.BooleanProperty(default=False)
     schedule_period = ndb.IntegerProperty(default=PERIOD_SCHEDULE.MINUTE_5)
     max_stories_per_period = ndb.IntegerProperty(default=1)
+    dump_excess_in_period = ndb.BooleanProperty(default=False)
 
     status = ndb.IntegerProperty(default=FEED_STATE.ACTIVE)
     include_summary = ndb.BooleanProperty(default=False)
