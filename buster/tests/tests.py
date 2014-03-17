@@ -255,6 +255,7 @@ class BusterTestCase(MockUrlfetchTest):
 
     def tearDown(self):
         root.removeHandler(self.ch)
+        cachepy.flush()
         self.testbed.deactivate()
 
     def buildRSS(self, unique_key, items=1, **kw):
@@ -457,8 +458,8 @@ class BusterTestCase(MockUrlfetchTest):
         resp = self.app.get('/api/feeds/1')
         assert resp.status_code == 401
         mock_user_response = json.dumps(self.buildMockUserResponse())
-
-        self.set_response("https://alpha-api.app.net/stream/0/token", content=mock_user_response, status_code=200)
+        cachepy.flush()
+        self.set_response("https://alpha-api.app.net/stream/0/token", content=mock_user_response, status_code=200, method='GET')
         resp = self.app.get('/api/feeds', headers=self.authHeaders())
 
         assert resp.status_code == 200
@@ -546,7 +547,7 @@ class BusterTestCase(MockUrlfetchTest):
         test_feed_url = 'http://example.com/rss2'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test'), status_code=200)
 
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
         ), headers={'Authorization': 'Bearer %s' % (another_fake_access_token, )})
 
@@ -603,7 +604,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test'), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
         ), headers=self.authHeaders())
 
@@ -636,7 +637,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test'), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
         ), headers=self.authHeaders())
 
@@ -645,7 +646,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.setMockAppToken()
         headers = self.authHeaders(access_token='NEW_TOKEN')
         new_feed_url = "http://example.com/rss2"
-        resp = self.app.post('/api/feeds/%s/update/feed_url' % (feed.key.urlsafe(), ), data={'feed_url': new_feed_url}, headers=headers)
+        self.app.post('/api/feeds/%s/update/feed_url' % (feed.key.urlsafe(), ), data={'feed_url': new_feed_url}, headers=headers)
         feed = Feed.query().get()
 
         assert new_feed_url == feed.feed_url
@@ -655,7 +656,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         test_feed_url = 'http://example.com/rss'
         self.set_rss_response(test_feed_url, content=self.buildRSS('test'), status_code=200)
-        resp = self.app.post('/api/feeds', data=dict(
+        self.app.post('/api/feeds', data=dict(
             feed_url=test_feed_url,
         ), headers=self.authHeaders())
 
@@ -667,7 +668,7 @@ class BusterTestCase(MockUrlfetchTest):
         self.app.post('/api/feeds/%s/error' % (feed.key.urlsafe(), ), headers=headers)
         feed = Feed.query().get()
 
-        assert feed.initial_error != None
+        assert feed.initial_error is not None
         headers = self.authHeaders(access_token='NEW_TOKEN')
         headers.update({
             'Content-Type': 'application/xml',
@@ -680,7 +681,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         self.app.post('/api/feeds/%s/subscribe/app?%s' % (feed.key.urlsafe(), urllib.urlencode(query_string)), data=self.buildRSS('test', items=2), headers=headers)
 
-        assert feed.initial_error == None
+        assert feed.initial_error is None
 
         feed = Feed.query().get()
         times = datetime.utcnow() - timedelta(days=1)
@@ -1136,7 +1137,7 @@ class BusterTestCase(MockUrlfetchTest):
         test_feed_url = 'http://example.com/rss'
         sentance_1 = 'Dog' + ('x' * 196) + '.'
         sentance_2 = ' Dxx Dxx.'
-        description  = sentance_1 + sentance_2
+        description = sentance_1 + sentance_2
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
         feed, entry = self.createFeed(include_summary=True, feed_url=test_feed_url)
         assert entry.to_json(format=True)['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver' target='_blank'>test_0</a><br>%s</span>" % (sentance_1)
@@ -1144,7 +1145,7 @@ class BusterTestCase(MockUrlfetchTest):
 
         sentance_1 = 'x' * 201 + '.'
         sentance_2 = ' xxx.'
-        description  = sentance_1 + sentance_2
+        description = sentance_1 + sentance_2
         self.set_rss_response(test_feed_url, content=self.buildRSS('test', items=1, description=description), status_code=200)
         feed, entry = self.createFeed(include_summary=True, feed_url=test_feed_url)
         assert entry.to_json(format=True)['html']['post'] == "<span><a href='http://example.com/buster/test_0?utm_medium=App.net&utm_source=PourOver' target='_blank'>test_0</a><br>%s</span>" % (sentance_1[0:199] + u"\u2026")
@@ -1520,6 +1521,45 @@ class BusterTestCase(MockUrlfetchTest):
         assert 1 == Entry.query(Entry.published == True, Entry.overflow == False, ancestor=feed.key).count()
         assert 4 == Entry.query(Entry.published == True, ancestor=feed.key).count()
         assert 3 == Entry.query(Entry.published == True, Entry.overflow == True, ancestor=feed.key).count()
+
+    def testAdminAPI(self):
+        self.setMockUser()
+
+        test_feed_url = 'http://example.com/rss'
+        self.set_rss_response(test_feed_url, content=self.buildRSS('test'), status_code=200)
+        self.app.post('/api/feeds', data=dict(
+            feed_url=test_feed_url,
+            channel_id=10,
+        ), headers=self.authHeaders())
+
+        feed = Feed.query().get()
+
+        assert feed.dump_excess_in_period == False
+        self.setMockAppToken()
+        headers = self.authHeaders(access_token='NEW_TOKEN')
+        resp = self.app.post('/api/admin/feeds/channel/10/limit', data={
+            'dump_excess_in_period': 1,
+        }, headers=headers)
+        print resp.data
+        feed = Feed.query().get()
+
+        assert feed.dump_excess_in_period == True
+
+        assert feed.max_stories_per_period == 1
+        self.app.post('/api/admin/feeds/channel/10/limit', data={
+            'max_stories_per_period': 2,
+        }, headers=headers)
+        feed = Feed.query().get()
+        assert feed.max_stories_per_period == 2
+        assert feed.manual_control == True
+
+        assert feed.schedule_period == 5
+        self.app.post('/api/admin/feeds/channel/10/limit', data={
+            'schedule_period': 15,
+        }, headers=headers)
+        feed = Feed.query().get()
+
+        assert feed.schedule_period == 15
 
 if __name__ == '__main__':
     unittest.main()

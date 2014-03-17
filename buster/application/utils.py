@@ -158,3 +158,18 @@ def dict_hash(_dict):
     _dict_items = u''.join([unicode(item) for sublist in _dict_items for item in sublist])
     _dict_items = _dict_items.encode('utf-8', 'replace')
     return hashlib.sha224(_dict_items).hexdigest()
+
+
+def clamp_to_interval(val, bounds):
+    min_bound, max_bound = bounds
+    return min(max_bound, max(min_bound, val))
+
+
+def cast_int(val, default=0, bounds=None):
+    try:
+        val = int(val)
+        if bounds:
+            return clamp_to_interval(val, bounds)
+        return val
+    except:
+        return default

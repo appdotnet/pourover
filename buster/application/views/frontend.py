@@ -9,7 +9,8 @@ from application.models import Entry, Feed, FEED_TYPE_TO_CLASS
 from application.fetcher import FetchException, fetch_parsed_feed_for_feed
 from application.publisher.entry import publish_entry
 
-from view_utils import jsonify, jsonify_error
+from view_utils import jsonify, jsonify_error, get_feeds_for_channel, export_feeds_to_json
+
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,8 @@ def feeds():
 def feeds_for_channel_id(channel_id):
     """List all examples"""
 
-    users_feeds = [feed.to_json() for feed in FEED_TYPE_TO_CLASS[FEED_TYPE.RSS].for_user_and_channel(g.user, channel_id) if feed.visible]
+    users_feeds = get_feeds_for_channel(channel_id)
+    users_feeds = export_feeds_to_json(users_feeds)
 
     return jsonify(status='ok', data=users_feeds)
 
