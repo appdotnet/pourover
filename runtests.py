@@ -16,7 +16,9 @@ def main(sdk_path, test_path):
     import dev_appserver
     dev_appserver.fix_sys_path()
     suite = unittest2.loader.TestLoader().discover(test_path)
-    unittest2.TextTestRunner(verbosity=2, buffer=True, failfast=True).run(suite)
+    test_result = unittest2.TextTestRunner(verbosity=2, buffer=True, failfast=True).run(suite)
+    if not test_result.wasSuccessful():
+        sys.exit(1)
 
 
 if __name__ == '__main__':
