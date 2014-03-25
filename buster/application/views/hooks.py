@@ -145,6 +145,9 @@ def feed_push_update(feed_key):
 
             raise ndb.Return('')
 
+    # I want to turn these off for a bit because they seem to be causing double posts
+    raise ndb.Return('')
+
     yield feed.clear_error()
     parsed_feed = feedparser.parse(data)
     new_guids, old_guids = yield Entry.process_parsed_feed(parsed_feed, feed, overflow=False)

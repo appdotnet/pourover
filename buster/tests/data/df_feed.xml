@@ -11,8 +11,8 @@
     <link rel="alternate" type="text/html" href="http://blog.app.net/2013/07/15/pourover-for-app-net-is-now-available/" />
     <link rel="shorturl" href="http://df4.us/lkh" />
     <id>tag:daringfireball.net,2013:/linked//6.27953</id>
-    <published>2013-07-17T19:21:11Z</published>
-    <updated>2013-07-17T19:56:44Z</updated>
+    <published>%s</published>
+    <updated>%s</updated>
     <author>
         <name>John Gruber</name>
         <uri>http://daringfireball.net/</uri>

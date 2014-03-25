@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from datetime import datetime, timedelta
 import itertools
+from time import mktime
 
 from google.appengine.ext import ndb
 
@@ -37,15 +38,19 @@ def date_filter():
     now = datetime.now()
     two_days_ago = now - timedelta(days=2)
 
-    def filter(entry):
+    def _filter(entry):
         published_parsed = entry.get('published_parsed')
         if not published_parsed:
             return True
+
+        published_parsed = datetime.fromtimestamp(mktime(published_parsed))
 
         if published_parsed > two_days_ago:
             return True
 
         return False
+
+    return _filter
 
 
 def filter_entries(entries):
