@@ -735,7 +735,7 @@ def broadcast_format_for_adn(feed, entry):
         post['machine_only'] = True
 
     if feed.cross_post_to_defaults:
-        post['post_to'] = {'defaults': True}
+        post['publish_to'] = {'defaults': True}
 
     return post
 
