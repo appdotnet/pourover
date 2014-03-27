@@ -42,6 +42,7 @@ class FeedUpdate(Form):
     bitly_login = fields.TextField(validators=[validators.Length(min=-1, max=40)])
     bitly_api_key = fields.TextField(validators=[validators.Length(min=-1, max=40)])
     publish_to_stream = fields.BooleanField(default=False, filters=[boolean_filter])
+    cross_post_to_defaults = fields.BooleanField(default=False, filters=[boolean_filter])
     channel_id = fields.IntegerField()
 
 

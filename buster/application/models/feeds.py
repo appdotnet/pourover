@@ -208,6 +208,8 @@ class Feed(ndb.Model):
     user_agent = ndb.StringProperty(default=None)
     channel_id = ndb.IntegerProperty()
     publish_to_stream = ndb.BooleanProperty(default=False)
+    cross_post_to_defaults = ndb.BooleanProperty(default=False)
+
     email = ndb.StringProperty()
     error_count = ndb.IntegerProperty(default=0)
     use_external_poller = ndb.BooleanProperty(default=False)
@@ -503,6 +505,7 @@ class Feed(ndb.Model):
             'description': self.effective_description,
             'feed_type': FEED_TYPE.RSS,
             'publish_to_stream': self.publish_to_stream,
+            'cross_post_to_defaults': self.cross_post_to_defaults,
         }
 
         if getattr(self, 'preview', None) is None:

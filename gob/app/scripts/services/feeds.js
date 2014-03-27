@@ -8,7 +8,8 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'LocalApiClient
     schedule_period: 1,
     format_mode: 1,
     include_thumb: true,
-    include_video: true
+    include_video: true,
+    cross_post_to_defaults: false,
   };
 
   $rootScope.feed = _.extend({}, DEFAULT_FEED_OBJ);
@@ -45,7 +46,7 @@ angular.module('pourOver').factory('Feeds', ['$q', '$rootScope', 'LocalApiClient
   return {
     DEFAULT_FEED_OBJ: DEFAULT_FEED_OBJ,
     serialize_feed: function (feed) {
-      _.each(['linked_list_mode', 'include_thumb', 'include_summary', 'include_video', 'publish_to_stream'], function (el) {
+      _.each(['linked_list_mode', 'include_thumb', 'include_summary', 'include_video', 'publish_to_stream', 'cross_post_to_defaults'], function (el) {
         if (!feed[el]) {
           delete feed[el];
         }
